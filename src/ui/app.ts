@@ -95,7 +95,7 @@ import {
 
 export { formatClock, stars } from './dom'
 
-export const APP_VERSION = '1.4.5'
+export const APP_VERSION = '1.4.6'
 export const GITHUB_URL = 'https://github.com/dofy/fishtank'
 
 export interface AppHooks {
@@ -394,14 +394,16 @@ export class App {
     actions.className = 'hud-actions'
     actions.append(modeBtn, langBtn, immersiveBtn)
 
-    this.hud.replaceChildren(
-      lvGroup,
+    const statsGroup = document.createElement('div')
+    statsGroup.className = 'hud-stats'
+    statsGroup.append(
       stat(STAT_ICONS.tank, c.hudTank, `${placed}/${cap}`),
       stat(STAT_ICONS.bag, c.hudBag, `${s.fish.length}`),
-      heartStat,
       stat(STAT_ICONS.book, c.hudSpecies, `${prog.owned}/${prog.total}`),
-      actions,
+      heartStat,
     )
+
+    this.hud.replaceChildren(lvGroup, statsGroup, actions)
   }
 
   private renderNav(): void {
@@ -587,7 +589,7 @@ export class App {
     actionBar.className = 'action-bar'
 
     const row = document.createElement('div')
-    row.className = 'row m-0'
+    row.className = 'action-buttons'
     const canBreed = Boolean(a && b && this.state.hearts > 0)
     const go = makeButton(c.breedBtn(this.breedPick.length), () => {
       const clickNow = Date.now()
@@ -728,7 +730,7 @@ export class App {
     headRow.append(heading(c.mergeHeading(SYNTHESIS_INPUT_COUNT, this.mergePick.length)))
 
     const row = document.createElement('div')
-    row.className = 'row m-0'
+    row.className = 'action-buttons'
     const ready = this.mergePick.length === SYNTHESIS_INPUT_COUNT
     const go = makeButton(c.mergeBtn(this.mergePick.length, SYNTHESIS_INPUT_COUNT), () => {
       if (this.mergePick.length !== SYNTHESIS_INPUT_COUNT) {
@@ -796,9 +798,12 @@ export class App {
     clear.setAttribute('aria-disabled', String(this.mergePick.length === 0))
 
     row.append(go, autoBtn, clear)
-    headRow.append(row)
 
-    const out: Node[] = [headRow]
+    const actionBar = document.createElement('div')
+    actionBar.className = 'action-bar'
+    actionBar.append(row)
+
+    const out: Node[] = [headRow, actionBar]
 
     const filterBox = document.createElement('div')
     filterBox.className = 'filter-box'
@@ -1547,8 +1552,15 @@ export class App {
     mHead.append(
       th(c.pairingCol),
       ...([1, 2, 3, 4, 5] as Tier[]).map((t) => {
-        const cell = th(`${stars(t)} ${tierName(t, this.locale)}`)
+        const cell = document.createElement('th')
         cell.className = `tier-${t}`
+        const sSpan = document.createElement('span')
+        sSpan.className = 'odds-th-stars'
+        sSpan.textContent = stars(t)
+        const nSpan = document.createElement('span')
+        nSpan.className = 'odds-th-name'
+        nSpan.textContent = tierName(t, this.locale)
+        cell.append(sSpan, nSpan)
         return cell
       }),
     )
@@ -2147,8 +2159,15 @@ export class App {
       th(this.t.pairingCol),
       ...odds.map((_, i) => {
         const t = (i + 1) as Tier
-        const cell = th(`${stars(t)} ${tierName(t, this.locale)}`)
+        const cell = document.createElement('th')
         cell.className = `tier-${t}`
+        const sSpan = document.createElement('span')
+        sSpan.className = 'odds-th-stars'
+        sSpan.textContent = stars(t)
+        const nSpan = document.createElement('span')
+        nSpan.className = 'odds-th-name'
+        nSpan.textContent = tierName(t, this.locale)
+        cell.append(sSpan, nSpan)
         return cell
       }),
     )
