@@ -51,6 +51,13 @@ header.hud::-webkit-scrollbar { display: none; }
 .hud .stat .ico { color: var(--accent); }
 .hud .stat b { @apply text-[13px] tabular-nums max-[720px]:text-xs; }
 .hud .label { @apply text-[var(--muted)] text-[11px] uppercase tracking-[0.03em] max-[920px]:hidden; }
+.hud-hearts { @apply inline-flex items-center gap-[2px]; }
+.heart-pip { @apply inline-flex w-3 h-3 shrink-0 pointer-events-none; }
+.heart-pip svg { @apply w-full h-full block; }
+.heart-pip.filled { color: #f43f5e; }
+.heart-pip.empty { @apply text-[var(--muted)] opacity-55; }
+:root[data-theme='lcd'] .heart-pip.filled { color: var(--text); }
+:root[data-theme='lcd'] .heart-pip.empty { color: var(--muted); opacity: 0.7; }
 .hud-sub { @apply text-[11px] text-[var(--accent)] tabular-nums max-[720px]:text-[10px]; }
 .hud-actions { @apply flex items-center gap-[5px] ml-auto shrink-0; }
 .hud .mode-btn,
