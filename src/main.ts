@@ -313,6 +313,14 @@ async function main(): Promise<void> {
     if (document.visibilityState === 'hidden') save(state)
   })
   window.addEventListener('beforeunload', () => save(state))
+
+  if ('serviceWorker' in navigator && window.location.protocol === 'https:') {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').catch(() => {
+        /* ignore registration failure in restricted environments */
+      })
+    })
+  }
 }
 
 void main()

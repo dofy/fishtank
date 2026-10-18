@@ -1,4 +1,4 @@
-# Balance & Game Data Guide / 游戏帮助与数值说明 (`v1.3.7`)
+# Balance & Game Data Guide / 游戏帮助与数值说明 (`v1.4.0`)
 
 This document details the gameplay mechanics, progression curves, and breeding probabilities for **Fishtank**, modeled on [PC FISH: Taskbar Aquarium](https://store.steampowered.com/app/4842670/PC_FISH_Taskbar_Aquarium/).
 

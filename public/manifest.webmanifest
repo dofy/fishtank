@@ -1,0 +1,32 @@
+{
+  "name": "Fishtank · 桌面放置水族箱",
+  "short_name": "Fishtank",
+  "description": "A browser idle aquarium game inspired by PC FISH: breed, merge, and collect 28 marine species across Realistic Reef and Monochrome LCD themes.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#05131d",
+  "theme_color": "#0b2d3d",
+  "categories": ["games", "entertainment"],
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

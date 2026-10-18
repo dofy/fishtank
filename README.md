@@ -30,6 +30,8 @@ A browser idle aquarium game inspired by [PC FISH: Taskbar Aquarium](https://sto
   - **Immersive Mode**: One-click full-viewport aquarium view hiding bottom tabs and panels.
 - **Web Audio SFX & 3 Procedural BGM Tracks / 交互音效与三首背景音乐**
   - Zero-dependency Web Audio synthesizer providing tactile click/select/splash/hatch SFX and 3 selectable background tracks (*Coral Lo-Fi*, *Deep Sea Tide*, *Pixel Chiptune*) with independent volume sliders and mute toggles.
+- **Installable PWA & Offline Play / 支持 PWA 安装与离线游玩**
+  - Includes a Web App Manifest, Service Worker offline cache, and pixel-art app icons so you can install Fishtank as a standalone desktop or mobile app and play offline anytime.
 - **Swappable Theme & Sprite Assets / 零代码素材替换**
   - Two built-in renderers: **Realistic Reef (`realistic`)** and **Monochrome LCD (`lcd`)**.
   - Dropping `<speciesId>.png` or `decor-<decorId>.png` into `public/themes/<theme>/sprites/` automatically replaces the procedural artwork for that creature or decoration without code changes.
