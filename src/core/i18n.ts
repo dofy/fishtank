@@ -304,7 +304,7 @@ const ZH: Copy = {
   showcaseUsesLabel: (usesStr) => `可繁殖次数 ${usesStr}`,
   showcaseDecorLabel: (dName) => `造景：${dName}`,
   showcaseCloseBtn: '收下小鱼',
-  mergeHeading: (count, picked) => `选择 ${count} 条同星级的鱼进行合成（已选 ${picked}/${count}）`,
+  mergeHeading: (count, picked) => `选择 ${count} 条鱼进行合成（已选 ${picked}/${count}）`,
   mergeCondTitle: '筛选与自动选择条件',
   mergeFilterZeroUses: '只显示/选择剩余繁殖次数为 0 的鱼',
   mergeFilterExcludeTank: '排除已放置于鱼缸中的鱼',
@@ -313,16 +313,16 @@ const ZH: Copy = {
   mergeEmptyByFilter: '当前筛选条件下没有符合要求的鱼（可取消勾选“只显示剩余繁殖次数为 0”或勾选更多稀有度）。',
   mergeAutoPickedMsg: (picked, total) =>
     picked >= total
-      ? `已按筛选条件自动选中 ${picked}/${total} 条同星级鱼。`
+      ? `已按筛选条件自动选中 ${picked}/${total} 条材料鱼。`
       : picked > 0
-        ? `当前符合条件的同星级鱼最多只有 ${picked}/${total} 条，还差 ${total - picked} 条才能合成。`
+        ? `当前符合条件的材料鱼共 ${picked}/${total} 条，还差 ${total - picked} 条才能合成。`
         : '当前筛选条件下没有可自动选择的鱼。',
   mergeAlreadyFullMsg: (total) => `已选满 ${total} 条材料鱼，可直接点击“开始合成”或先取消已选鱼。`,
   mergeNothingToClearMsg: '当前没有已选中的合成材料鱼。',
   mergeBtn: (picked, total) => `开始合成 (${picked}/${total})`,
   mergedMsg: (name, starsStr, tierStr) => `合成成功：获得 ${name}（${starsStr} ${tierStr}）！`,
   mergeNote:
-    '消耗 10 条同星级鱼（1★–4★）可 100% 合成 1 条高一星级的鱼，并继承材料中的最高品阶。建议优先消耗繁殖次数用尽（0/n）的重复鱼。',
+    '消耗 10 条材料鱼（1★–4★）可合成 1 条高一星级的鱼，并继承材料中的最高品阶（10 条同星级时 100% 升入下一星级；混搭不同星级时按投入比例决定产出星级）。建议优先消耗繁殖次数用尽（0/n）的重复鱼。',
   decorHeading: (placed, unlocked, total) =>
     `鱼缸装饰品（已摆放 ${placed} 件 · 已解锁 ${unlocked}/${total}）`,
   decorPlacedTag: '已摆放',
@@ -474,7 +474,7 @@ const EN: Copy = {
   showcaseUsesLabel: (usesStr) => `Breeding uses ${usesStr}`,
   showcaseDecorLabel: (dName) => `Decor: ${dName}`,
   showcaseCloseBtn: 'Keep Fish',
-  mergeHeading: (count, picked) => `Merge ${count} fish of one tier (${picked}/${count} selected)`,
+  mergeHeading: (count, picked) => `Merge ${count} fish (${picked}/${count} selected)`,
   mergeCondTitle: 'Filter & Auto-Select Conditions',
   mergeFilterZeroUses: 'Only fish with 0 remaining breeding uses',
   mergeFilterExcludeTank: 'Exclude fish currently placed in the tank',
@@ -484,9 +484,9 @@ const EN: Copy = {
     'No fish match the current filters (try unchecking "0 remaining uses" or enabling more rarity tiers).',
   mergeAutoPickedMsg: (picked, total) =>
     picked >= total
-      ? `Auto-selected ${picked}/${total} same-tier fish matching filters.`
+      ? `Auto-selected ${picked}/${total} fish matching filters.`
       : picked > 0
-        ? `Only ${picked}/${total} matching same-tier fish available (${total - picked} more needed to merge).`
+        ? `Only ${picked}/${total} matching fish available (${total - picked} more needed to merge).`
         : 'No matching fish available to auto-select.',
   mergeAlreadyFullMsg: (total) => `Already selected ${total}/${total} fish. Click Merge or deselect one first.`,
   mergeNothingToClearMsg: 'No selected merge materials to clear.',

@@ -129,26 +129,16 @@ header.hud::-webkit-scrollbar {
   flex-shrink: 0;
 }
 
-.hud .icon-only-btn {
+.hud .mode-btn,
+.hud .lang-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 4px 7px;
-  flex-shrink: 0;
-}
-
-.hud .mode-btn {
-  display: inline-flex;
-  align-items: center;
   gap: 4px;
-  padding: 3px 8px;
+  height: 26px;
+  padding: 0 9px;
   font-size: 11px;
-  font-weight: 600;
-  flex-shrink: 0;
-}
-.hud .lang-btn {
-  padding: 3px 8px;
-  font-size: 11px;
+  line-height: 1;
   font-weight: 600;
   flex-shrink: 0;
 }
@@ -1083,13 +1073,13 @@ button.check-row[aria-checked='true'] .check-dot {
 
 .toast-host {
   position: fixed;
-  top: 52px;
+  bottom: 18px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 120;
   display: grid;
   gap: 6px;
-  width: min(460px, calc(100vw - 24px));
+  width: min(440px, calc(100vw - 24px));
   pointer-events: none;
 }
 
@@ -1162,14 +1152,14 @@ button.check-row[aria-checked='true'] .check-dot {
 
 .toast.toast-out {
   opacity: 0;
-  transform: translateY(-6px) scale(0.96);
+  transform: translateY(8px) scale(0.96);
   transition: opacity 0.16s ease, transform 0.16s ease;
 }
 
 @keyframes toast-in {
   from {
     opacity: 0;
-    transform: translateY(-10px) scale(0.95);
+    transform: translateY(10px) scale(0.95);
   }
   to {
     opacity: 1;
@@ -1204,8 +1194,10 @@ button.check-row[aria-checked='true'] .check-dot {
     display: none;
   }
 
-  .hud .mode-btn {
-    padding: 4px 6px;
+  .hud .mode-btn,
+  .hud .lang-btn {
+    height: 26px;
+    padding: 0 7px;
   }
 
   .book-detail {

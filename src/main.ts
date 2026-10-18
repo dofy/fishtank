@@ -166,6 +166,10 @@ async function main(): Promise<void> {
     if (!hit) return
     draggingDecorId = hit
     scene.activeDecorId = hit
+    if (cssWidth > 0) {
+      const existing = state.placedDecor?.find((d) => d.id === hit)
+      if (existing) moveDecor(state, hit, existing.x)
+    }
     app.canvas.style.cursor = 'grabbing'
     try {
       app.canvas.setPointerCapture(event.pointerId)

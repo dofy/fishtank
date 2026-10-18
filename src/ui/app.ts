@@ -312,25 +312,6 @@ export class App {
     timerChip.textContent = heartWait
     heartStat.append(timerChip)
 
-    const audioCfg = syncAudioConfig(s.audio)
-    const anyAudioOn = audioCfg.sfxEnabled || audioCfg.bgmEnabled
-    const audioBtn = makeOnlyIconButton(
-      anyAudioOn ? AUDIO_ICONS.on : AUDIO_ICONS.off,
-      `${c.settingsAudioHeading}: ${anyAudioOn ? c.audioOn : c.audioOff}`,
-      () => {
-        const nextOn = !anyAudioOn
-        const updated: AudioConfig = {
-          ...audioCfg,
-          sfxEnabled: nextOn,
-          bgmEnabled: nextOn,
-        }
-        this.hooks.onAudioChange(updated)
-        if (nextOn) sound.play('click')
-      },
-    )
-    audioBtn.className = 'icon-only-btn'
-    audioBtn.setAttribute('aria-pressed', String(anyAudioOn))
-
     const mode: ColorMode = s.colorMode ?? 'auto'
     const modeLabel =
       mode === 'auto' ? c.colorModeAuto : mode === 'light' ? c.colorModeLight : c.colorModeDark
@@ -362,7 +343,7 @@ export class App {
 
     const actions = document.createElement('div')
     actions.className = 'hud-actions'
-    actions.append(audioBtn, modeBtn, langBtn, immersiveBtn)
+    actions.append(modeBtn, langBtn, immersiveBtn)
 
     this.hud.replaceChildren(
       lvGroup,
@@ -705,15 +686,6 @@ export class App {
     const candidateIds = new Set(mergeCandidates.map((f) => f.uid))
     this.mergePick = this.mergePick.filter((uid) => candidateIds.has(uid)).slice(0, SYNTHESIS_INPUT_COUNT)
 
-    const pickTier = this.mergePick.length
-      ? this.state.fish.find((f) => f.uid === this.mergePick[0])?.tier
-      : undefined
-    if (pickTier !== undefined) {
-      this.mergePick = this.mergePick.filter(
-        (uid) => this.state.fish.find((f) => f.uid === uid)?.tier === pickTier,
-      )
-    }
-
     const out: Node[] = [heading(c.mergeHeading(SYNTHESIS_INPUT_COUNT, this.mergePick.length))]
 
     const filterBox = document.createElement('div')
@@ -779,10 +751,9 @@ export class App {
     const grid = document.createElement('div')
     grid.className = 'grid'
     for (const fish of mergeCandidates) {
-      const wrongTier = pickTier !== undefined && fish.tier !== pickTier
       const idx = this.mergePick.indexOf(fish.uid)
       const picked = idx !== -1
-      const locked = wrongTier || fish.tier >= 5
+      const locked = fish.tier >= 5
       grid.append(
         this.fishCell(fish, now, {
           selected: picked,
@@ -791,8 +762,6 @@ export class App {
           onClick: () => {
             if (fish.tier >= 5) {
               this.say(c.synthError('max-tier', SYNTHESIS_INPUT_COUNT), 'bad')
-            } else if (wrongTier) {
-              this.say(c.synthError('mixed-tier', SYNTHESIS_INPUT_COUNT), 'bad')
             } else if (!picked && this.mergePick.length >= SYNTHESIS_INPUT_COUNT) {
               this.say(c.mergeAlreadyFullMsg(SYNTHESIS_INPUT_COUNT), 'bad')
             } else {
@@ -1414,8 +1383,12 @@ export class App {
     kind: 'breed' | 'merge' = 'breed',
     parents: Fish[] = [],
   ): void {
-    const floorDecors = DECORATIONS.filter((d) => (d.mount ?? 'floor') === 'floor')
-    const decor = floorDecors[Math.floor(Math.random() * floorDecors.length)] ?? DECORATIONS[0]!
+    const unlockedFloorDecors = DECORATIONS.filter(
+      (d) => (d.mount ?? 'floor') === 'floor' && isDecorUnlocked(this.state, d.id),
+    )
+    const decor =
+      unlockedFloorDecors[Math.floor(Math.random() * unlockedFloorDecors.length)] ??
+      DECORATIONS[0]!
     const decorX = 0.28 + Math.random() * 0.44
     const decorFlip: 1 | -1 = Math.random() < 0.5 ? 1 : -1
     const sp = species(outcome.child.speciesId)
@@ -2004,23 +1977,6 @@ function makeIconButton(
   txt.className = 'btn-text'
   txt.textContent = text
   b.append(ico, txt)
-  b.addEventListener('click', onClick)
-  return b
-}
-
-function makeOnlyIconButton(
-  svgHtml: string,
-  title: string,
-  onClick: (event: MouseEvent) => void,
-): HTMLButtonElement {
-  const b = document.createElement('button')
-  b.type = 'button'
-  b.title = title
-  b.setAttribute('aria-label', title)
-  const ico = document.createElement('span')
-  ico.className = 'ico'
-  ico.innerHTML = svgHtml
-  b.append(ico)
   b.addEventListener('click', onClick)
   return b
 }

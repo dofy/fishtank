@@ -238,9 +238,15 @@ export function toggleDecor(
 
 export function moveDecor(state: GameState, id: DecorId, x: number): boolean {
   const list = syncDecor(state)
-  const target = list.find((d) => d.id === id)
-  if (!target) return false
+  const idx = list.findIndex((d) => d.id === id)
+  if (idx === -1) return false
+  const target = list[idx]!
   target.x = Math.min(0.94, Math.max(0.06, x))
+  // Bring the moved/clicked decoration to the top of the z-order
+  if (idx !== list.length - 1) {
+    list.splice(idx, 1)
+    list.push(target)
+  }
   return true
 }
 
@@ -389,7 +395,11 @@ export function breed(
 
 export type SynthError = 'wrong-count' | 'mixed-tier' | 'max-tier' | 'starter-material'
 
-/** Consume exactly ten same-tier fish to mint one fish a tier higher. */
+/**
+ * Consume ten fish (tiers 1..4) to mint one fish a tier higher.
+ * If mixed tiers are supplied, the output tier is rolled weighted by each material's tier count,
+ * capped at `maxInputTier + 1` (up to Mythic 5★), matching PC FISH's mixed-rarity synthesis.
+ */
 export function synthesize(
   state: GameState,
   uids: string[],
@@ -404,12 +414,12 @@ export function synthesize(
   if (picked.some((f) => f.tier === 0)) {
     return { error: 'starter-material' }
   }
+  if (picked.some((f) => f.tier >= 5)) return { error: 'max-tier' }
 
-  const tier = picked[0]!.tier
-  if (picked.some((f) => f.tier !== tier)) return { error: 'mixed-tier' }
-  if (tier >= 5) return { error: 'max-tier' }
-
-  const outTier = (tier + 1) as Tier
+  // Each material votes for (its tier + 1), so 10 same-tier fish = 100% (tier + 1),
+  // and mixed tiers weight proportionally between their respective (tier + 1) outcomes.
+  const baseTier = picked[random.int(picked.length)]!.tier
+  const outTier = Math.min(5, baseTier + 1) as Tier
   const keep = new Set(uids)
   state.fish = state.fish.filter((f) => !keep.has(f.uid))
 
@@ -535,28 +545,31 @@ export function sortBreedCandidates(list: Fish[], sort: FishSort, now = Date.now
 }
 
 /**
- * Pick up to 10 same-tier fish from the filtered candidates using the optimal "1 + 9" strategy:
- * 1 highest-grade fish (so the merged output inherits that grade) + 9 lowest-grade fish (saving other high-grade copies).
+ * Pick up to 10 fish from all filtered candidates using the optimal "1 + 9" strategy:
+ * 1 highest-grade fish (so the merged output inherits that grade) + up to 9 lowest-grade/lowest-tier fish.
+ * If any single checked tier has >= 10 fish, prefers keeping all 10 within that tier for a 100% deterministic upgrade;
+ * otherwise combines across all checked tiers so all filtered fish can be selected up to 10.
  */
 export function autoPickForMerge(state: GameState): string[] {
   const filter = syncMergeFilter(state)
   const candidates = filterMergeCandidates(state)
+  if (candidates.length === 0) return []
   const tiers = [...filter.tiers].sort((a, b) => a - b)
 
-  const pickFromGroup = (group: Fish[]): string[] => {
-    if (group.length === 0) return []
-    // Pick 1 best-grade fish (preferring 0 uses and older birth among ties)
-    const byHighGrade = [...group].sort((a, b) => {
+  const pickOnePlusNine = (pool: Fish[]): string[] => {
+    if (pool.length === 0) return []
+    const byHighGrade = [...pool].sort((a, b) => {
       if (b.grade !== a.grade) return b.grade - a.grade
       if (a.uses !== b.uses) return a.uses - b.uses
+      if (a.tier !== b.tier) return a.tier - b.tier
       return a.bornAt - b.bornAt
     })
     const lead = byHighGrade[0]!
-    // Fill remaining 9 slots with lowest-grade, lowest-uses fish
-    const rest = group
+    const rest = pool
       .filter((f) => f.uid !== lead.uid)
       .sort((a, b) => {
         if (a.uses !== b.uses) return a.uses - b.uses
+        if (a.tier !== b.tier) return a.tier - b.tier
         if (a.grade !== b.grade) return a.grade - b.grade
         return a.bornAt - b.bornAt
       })
@@ -564,17 +577,14 @@ export function autoPickForMerge(state: GameState): string[] {
     return [lead.uid, ...rest.map((f) => f.uid)]
   }
 
-  let bestGroup: Fish[] = []
   for (const t of tiers) {
     const group = candidates.filter((f) => f.tier === t)
     if (group.length >= SYNTHESIS_INPUT_COUNT) {
-      return pickFromGroup(group)
-    }
-    if (group.length > bestGroup.length) {
-      bestGroup = group
+      return pickOnePlusNine(group)
     }
   }
-  return pickFromGroup(bestGroup)
+
+  return pickOnePlusNine(candidates)
 }
 
 export function collectionProgress(state: GameState): { owned: number; total: number } {
