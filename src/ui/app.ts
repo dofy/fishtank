@@ -647,7 +647,7 @@ export class App {
       cell.append(
         this.portrait(sp, sp.tier, owned ? 3 : 1, !owned),
         label(owned ? speciesName(sp.id, this.locale) : '???', 'name'),
-        label(tierName(sp.tier, this.locale), `meta tier-${sp.tier}`),
+        this.tierMetaLine(sp.tier),
       )
       grid.append(cell)
     }
@@ -806,10 +806,7 @@ export class App {
       count(usesText),
       this.portrait(sp, fish.tier, fish.grade, !adult),
       label(speciesName(sp.id, this.locale), 'name'),
-      label(
-        `${stars(fish.tier)} ${tierName(fish.tier, this.locale)} · ${this.t.gradeLabel(fish.grade)}`,
-        `meta tier-${fish.tier}`,
-      ),
+      this.tierMetaLine(fish.tier, fish.grade),
     )
     if (opts.pickOrder !== undefined) {
       cell.append(label(`#${opts.pickOrder}`, 'pick-order'))
@@ -830,6 +827,35 @@ export class App {
     }
     cell.title = this.describe(fish, now)
     return cell
+  }
+
+  private tierMetaLine(tier: Tier, grade?: Grade): HTMLElement {
+    const wrap = document.createElement('div')
+    wrap.className = 'meta'
+
+    const starSpan = document.createElement('span')
+    starSpan.className = `stars${tier === 0 ? ' stars-zero' : ''}`
+    starSpan.textContent = stars(tier)
+
+    const tierSpan = document.createElement('span')
+    tierSpan.className = `tier-tag tier-${tier}`
+    tierSpan.textContent = tierName(tier, this.locale)
+
+    wrap.append(starSpan, ' ', tierSpan)
+
+    if (grade !== undefined) {
+      const sep = document.createElement('span')
+      sep.className = 'meta-sep'
+      sep.textContent = ' · '
+
+      const gradeSpan = document.createElement('span')
+      gradeSpan.className = `grade-tag grade-${grade}`
+      gradeSpan.textContent = this.t.gradeLabel(grade)
+
+      wrap.append(sep, gradeSpan)
+    }
+
+    return wrap
   }
 
   private badge(kind: 'ready' | 'partial' | 'none'): HTMLElement {
@@ -853,10 +879,22 @@ export class App {
     const head = document.createElement('tr')
     head.append(
       th(this.t.pairingCol),
-      ...odds.map((_, i) => th(tierName((i + 1) as Tier, this.locale))),
+      ...odds.map((_, i) => {
+        const t = (i + 1) as Tier
+        const cell = th(`${stars(t)} ${tierName(t, this.locale)}`)
+        cell.className = `tier-${t}`
+        return cell
+      }),
     )
     const row = document.createElement('tr')
-    row.append(td(`${stars(a)} + ${stars(b)}`), ...odds.map((value) => td(`${value}%`)))
+    row.append(
+      td(`${stars(a)} + ${stars(b)}`),
+      ...odds.map((value, i) => {
+        const cell = td(`${value}%`)
+        if (value > 0) cell.className = `tier-${i + 1}`
+        return cell
+      }),
+    )
     table.append(head, row)
     return table
   }

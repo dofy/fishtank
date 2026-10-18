@@ -271,12 +271,56 @@ p.note { margin: 8px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5
 }
 .cell .timer { font-size: 11px; color: var(--accent-2); font-variant-numeric: tabular-nums; }
 
-.stars { font-size: 11px; color: var(--accent-2); letter-spacing: 1px; }
-.tier-1 { color: var(--muted); }
-.tier-2 { color: #49b675; }
-.tier-3 { color: #4a9ae0; }
-.tier-4 { color: #a97fe0; }
-.tier-5 { color: var(--accent-2); }
+.stars {
+  font-size: 11px;
+  color: #fbbf24;
+  letter-spacing: 0.5px;
+}
+.stars.stars-zero {
+  color: var(--muted);
+}
+.meta-sep {
+  color: var(--muted);
+  opacity: 0.65;
+}
+.tier-tag,
+.grade-tag {
+  font-weight: 600;
+}
+
+.tier-0, .cell .meta .tier-0 { color: #94a3b8; }
+.tier-1, .cell .meta .tier-1, .cell .meta .grade-1 { color: #e2e8f0; }
+.tier-2, .cell .meta .tier-2, .cell .meta .grade-2 { color: #4ade80; }
+.tier-3, .cell .meta .tier-3, .cell .meta .grade-3 { color: #38bdf8; }
+.tier-4, .cell .meta .tier-4, .cell .meta .grade-4 { color: #c084fc; }
+.tier-5, .cell .meta .tier-5, .cell .meta .grade-5 { color: #fbbf24; }
+
+button.check-row.tier-1 .check-label { color: #e2e8f0; font-weight: 600; }
+button.check-row.tier-2 .check-label { color: #4ade80; font-weight: 600; }
+button.check-row.tier-3 .check-label { color: #38bdf8; font-weight: 600; }
+button.check-row.tier-4 .check-label { color: #c084fc; font-weight: 600; }
+
+:root[data-theme='lcd'] .stars,
+:root[data-theme='lcd'] .tier-0,
+:root[data-theme='lcd'] .tier-1,
+:root[data-theme='lcd'] .tier-2,
+:root[data-theme='lcd'] .tier-3,
+:root[data-theme='lcd'] .tier-4,
+:root[data-theme='lcd'] .tier-5,
+:root[data-theme='lcd'] .cell .meta .tier-0,
+:root[data-theme='lcd'] .cell .meta .tier-1,
+:root[data-theme='lcd'] .cell .meta .tier-2,
+:root[data-theme='lcd'] .cell .meta .tier-3,
+:root[data-theme='lcd'] .cell .meta .tier-4,
+:root[data-theme='lcd'] .cell .meta .tier-5,
+:root[data-theme='lcd'] .cell .meta .grade-1,
+:root[data-theme='lcd'] .cell .meta .grade-2,
+:root[data-theme='lcd'] .cell .meta .grade-3,
+:root[data-theme='lcd'] .cell .meta .grade-4,
+:root[data-theme='lcd'] .cell .meta .grade-5,
+:root[data-theme='lcd'] button.check-row .check-label {
+  color: var(--text);
+}
 
 table.odds { border-collapse: collapse; font-size: 12px; width: 100%; }
 table.odds th, table.odds td { border: 1px solid var(--border); padding: 4px 6px; text-align: right; }
