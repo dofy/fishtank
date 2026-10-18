@@ -1,15 +1,39 @@
 {
   "name": "fishtank",
-  "version": "0.1.0",
+  "version": "1.2.3",
   "private": false,
   "license": "MIT",
   "type": "module",
-  "description": "A browser idle aquarium: breed, collect and merge pixel fish. Two swappable art themes, realistic and monochrome LCD.",
+  "description": "A browser idle aquarium game inspired by PC FISH: breed, collect and merge fish across swappable Realistic Reef and Monochrome LCD themes.",
+  "homepage": "https://fishtank.phpz.org",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dofy/fishtank.git"
+  },
+  "bugs": {
+    "url": "https://github.com/dofy/fishtank/issues"
+  },
+  "keywords": [
+    "aquarium",
+    "idle-game",
+    "pixel-art",
+    "lcd",
+    "virtual-pet",
+    "breeding-game",
+    "canvas-game",
+    "typescript"
+  ],
+  "author": {
+    "name": "Seven Yu",
+    "email": "dofyyu@gmail.com",
+    "url": "https://yahaha.net"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "deploy": "pnpm build && env -u CLOUDFLARE_API_TOKEN wrangler deploy"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",

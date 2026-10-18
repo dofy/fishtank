@@ -1,8 +1,11 @@
 import { sound, syncAudioConfig } from '../core/audio'
 import {
+  BREEDING_MATRIX,
+  EXP_BY_TIER,
+  GROWTH_MS_BY_TIER,
   HEART_MAX,
+  LEVELS,
   SYNTHESIS_INPUT_COUNT,
-  TRADE_HUB_LEVEL,
   USES_BY_TIER,
   nextLevelExp,
 } from '../core/balance'
@@ -94,6 +97,15 @@ const IMMERSIVE_ICONS = {
   exit: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3.5 5.5 8l4.5 4.5M6 8h7.5"/></svg>',
 }
 
+const HELP_ICON =
+  '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><path d="M6.3 6.2a1.8 1.8 0 1 1 2.5 1.7c-.6.3-.8.6-.8 1.3"/><circle cx="8" cy="11.5" r="0.6" fill="currentColor"/></svg>'
+
+const GITHUB_ICON =
+  '<svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 .2a8 8 0 0 0-2.53 15.59c.4.07.55-.17.55-.38l-.01-1.49c-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.42 7.42 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48l-.01 2.2c0 .21.15.46.55.38A8.01 8.01 0 0 0 8 .2Z"/></svg>'
+
+export const APP_VERSION = '1.2.3'
+export const GITHUB_URL = 'https://github.com/dofy/fishtank'
+
 export interface AppHooks {
   onThemeChange(id: string): void
   onColorModeChange(mode: ColorMode): void
@@ -137,6 +149,7 @@ export class App {
   private bookDetailGrade: Grade = 1
   private bookSelectedUid: string | null = null
   private immersive = false
+  private helpOpen = false
   private portraitCache = new Map<string, HTMLCanvasElement>()
   private showcase: ShowcaseState | null = null
   private showcaseCanvas: HTMLCanvasElement | null = null
@@ -147,6 +160,7 @@ export class App {
   private readonly hud = document.createElement('header')
   private readonly nav = document.createElement('nav')
   private readonly body = document.createElement('section')
+  private readonly footer = document.createElement('footer')
   private readonly modal = document.createElement('div')
   private readonly toastHost = document.createElement('div')
 
@@ -158,6 +172,7 @@ export class App {
     this.hud.className = 'hud'
     this.nav.className = 'tabs'
     this.body.className = 'panel'
+    this.footer.className = 'app-footer'
     this.modal.className = 'modal-host'
     this.toastHost.className = 'toast-host'
     this.canvas.id = 'tank'
@@ -172,10 +187,23 @@ export class App {
   }
 
   mount(root: HTMLElement): void {
-    root.replaceChildren(this.hud, this.canvas, this.nav, this.body, this.modal, this.toastHost)
+    root.replaceChildren(
+      this.hud,
+      this.canvas,
+      this.nav,
+      this.body,
+      this.footer,
+      this.modal,
+      this.toastHost,
+    )
     window.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && this.immersive) {
-        this.setImmersive(false)
+      if (e.key === 'Escape') {
+        if (this.helpOpen) {
+          this.helpOpen = false
+          this.renderShowcase()
+        } else if (this.immersive) {
+          this.setImmersive(false)
+        }
       }
     })
     this.render()
@@ -188,8 +216,10 @@ export class App {
   private setImmersive(next: boolean): void {
     this.immersive = next
     document.documentElement.dataset.immersive = next ? 'on' : 'off'
+    document.documentElement.dataset.hudIdle = 'off'
     this.render()
     window.dispatchEvent(new Event('resize'))
+    window.dispatchEvent(new Event('pointermove'))
   }
 
   setState(state: GameState): void {
@@ -275,6 +305,7 @@ export class App {
     this.renderHud(now)
     this.renderNav()
     this.renderBody(now)
+    this.renderFooter()
     this.renderShowcase()
   }
 
@@ -933,9 +964,10 @@ export class App {
     const c = this.t
     const out: Node[] = []
 
-    const totalVariants = SPECIES.length * 5
+    const totalVariants = SPECIES.reduce((sum, sp) => sum + (sp.tier === 0 ? 1 : 5), 0)
     const unlockedVariants = SPECIES.reduce(
-      (sum, sp) => sum + discoveredGradesFor(this.state, sp.id).length,
+      (sum, sp) =>
+        sum + Math.min(sp.tier === 0 ? 1 : 5, discoveredGradesFor(this.state, sp.id).length),
       0,
     )
     const pctStr = ((unlockedVariants / Math.max(1, totalVariants)) * 100).toFixed(1)
@@ -1127,12 +1159,13 @@ export class App {
       }
     }
 
-    // 5-Grade Variant Color Swatches (Grades 1..5)
+    // Grade Variant Color Swatches (1 for starter fish, 5 for regular species)
     const unlockedGrades = new Set(discoveredGradesFor(this.state, sp.id))
+    const maxGrades: Grade[] = sp.tier === 0 ? [1] : [1, 2, 3, 4, 5]
     const varTitle = heading(c.bookVariantsTitle, 'h3')
     const varRow = document.createElement('div')
     varRow.className = 'variant-strip'
-    for (const g of [1, 2, 3, 4, 5] as Grade[]) {
+    for (const g of maxGrades) {
       const isUnlocked = unlockedGrades.has(g)
       const chip = document.createElement('button')
       chip.type = 'button'
@@ -1179,10 +1212,11 @@ export class App {
     // Footer: Held count & Variant discovery rate
     const footer = document.createElement('div')
     footer.className = 'book-detail-foot'
-    const varPct = Math.round((unlockedGrades.size / 5) * 100)
+    const varCount = Math.min(maxGrades.length, unlockedGrades.size)
+    const varPct = Math.round((varCount / maxGrades.length) * 100)
     footer.append(
       label(c.bookOwnedBadge(specimens.length), 'meta'),
-      label(c.bookVariantRate(unlockedGrades.size, 5, varPct), 'meta'),
+      label(c.bookVariantRate(varCount, maxGrades.length, varPct), 'meta'),
     )
 
     card.append(
@@ -1341,6 +1375,16 @@ export class App {
     enBtn.setAttribute('aria-pressed', String(this.locale === 'en'))
     langRow.append(zhBtn, enBtn)
 
+    const helpRow = document.createElement('div')
+    helpRow.className = 'row'
+    const openHelp = makeIconButton(HELP_ICON, c.openHelpBtn, () => {
+      sound.play('click')
+      this.helpOpen = true
+      this.renderShowcase()
+    })
+    openHelp.className = 'icon-btn btn-secondary'
+    helpRow.append(openHelp)
+
     out.push(
       themeRow,
       note(c.settingsThemeNote),
@@ -1351,12 +1395,8 @@ export class App {
       audioBox,
       heading(c.settingsLangHeading, 'h3'),
       langRow,
-      heading(c.settingsTradeHeading, 'h3'),
-      note(
-        this.state.level >= TRADE_HUB_LEVEL
-          ? c.settingsTradeUnlocked
-          : c.settingsTradeLocked(TRADE_HUB_LEVEL),
-      ),
+      heading(c.settingsHelpHeading, 'h3'),
+      helpRow,
       heading(c.settingsSaveHeading, 'h3'),
     )
 
@@ -1387,6 +1427,168 @@ export class App {
     }
     out.push(danger, note(c.settingsSaveNote))
     return out
+  }
+
+  private renderFooter(): void {
+    const c = this.t
+    const left = document.createElement('div')
+    left.className = 'footer-meta'
+    left.textContent = `Fishtank v${APP_VERSION} · © 2026 Seven Yu`
+
+    const right = document.createElement('div')
+    right.className = 'footer-links'
+
+    const helpLink = document.createElement('button')
+    helpLink.type = 'button'
+    helpLink.className = 'footer-link'
+    helpLink.innerHTML = `<span class="ico">${HELP_ICON}</span><span>${c.helpBtn}</span>`
+    helpLink.onclick = () => {
+      sound.play('click')
+      this.helpOpen = true
+      this.renderShowcase()
+    }
+
+    const ghLink = document.createElement('a')
+    ghLink.href = GITHUB_URL
+    ghLink.target = '_blank'
+    ghLink.rel = 'noopener noreferrer'
+    ghLink.className = 'footer-link'
+    ghLink.title = 'GitHub: dofy/fishtank'
+    ghLink.innerHTML = `<span class="ico">${GITHUB_ICON}</span><span>GitHub</span>`
+
+    right.append(helpLink, ghLink)
+    this.footer.replaceChildren(left, right)
+  }
+
+  private renderHelpModal(): HTMLElement {
+    const c = this.t
+    const backdrop = document.createElement('div')
+    backdrop.className = 'showcase-backdrop'
+    backdrop.addEventListener('click', (e) => {
+      if (e.target === backdrop) {
+        sound.play('click')
+        this.helpOpen = false
+        this.renderShowcase()
+      }
+    })
+
+    const card = document.createElement('div')
+    card.className = 'help-modal'
+
+    const top = document.createElement('div')
+    top.className = 'book-detail-head'
+    const title = document.createElement('h2')
+    title.className = 'm-0 text-base font-bold text-[var(--accent)]'
+    title.textContent = `${c.helpModalTitle} (v${APP_VERSION})`
+
+    const closeBtn = document.createElement('button')
+    closeBtn.type = 'button'
+    closeBtn.className = 'book-close-btn'
+    closeBtn.innerHTML =
+      '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg>'
+    closeBtn.onclick = () => {
+      sound.play('click')
+      this.helpOpen = false
+      this.renderShowcase()
+    }
+    top.append(title, closeBtn)
+
+    const content = document.createElement('div')
+    content.className = 'help-body'
+
+    // Section 1: Core Guide
+    content.append(heading(c.helpIntroTitle, 'h3'))
+    const ul = document.createElement('ul')
+    ul.className = 'help-list'
+    for (const item of c.helpIntroItems) {
+      const li = document.createElement('li')
+      li.textContent = item
+      ul.append(li)
+    }
+    content.append(ul)
+
+    // Section 2: Breeding Probability Matrix
+    content.append(heading(c.helpMatrixTitle, 'h3'))
+    const matrixTable = document.createElement('table')
+    matrixTable.className = 'odds'
+    const mHead = document.createElement('tr')
+    mHead.append(
+      th(c.pairingCol),
+      ...([1, 2, 3, 4, 5] as Tier[]).map((t) => {
+        const cell = th(`${stars(t)} ${tierName(t, this.locale)}`)
+        cell.className = `tier-${t}`
+        return cell
+      }),
+    )
+    matrixTable.append(mHead)
+    for (const [key, odds] of Object.entries(BREEDING_MATRIX)) {
+      const [lo, hi] = key.split('+').map(Number) as [Tier, Tier]
+      const tr = document.createElement('tr')
+      tr.append(
+        td(`${stars(lo)} + ${stars(hi)}`),
+        ...odds.map((v, idx) => {
+          const cell = td(`${v}%`)
+          if (v > 0) cell.className = `tier-${idx + 1}`
+          return cell
+        }),
+      )
+      matrixTable.append(tr)
+    }
+    content.append(matrixTable)
+
+    // Section 3: Aquarium Levels & Capacity
+    content.append(heading(c.helpLevelTitle, 'h3'))
+    const lvTable = document.createElement('table')
+    lvTable.className = 'odds'
+    const lvHead = document.createElement('tr')
+    lvHead.append(
+      th(c.helpLevelColLv),
+      th(c.helpLevelColExp),
+      th(c.helpLevelColCap),
+      th(c.helpLevelColDecor),
+    )
+    lvTable.append(lvHead)
+    for (const row of LEVELS) {
+      const tr = document.createElement('tr')
+      const decorsAtLv = DECORATIONS.filter((d) => d.unlockLevel === row.level)
+        .map((d) => decorName(d.id, this.locale))
+        .join(' / ')
+      tr.append(
+        td(`Lv.${row.level}`),
+        td(`${row.totalExp}`),
+        td(`${row.capacity}`),
+        td(decorsAtLv || '—'),
+      )
+      lvTable.append(tr)
+    }
+    content.append(lvTable)
+
+    // Section 4: Rarity Tiers & Grade Multipliers
+    content.append(heading(c.helpTierTitle, 'h3'))
+    const tierTable = document.createElement('table')
+    tierTable.className = 'odds'
+    const tHead = document.createElement('tr')
+    tHead.append(
+      th(c.helpTierColTier),
+      th(c.helpTierColGrowth),
+      th(c.helpTierColExp),
+      th(c.helpTierColUses),
+    )
+    tierTable.append(tHead)
+    for (const t of [0, 1, 2, 3, 4, 5] as Tier[]) {
+      const tr = document.createElement('tr')
+      const tierCell = td(`${stars(t)} ${tierName(t, this.locale)}`)
+      tierCell.className = `tier-${t}`
+      const mins = Math.round(GROWTH_MS_BY_TIER[t] / 60_000)
+      const usesStr = t === 0 ? '∞' : `1–5 (avg ${USES_BY_TIER[t]})`
+      tr.append(tierCell, td(`${mins} min`), td(`${EXP_BY_TIER[t]} EXP`), td(usesStr))
+      tierTable.append(tr)
+    }
+    content.append(tierTable, note(c.helpGradeNote))
+
+    card.append(top, content)
+    backdrop.append(card)
+    return backdrop
   }
 
   // ------------------------------------------------------------- showcase
@@ -1448,7 +1650,11 @@ export class App {
 
   private renderShowcase(): void {
     if (!this.showcase) {
-      this.modal.replaceChildren()
+      if (this.helpOpen) {
+        this.modal.replaceChildren(this.renderHelpModal())
+      } else {
+        this.modal.replaceChildren()
+      }
       return
     }
     const { ceremony, kind, outcome, decor } = this.showcase

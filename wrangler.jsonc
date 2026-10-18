@@ -1,0 +1,15 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "fishtank",
+  "compatibility_date": "2026-10-18",
+  "workers_dev": true,
+  "routes": [
+    {
+      "pattern": "fishtank.phpz.org",
+      "custom_domain": true
+    }
+  ],
+  "assets": {
+    "directory": "./dist"
+  }
+}

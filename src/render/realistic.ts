@@ -19,10 +19,12 @@ export class RealisticRenderer implements Renderer {
     ctx.fillStyle = water
     ctx.fillRect(0, 0, w, h)
 
+    this.distantReef(ctx, w, h, view.time, night)
     if (night) {
       this.lampLightCones(ctx, w, h, view.time)
     }
     this.caustics(ctx, w, h, view.time, night)
+    this.plankton(ctx, w, h, view.time, night)
     this.sandFloor(ctx, w, h, s, night)
 
     for (const d of view.decors) this.decorNode(ctx, d, h, view.time, s, night)
@@ -46,6 +48,106 @@ export class RealisticRenderer implements Renderer {
   private lampPositions(w: number): number[] {
     if (w < 380) return [w * 0.28, w * 0.72]
     return [w * 0.22, w * 0.5, w * 0.78]
+  }
+
+  /** Multi-layer distant reef silhouettes & ambient schooling minnows for depth. */
+  private distantReef(
+    ctx: CanvasRenderingContext2D,
+    w: number,
+    h: number,
+    t: number,
+    night: boolean,
+  ): void {
+    ctx.save()
+
+    // Far ridge silhouette
+    ctx.fillStyle = night ? 'rgba(2, 12, 20, 0.42)' : 'rgba(6, 44, 64, 0.22)'
+    ctx.beginPath()
+    ctx.moveTo(0, h)
+    for (let x = 0; x <= w + 24; x += 24) {
+      const ridge =
+        Math.sin(x * 0.008 + 0.5) * (h * 0.14) +
+        Math.cos(x * 0.021 - 1.1) * (h * 0.06)
+      ctx.lineTo(x, h * 0.64 - ridge)
+    }
+    ctx.lineTo(w, h)
+    ctx.closePath()
+    ctx.fill()
+
+    // Midground reef shelf & distant swaying sea fans
+    ctx.fillStyle = night ? 'rgba(4, 18, 29, 0.56)' : 'rgba(8, 56, 80, 0.28)'
+    ctx.beginPath()
+    ctx.moveTo(0, h)
+    for (let x = 0; x <= w + 20; x += 20) {
+      const shelf =
+        Math.sin(x * 0.013 + 2.2) * (h * 0.1) +
+        Math.sin(x * 0.032) * (h * 0.04)
+      ctx.lineTo(x, h * 0.76 - shelf)
+    }
+    ctx.lineTo(w, h)
+    ctx.closePath()
+    ctx.fill()
+
+    // Distant kelp / sea-fan silhouettes rooted on the midground shelf
+    ctx.strokeStyle = night ? 'rgba(6, 26, 40, 0.65)' : 'rgba(10, 68, 92, 0.32)'
+    ctx.lineCap = 'round'
+    const anchors = [0.08, 0.23, 0.41, 0.62, 0.79, 0.93]
+    for (const [idx, fx] of anchors.entries()) {
+      const bx = w * fx
+      const baseH = h * (0.22 + (idx % 3) * 0.07)
+      const sway = Math.sin(t * 0.9 + idx * 1.3) * 10
+      ctx.lineWidth = 5 + (idx % 2) * 2
+      ctx.beginPath()
+      ctx.moveTo(bx, h - 14)
+      ctx.quadraticCurveTo(bx - sway * 0.4, h - baseH * 0.55, bx + sway, h - baseH)
+      ctx.stroke()
+    }
+
+    // Two small ambient background schools of tiny minnows
+    ctx.fillStyle = night ? 'rgba(125, 211, 252, 0.16)' : 'rgba(255, 255, 255, 0.2)'
+    for (let sIdx = 0; sIdx < 2; sIdx++) {
+      const dir = sIdx === 0 ? 1 : -1
+      const cycleW = w + 120
+      const rawX = ((t * 14 + sIdx * 240) % cycleW) - 60
+      const leaderX = dir === 1 ? rawX : w - rawX
+      const leaderY = h * (0.32 + sIdx * 0.22) + Math.sin(t * 0.7 + sIdx * 2) * (h * 0.06)
+      for (let m = 0; m < 6; m++) {
+        const ox = (m % 3) * -11 * dir + Math.sin(t * 2 + m) * 2
+        const oy = ((m / 3) | 0) * 7 - 3.5 + Math.cos(t * 1.7 + m) * 2
+        const mx = leaderX + ox
+        const my = leaderY + oy
+        ctx.beginPath()
+        ctx.ellipse(mx, my, 4.2, 1.7, 0, 0, Math.PI * 2)
+        ctx.fill()
+      }
+    }
+
+    ctx.restore()
+  }
+
+  /** Floating luminous plankton / water motes drifting through the water column. */
+  private plankton(
+    ctx: CanvasRenderingContext2D,
+    w: number,
+    h: number,
+    t: number,
+    night: boolean,
+  ): void {
+    ctx.save()
+    const count = 26
+    for (let i = 0; i < count; i++) {
+      const seed = hashString(`plankton-${i}`)
+      const px = ((seed % 1000) / 1000) * w + Math.sin(t * 0.45 + i) * 14
+      const py = (((seed >> 10) % 1000) / 1000) * (h - 32) + 12 + Math.cos(t * 0.35 + i * 0.7) * 8
+      const pulse = 0.35 + 0.65 * (0.5 + 0.5 * Math.sin(t * 1.6 + i * 1.9))
+      const r = 0.9 + (seed % 3) * 0.45
+      ctx.globalAlpha = (night ? 0.42 : 0.24) * pulse
+      ctx.fillStyle = night && i % 3 === 0 ? '#fde047' : '#bae6fd'
+      ctx.beginPath()
+      ctx.arc((px + w) % w, py, r, 0, Math.PI * 2)
+      ctx.fill()
+    }
+    ctx.restore()
   }
 
   /** Volumetric decorative light cones cast into the water when night mode is active. */

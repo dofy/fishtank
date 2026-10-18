@@ -6,6 +6,12 @@ A browser idle aquarium game inspired by [PC FISH: Taskbar Aquarium](https://sto
 
 ---
 
+## Live Demo / 在线体验
+
+**[https://fishtank.phpz.org](https://fishtank.phpz.org)**
+
+---
+
 ## Features / 核心特性
 
 - **Authentic Progression & Balance / 还原核心数值平衡**

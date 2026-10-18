@@ -118,6 +118,7 @@ export interface Copy {
   hudNextHeart: string
   hudFull: string
   hudSpecies: string
+  helpBtn: string
   immersiveBtn: string
   exitImmersiveBtn: string
   langToggle: string
@@ -220,9 +221,8 @@ export interface Copy {
   audioOn: string
   audioOff: string
   settingsLangHeading: string
-  settingsTradeHeading: string
-  settingsTradeUnlocked: string
-  settingsTradeLocked: (lv: number) => string
+  settingsHelpHeading: string
+  openHelpBtn: string
   settingsSaveHeading: string
   resetBtn: string
   confirmResetBtn: string
@@ -245,6 +245,21 @@ export interface Copy {
   ) => string
   breedError: (code: string, extra?: string) => string
   synthError: (code: string, count: number, picked?: number) => string
+  helpModalTitle: string
+  helpIntroTitle: string
+  helpIntroItems: string[]
+  helpMatrixTitle: string
+  helpLevelTitle: string
+  helpLevelColLv: string
+  helpLevelColExp: string
+  helpLevelColCap: string
+  helpLevelColDecor: string
+  helpTierTitle: string
+  helpTierColTier: string
+  helpTierColGrowth: string
+  helpTierColExp: string
+  helpTierColUses: string
+  helpGradeNote: string
 }
 
 const ZH: Copy = {
@@ -257,6 +272,7 @@ const ZH: Copy = {
   hudNextHeart: '恢复',
   hudFull: '已满',
   hudSpecies: '图鉴',
+  helpBtn: '帮助',
   immersiveBtn: '沉浸',
   exitImmersiveBtn: '返回',
   langToggle: 'EN',
@@ -365,9 +381,8 @@ const ZH: Copy = {
   audioOn: '开启',
   audioOff: '静音',
   settingsLangHeading: '界面语言 / Language',
-  settingsTradeHeading: '交易中心',
-  settingsTradeUnlocked: '已解锁（当前单机版不包含联网交易与经济市场）。',
-  settingsTradeLocked: (lv) => `将在鱼缸等级达到 Lv.${lv} 时解锁（与原版一致）。`,
+  settingsHelpHeading: '帮助与游戏数据说明',
+  openHelpBtn: '查看游戏指南与数值表',
   settingsSaveHeading: '存档管理',
   resetBtn: '重置存档进度',
   confirmResetBtn: '确认清空并重开？',
@@ -414,6 +429,27 @@ const ZH: Copy = {
           : `请先点击上方卡片选择满 ${count} 条材料鱼。`
     }
   },
+  helpModalTitle: '游戏帮助与数据说明',
+  helpIntroTitle: '1. 核心玩法指南',
+  helpIntroItems: [
+    '【鱼缸与互动】开局赠送 3 条无限繁殖次数（∞）的初始鱼。点击鱼缸空白水域可一颗颗投放鱼食（附近的鱼会游过去抢食，每条鱼每 9 秒最多吃 1 颗并游开，落底自动消失）；点击正在游动的鱼会让它受惊逃跑。',
+    '【繁殖系统】每次繁殖消耗 1 颗爱心（每 7 分钟自动恢复 1 颗，上限 5 颗）。选择两条成年鱼即可配对产出 1★–5★ 后代，子代星级概率由双亲星级组合决定，双亲品阶越高越容易生出高品阶后代。',
+    '【10 合 1 合成】消耗 10 条 1★–4★ 的鱼可合成 1 条高一星级的新鱼，并 100% 继承 10 条材料中的最高品阶（“1 拖 9”策略最优）。建议优先消耗繁殖次数用尽（0/n）的鱼。',
+    '【装饰与昼夜】鱼缸升级（Lv.1–Lv.10）会自动解锁 18 件海底造景与顶挂彩灯，放入后可直接在鱼缸中按住拖拽位置；黑夜模式下顶灯与彩灯会自动点亮。',
+  ],
+  helpMatrixTitle: '2. 亲代星级繁殖概率表（产出 1★–5★ 概率）',
+  helpLevelTitle: '3. 鱼缸等级、经验与容量解锁表',
+  helpLevelColLv: '等级',
+  helpLevelColExp: '累计经验 (EXP)',
+  helpLevelColCap: '鱼缸展示上限',
+  helpLevelColDecor: '解锁装饰',
+  helpTierTitle: '4. 稀有度星级基础属性表',
+  helpTierColTier: '稀有度星级',
+  helpTierColGrowth: '成长/冷却时间',
+  helpTierColExp: '基础总经验',
+  helpTierColUses: '可繁殖次数',
+  helpGradeNote:
+    '品阶经验倍率：品阶 1 (1.0x) · 品阶 2 (1.25x) · 品阶 3 (1.5x) · 品阶 4 (1.75x) · 品阶 5 (2.0x)。每次繁殖立即结算一半经验，鱼苗成年时结算另一半。',
 }
 
 const EN: Copy = {
@@ -426,6 +462,7 @@ const EN: Copy = {
   hudNextHeart: 'Next heart',
   hudFull: 'full',
   hudSpecies: 'Species',
+  helpBtn: 'Help',
   immersiveBtn: 'Immersive',
   exitImmersiveBtn: 'Back',
   langToggle: '中文',
@@ -536,10 +573,8 @@ const EN: Copy = {
   audioOn: 'ON',
   audioOff: 'MUTE',
   settingsLangHeading: 'Language / 界面语言',
-  settingsTradeHeading: 'Trade hub',
-  settingsTradeUnlocked:
-    'Unlocked. This build keeps trading out of scope: there is no economy, no server and no market.',
-  settingsTradeLocked: (lv) => `Locked until aquarium level ${lv}, mirroring the original's gate.`,
+  settingsHelpHeading: 'Help & Game Data Guide',
+  openHelpBtn: 'Open Help & Balance Tables',
   settingsSaveHeading: 'Save',
   resetBtn: 'Reset progress',
   confirmResetBtn: 'Confirm reset?',
@@ -586,6 +621,27 @@ const EN: Copy = {
           : `Select ${count} material fish from the grid above first.`
     }
   },
+  helpModalTitle: 'Game Guide & Balance Data',
+  helpIntroTitle: '1. Core Gameplay Guide',
+  helpIntroItems: [
+    '[Tank & Interactions] Start with 3 infinite-use (∞) starter fish. Click empty water to drop food pellets one by one (nearby fish chase and eat 1 pellet per 9s cooldown then swim away; uneaten pellets vanish on the sand). Click a swimming fish to startle it.',
+    '[Breeding] Each attempt costs 1 Heart (regenerates 1 every 7 minutes, cap 5). Pair two adults to hatch 1★–5★ offspring based on the parent star matrix. Higher parent grades boost high-grade offspring odds.',
+    '[10-to-1 Merge] Combine 10 fish (1★–4★) into 1 higher-tier fish that inherits the best grade among all 10 inputs ("1 high-grade + 9 low-grade" is optimal). Spend 0-use duplicates here.',
+    '[Decor & Night Mode] Leveling the aquarium (Lv.1–Lv.10) unlocks 18 floor ornaments and top-hanging lights. Drag placed items directly inside the tank; overhead & hanging lights illuminate automatically in Night mode.',
+  ],
+  helpMatrixTitle: '2. Breeding Offspring Probability Matrix (1★–5★ Odds)',
+  helpLevelTitle: '3. Aquarium Levels, EXP & Tank Capacity',
+  helpLevelColLv: 'Level',
+  helpLevelColExp: 'Cumulative EXP',
+  helpLevelColCap: 'Tank Capacity',
+  helpLevelColDecor: 'Unlocked Decorations',
+  helpTierTitle: '4. Rarity Tier Stats (Growth, EXP & Uses)',
+  helpTierColTier: 'Rarity Tier',
+  helpTierColGrowth: 'Growth / Cooldown',
+  helpTierColExp: 'Base EXP',
+  helpTierColUses: 'Breeding Uses',
+  helpGradeNote:
+    'Grade EXP Multiplier: Grade 1 (1.0x) · Grade 2 (1.25x) · Grade 3 (1.5x) · Grade 4 (1.75x) · Grade 5 (2.0x). Half EXP is awarded immediately on breeding, and the other half upon maturation.',
 }
 
 export function copy(locale: Locale): Copy {

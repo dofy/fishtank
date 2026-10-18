@@ -28,6 +28,7 @@ export class LcdRenderer implements Renderer {
     ctx.fillRect(0, 0, w, h)
 
     this.dotGrid(ctx, w, h, s)
+    this.distantRidge(ctx, w, h, s)
     if (night) {
       this.lampCones(ctx, w, h, s)
     }
@@ -108,6 +109,25 @@ export class LcdRenderer implements Renderer {
       if (night) {
         for (let dx = -c * 2; dx <= c * 2; dx += c) {
           ctx.fillRect(lx + dx, c * 2, c - 1, c - 1)
+        }
+      }
+    }
+  }
+
+  /** Subtle dithered distant reef horizon for LCD depth. */
+  private distantRidge(ctx: CanvasRenderingContext2D, w: number, h: number, s: SceneColors): void {
+    const c = this.cell
+    ctx.fillStyle = s.accent
+    for (let x = c; x < w - c; x += c) {
+      const ridgeH =
+        Math.sin(x * 0.012 + 0.7) * (h * 0.12) +
+        Math.cos(x * 0.027 - 0.8) * (h * 0.05)
+      const topY = Math.round((h * 0.72 - ridgeH) / c) * c
+      for (let y = topY; y < h - c * 4; y += c) {
+        const gx = (x / c) | 0
+        const gy = (y / c) | 0
+        if (gx % 2 === 0 && gy % 2 === 0) {
+          ctx.fillRect(x, y, c - 1, c - 1)
         }
       }
     }

@@ -1,55 +1,83 @@
-# Balance Provenance (`PC FISH: Taskbar Aquarium`)
+# Balance & Game Data Guide / 游戏帮助与数值说明 (`v1.2.3`)
 
-This project reproduces the progression and breeding loop of **PC FISH: Taskbar Aquarium** ([Steam app 4842670](https://store.steampowered.com/app/4842670/PC_FISH_Taskbar_Aquarium/)).
+This document details the gameplay mechanics, progression curves, and breeding probabilities for **Fishtank**, modeled on [PC FISH: Taskbar Aquarium](https://store.steampowered.com/app/4842670/PC_FISH_Taskbar_Aquarium/).
 
-Constants in `src/core/balance.ts` are tagged either **SOURCE** (taken directly from published community guides for *PC FISH*) or **TUNED** (chosen to fit the source curves where the original does not expose raw numbers).
+本文档详细说明 **Fishtank** 的核心玩法机制、升级容量曲线与繁殖概率矩阵（数值参考 Steam《[PC FISH: Taskbar Aquarium](https://store.steampowered.com/app/4842670/PC_FISH_Taskbar_Aquarium/?l=tchinese)》）。
 
-## 1. Hearts & Breeding Economy (SOURCE)
+---
 
-| Parameter | Value | Provenance |
+## 1. Core Mechanics / 核心机制参数
+
+| Parameter / 参数 | Value / 数值 | Description / 说明 |
 | :--- | :--- | :--- |
-| `HEART_COST_PER_BREED` | `1` | 1 heart consumed per breeding attempt |
-| `HEART_MAX` | `5` | Maximum heart capacity |
-| `HEART_REGEN_MS` | `420,000` (7 min) | ~1 heart every 7 minutes (~8.57 hearts/hour) |
-| `SYNTHESIS_INPUT_COUNT` | `10` | 10 same-tier fish merge into 1 fish of `tier + 1` |
-| `TRADE_HUB_LEVEL` | `4` | Aquarium level gate for trading |
+| `HEART_COST_PER_BREED` | `1` | 每次繁殖消耗 1 颗爱心 / 1 heart consumed per breeding attempt |
+| `HEART_MAX` | `5` | 爱心存储上限 5 颗 / Maximum heart capacity |
+| `HEART_REGEN_MS` | `7 min` (`420,000 ms`) | 每 7 分钟恢复 1 颗爱心 / ~1 heart every 7 minutes (~8.57/hr) |
+| `PARENT_COOLDOWN_MS` | `3 min` (`180,000 ms`) | 初始鱼繁殖后的冷却时间 / Starter parent cooldown after breeding |
+| `SYNTHESIS_INPUT_COUNT` | `10` | 10 条鱼（1★–4★）合成为 1 条高一星级鱼 / 10 fish merge into 1 higher-tier fish |
+| `EAT_COOLDOWN` | `9 sec` | 鱼缸内同一条鱼吃食后的饱腹间隔 / Satiety cooldown per fish after eating a pellet |
 
-## 2. Aquarium Level & Tank Capacity (SOURCE)
+---
 
-| Level | Cumulative EXP | EXP Delta | Tank Capacity | Unlocks |
+## 2. Aquarium Level, EXP & Unlocks / 鱼缸等级、经验与解锁表
+
+Breeding awards half of the offspring's EXP immediately and the remaining half when the fry matures into an adult.
+
+每次成功繁殖立即获得子代总经验的一半，鱼苗成年时自动结算另一半经验。
+
+| Level / 等级 | Cumulative EXP / 累计经验 | EXP Delta / 升级所需 | Tank Capacity / 鱼缸展示上限 | Unlocked Decorations / 解锁装饰品 |
 | :---: | :---: | :---: | :---: | :--- |
-| 1 | 0 | — | 3 | 3 Starter Fish + 3 Starter Decos (`kelp`, `rocks`, `shell`) |
-| 2 | 10 | +10 | 4 | Staghorn Coral (`coral`) |
-| 3 | 60 | +50 | 5 | Starfish Rock (`starfish`) |
-| 4 | 260 | +200 | 6 | Sunken Driftwood (`driftwood`) + Trade Hub |
-| 5 | 760 | +500 | 7 | Glowing Anemone (`anemone`) |
-| 6 | 1,760 | +1,000 | 8 | Stone Archway (`arch`) |
-| 7 | 4,760 | +3,000 | 9 | Treasure Chest (`chest`) |
-| 8 | 12,760 | +8,000 | 10 | Ancient Anchor (`anchor`) |
-| 9 | 27,760 | +15,000 | 11 | Sunken Castle (`castle`) |
-| 10 | 57,760 | +30,000 | 12 | Abyssal Idol (`statue`) |
+| **Lv.1** | `0` | — | `3` | 翠绿海草 (`kelp`) · 礁石群 (`rocks`) · 珍珠扇贝 (`shell`) · 七彩串灯 (`fairylights`, 顶挂) |
+| **Lv.2** | `10` | `+10` | `4` | 鹿角珊瑚 (`coral`) · 夜光海蕈 (`mushroom`) |
+| **Lv.3** | `60` | `+50` | `5` | 海星礁石 (`starfish`) · 星芒吊灯 (`starlamps`, 顶挂) |
+| **Lv.4** | `260` | `+200` | `6` | 沉木拱枝 (`driftwood`) |
+| **Lv.5** | `760` | `+500` | `7` | 荧光海葵 (`anemone`) · 祭典灯笼 (`lanterns`, 顶挂) |
+| **Lv.6** | `1,760` | `+1,000` | `8` | 海底石拱门 (`arch`) · 紫晶簇洞 (`crystal`) |
+| **Lv.7** | `4,760` | `+3,000` | `9` | 沉船宝箱 (`chest`) · 霓虹水母灯 (`jellylamps`, 顶挂) |
+| **Lv.8** | `12,760` | `+8,000` | `10` | 古老船锚 (`anchor`) |
+| **Lv.9** | `27,760` | `+15,000` | `11` | 海底城堡 (`castle`) |
+| **Lv.10** | `57,760` | `+30,000` | `12` | 深海神像 (`statue`) |
 
-## 3. Offspring Tier Probability Matrix (SOURCE)
+---
 
-Percentages for offspring tiers `1★` through `5★` given parent tiers `low+high`:
+## 3. Offspring Tier Probability Matrix / 亲代星级繁殖概率表
 
-| Parent Pairing | 1★ Common | 2★ Uncommon | 3★ Rare | 4★ Legendary | 5★ Mythic |
+Percentages for offspring tiers `1★` through `5★` given parent tiers `low + high`:
+
+不同亲代星级组合（`低星 + 高星`）产出 `1★` 至 `5★` 子代的概率分布：
+
+| Parent Pairing / 亲代组合 | 1★ 普通 (Common) | 2★ 高级 (Uncommon) | 3★ 稀有 (Rare) | 4★ 传说 (Legendary) | 5★ 神话 (Mythic) |
 | :---: | :---: | :---: | :---: | :---: | :---: |
-| `0+0` | 100% | 0% | 0% | 0% | 0% |
-| `0+1` | 90% | 10% | 0% | 0% | 0% |
-| `1+1` | 76% | 20% | 4% | 0% | 0% |
-| `1+2` | 48.9% | 41.6% | 9.5% | 0% | 0% |
-| `2+2` / `1+3` | 37.7% | 44.3% | 15% | 3% | 0% |
-| `2+3` / `1+4` | 0% | 50.5% | 43% | 6.5% | 0% |
-| `3+3` / `2+4` | 0% | 40.5% | 47.5% | 10% | 2% |
-| `3+4` / `2+5` | 0% | 0% | 52.1% | 44.4% | 3.5% |
-| `4+4` / `3+5` | 0% | 0% | 43.7% | 51.3% | 5% |
-| `4+5` | 0% | 0% | 0% | 70% | 30% |
-| `5+5` | 0% | 0% | 0% | 45% | 55% |
+| `初始 + 初始` (`0+0`) | **100%** | 0% | 0% | 0% | 0% |
+| `初始 + 1★` (`0+1`) | **90%** | **10%** | 0% | 0% | 0% |
+| `1★ + 1★` (`1+1`) | **76%** | **20%** | **4%** | 0% | 0% |
+| `1★ + 2★` (`1+2`) | **48.9%** | **41.6%** | **9.5%** | 0% | 0% |
+| `2★ + 2★` / `1★ + 3★` | **37.7%** | **44.3%** | **15%** | **3%** | 0% |
+| `2★ + 3★` / `1★ + 4★` | 0% | **50.5%** | **43%** | **6.5%** | 0% |
+| `3★ + 3★` / `2★ + 4★` | 0% | **40.5%** | **47.5%** | **10%** | **2%** |
+| `3★ + 4★` / `2★ + 5★` | 0% | 0% | **52.1%** | **44.4%** | **3.5%** |
+| `4★ + 4★` / `3★ + 5★` | 0% | 0% | **43.7%** | **51.3%** | **5%** |
+| `4★ + 5★` (`4+5`) | 0% | 0% | 0% | **70%** | **30%** |
+| `5★ + 5★` (`5+5`) | 0% | 0% | 0% | **45%** | **55%** |
 
-## 4. Tuned Parameters (TUNED)
+---
 
-- **Breeding uses per fish (`USES_BY_TIER`)**: `{ 0: 8, 1: 5, 2: 4, 3: 3, 4: 2, 5: 2 }`. Higher-tier fish have fewer uses, feeding exhausted duplicates into the 10-to-1 synthesis loop.
-- **Maturation time (`GROWTH_MS_BY_TIER`)**: scales from 2m (Starter) and 5m (1★) up to 60m (5★), matching the 7-minute heart cadence.
-- **Maturation EXP (`EXP_BY_TIER`)**: `{ 0: 4, 1: 10, 2: 40, 3: 160, 4: 640, 5: 2560 }` (`4x` per tier), multiplied by `1 + 0.25 * (grade - 1)`. Your first 1★ fry maturing reaches Level 2 (`10 EXP`) immediately.
-- **Season crafting (`SEASON_RECIPES`)**: mirrors the original Season 1 structure (1 keystone material + 3 stacks of 3 materials at required minimum tiers = 10 fish per craft).
+## 4. Rarity Tiers & Visual Grades / 稀有度星级与品阶属性
+
+### Rarity Tier Base Stats / 星级基础参数
+
+| Tier / 稀有度 | Growth Time / 成长时间 | Base EXP / 基础经验 | Breeding Uses / 可繁殖次数 | Species Count / 鱼种数 |
+| :--- | :---: | :---: | :---: | :---: |
+| **— 初始 (Starter)** | `3 min` (cooldown) | `5 EXP` | `∞` (无限) | 2 (仅品阶 1 / Grade 1 only) |
+| **★ 普通 (Common)** | `5 min` | `10 EXP` | `1–5` (均值 5) | 7 (各 5 个品阶变种) |
+| **★★ 高级 (Uncommon)** | `7 min` | `40 EXP` | `1–5` (均值 4) | 6 (各 5 个品阶变种) |
+| **★★★ 稀有 (Rare)** | `10 min` | `160 EXP` | `1–5` (均值 3) | 5 (各 5 个品阶变种) |
+| **★★★★ 传说 (Legendary)** | `15 min` | `640 EXP` | `1–5` (均值 2) | 5 (各 5 个品阶变种) |
+| **★★★★★ 神话 (Mythic)** | `20 min` | `2,560 EXP` | `1–5` (均值 2) | 3 (各 5 个品阶变种) |
+
+### Visual Grade (`Grade 1–5`) / 品阶系统
+
+- **EXP Multiplier / 经验倍率**: `1 + 0.25 × (Grade - 1)`
+  - `Grade 1`: **1.00x** · `Grade 2`: **1.25x** · `Grade 3`: **1.50x** · `Grade 4`: **1.75x** · `Grade 5`: **2.00x**
+- **Breeding Inheritance / 繁殖品阶遗传**: Base weights `{ 1: 56, 2: 26, 3: 12, 4: 5, 5: 1 }`, shifted upward by parent average grade (`GRADE_PARENT_BIAS = 0.35`).
+- **Synthesis Inheritance / 合成品阶继承**: 10-to-1 synthesis guarantees the output fish inherits the **highest grade (`Math.max`)** among all 10 input fish. Using **1 high-grade + 9 Grade-1 fish** is the optimal strategy.

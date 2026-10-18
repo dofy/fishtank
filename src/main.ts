@@ -122,18 +122,23 @@ async function main(): Promise<void> {
 
   let cssWidth = 0
   let cssHeight = TANK_HEIGHT
+  let logicalWidth = 0
+  let logicalHeight = TANK_HEIGHT
+  let zoom = 1
   let dpr = 1
 
   const resizeCanvas = () => {
-    const nextW = Math.max(280, Math.floor(app.canvas.clientWidth || root.clientWidth - 20 || 920))
+    const immersive = app.isImmersive()
+    const vw = window.innerWidth || 960
     const vh = window.innerHeight || 720
+    const nextW = immersive
+      ? vw
+      : Math.max(280, Math.floor(app.canvas.clientWidth || root.clientWidth - 20 || 920))
     let nextH: number
-    if (app.isImmersive()) {
-      const hudRect = root.querySelector('header.hud')?.getBoundingClientRect()
-      const hudH = hudRect ? hudRect.height : 44
-      nextH = Math.max(240, Math.floor(vh - hudH - 26))
+    if (immersive) {
+      nextH = Math.max(280, vh)
     } else {
-      const baseH = window.innerWidth <= 720 ? 185 : TANK_HEIGHT
+      const baseH = vw <= 720 ? 185 : TANK_HEIGHT
       nextH = Math.max(150, Math.min(baseH, Math.floor(vh * 0.3)))
     }
     const nextDpr = Math.min(2, window.devicePixelRatio || 1)
@@ -141,6 +146,10 @@ async function main(): Promise<void> {
     cssWidth = nextW
     cssHeight = nextH
     dpr = nextDpr
+    // Scale up the logical coordinate space in immersive mode (~1.4x..2.2x)
+    zoom = immersive ? Math.min(2.2, Math.max(1.35, cssHeight / 340)) : 1
+    logicalWidth = cssWidth / zoom
+    logicalHeight = cssHeight / zoom
     app.canvas.style.height = `${cssHeight}px`
     app.canvas.width = Math.round(cssWidth * dpr)
     app.canvas.height = Math.round(cssHeight * dpr)
@@ -149,14 +158,30 @@ async function main(): Promise<void> {
   resizeCanvas()
   window.addEventListener('resize', resizeCanvas)
 
+  // Auto-dim floating HUD in immersive mode after 3s of pointer inactivity
+  let hudIdleTimer = 0
+  const wakeHud = () => {
+    document.documentElement.dataset.hudIdle = 'off'
+    if (hudIdleTimer) window.clearTimeout(hudIdleTimer)
+    if (app.isImmersive()) {
+      hudIdleTimer = window.setTimeout(() => {
+        if (app.isImmersive()) {
+          document.documentElement.dataset.hudIdle = 'on'
+        }
+      }, 3000)
+    }
+  }
+  window.addEventListener('pointermove', wakeHud, { passive: true })
+  window.addEventListener('pointerdown', wakeHud, { passive: true })
+
   // Drag-and-drop decorations along the bottom of the tank
   let draggingDecorId: DecorId | null = null
 
   const canvasCoords = (event: PointerEvent): { x: number; y: number } => {
     const rect = app.canvas.getBoundingClientRect()
     return {
-      x: event.clientX - rect.left,
-      y: event.clientY - rect.top,
+      x: (event.clientX - rect.left) / zoom,
+      y: (event.clientY - rect.top) / zoom,
     }
   }
 
@@ -166,18 +191,18 @@ async function main(): Promise<void> {
     // 1. Click a fish to startle it and make it dart away
     const fishUid = scene.hitFish(pt.x, pt.y)
     if (fishUid) {
-      if (scene.scareFish(fishUid, pt.x, pt.y, cssWidth, cssHeight)) {
+      if (scene.scareFish(fishUid, pt.x, pt.y, logicalWidth, logicalHeight)) {
         sound.play('scare')
       }
       return
     }
 
     // 2. Click/drag a decoration
-    const hit = scene.hitDecor(pt.x, pt.y, cssHeight)
+    const hit = scene.hitDecor(pt.x, pt.y, logicalHeight)
     if (hit) {
       draggingDecorId = hit
       scene.activeDecorId = hit
-      if (cssWidth > 0) {
+      if (logicalWidth > 0) {
         const existing = state.placedDecor?.find((d) => d.id === hit)
         if (existing) moveDecor(state, hit, existing.x)
       }
@@ -191,14 +216,14 @@ async function main(): Promise<void> {
     }
 
     // 3. Click empty tank water to drop a single food pellet
-    scene.spawnFood(pt.x, pt.y, cssWidth, cssHeight)
+    scene.spawnFood(pt.x, pt.y, logicalWidth, logicalHeight)
     sound.play('feed')
   })
 
   app.canvas.addEventListener('pointermove', (event) => {
     const pt = canvasCoords(event)
-    if (draggingDecorId && cssWidth > 0) {
-      moveDecor(state, draggingDecorId, pt.x / cssWidth)
+    if (draggingDecorId && logicalWidth > 0) {
+      moveDecor(state, draggingDecorId, pt.x / logicalWidth)
       scene.activeDecorId = draggingDecorId
       app.canvas.style.cursor = 'grabbing'
       return
@@ -209,7 +234,7 @@ async function main(): Promise<void> {
       app.canvas.style.cursor = 'pointer'
       return
     }
-    const hover = scene.hitDecor(pt.x, pt.y, cssHeight)
+    const hover = scene.hitDecor(pt.x, pt.y, logicalHeight)
     scene.activeDecorId = hover
     app.canvas.style.cursor = hover ? 'grab' : 'pointer'
   })
@@ -219,7 +244,7 @@ async function main(): Promise<void> {
     draggingDecorId = null
     save(state)
     const pt = canvasCoords(event)
-    const hover = scene.hitDecor(pt.x, pt.y, cssHeight)
+    const hover = scene.hitDecor(pt.x, pt.y, logicalHeight)
     scene.activeDecorId = hover
     app.canvas.style.cursor = hover ? 'grab' : 'default'
     try {
@@ -249,12 +274,12 @@ async function main(): Promise<void> {
     const wallNow = Date.now()
     night = resolveDarkMode(state.colorMode ?? 'auto')
 
-    scene.sync(state, species, cssWidth, cssHeight, wallNow)
-    scene.update(dt, cssWidth, cssHeight, elapsed, () => sound.play('eat'))
+    scene.sync(state, species, logicalWidth, logicalHeight, wallNow)
+    scene.update(dt, logicalWidth, logicalHeight, elapsed, () => sound.play('eat'))
 
     ctx.save()
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-    renderer.scene(ctx, scene.view(cssWidth, cssHeight, elapsed, night))
+    ctx.setTransform(dpr * zoom, 0, 0, dpr * zoom, 0, 0)
+    renderer.scene(ctx, scene.view(logicalWidth, logicalHeight, elapsed, night))
     ctx.restore()
 
     requestAnimationFrame(frame)
