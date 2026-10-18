@@ -410,8 +410,8 @@ const ZH: Copy = {
         return '初始鱼不能作为合成材料消耗。'
       default:
         return picked !== undefined
-          ? `合成需要选满 ${count} 条同星级的鱼（当前已选 ${picked}/${count}）。`
-          : `请先点击上方卡片选择满 ${count} 条同星级的鱼。`
+          ? `合成需要选满 ${count} 条材料鱼（当前已选 ${picked}/${count}）。`
+          : `请先点击上方卡片选择满 ${count} 条材料鱼。`
     }
   },
 }
@@ -493,7 +493,7 @@ const EN: Copy = {
   mergeBtn: (picked, total) => `Merge (${picked}/${total})`,
   mergedMsg: (name, starsStr, tierStr) => `Merged into ${name}, ${starsStr} ${tierStr}.`,
   mergeNote:
-    'Ten go in, one comes out a tier higher, carrying the best grade among them. Spend exhausted duplicates (0/n) here, never a fish that still has breeding attempts.',
+    'Consume 10 material fish (1★–4★) to synthesize 1 higher-tier fish inheriting the highest grade among them (10 same-tier fish guarantee +1 tier; mixed tiers roll proportionally). Prioritize exhausted duplicates (0/n).',
   decorHeading: (placed, unlocked, total) =>
     `Aquarium Decorations (${placed} placed · ${unlocked}/${total} unlocked)`,
   decorPlacedTag: 'Placed',
@@ -511,7 +511,7 @@ const EN: Copy = {
   bookCompletion: (pct) => `Catalog Completion: ${pct}%`,
   bookVariantsTitle: 'Grade Variants (Click to preview)',
   bookSpecimensTitle: (count) => `Owned Specimens: x${count}`,
-  bookNoSpecimens: 'No specimens currently in inventory.',
+  bookNoSpecimens: 'No specimens of this species currently in your inventory (breed or merge to obtain another).',
   bookPlaceAction: 'Place',
   bookStoreAction: 'Store',
   bookGoBreedAction: 'Breed',
@@ -545,7 +545,7 @@ const EN: Copy = {
   confirmResetBtn: 'Confirm reset?',
   cancelBtn: 'Cancel',
   resetDoneMsg: 'Progress has been reset with 3 starter fish and 3 starter decorations.',
-  settingsSaveNote: 'Progress lives in localStorage on this device only.',
+  settingsSaveNote: 'Progress is saved automatically in your browser localStorage, including offline growth and heart recovery.',
   gradeLabel: (g) => `grade ${g}`,
   badgeReadyTitle: 'Placed in aquarium tank',
   badgePartialTitle: 'In tank / cooling down',
@@ -582,8 +582,8 @@ const EN: Copy = {
         return 'Starter fish cannot be consumed as merge materials.'
       default:
         return picked !== undefined
-          ? `Select ${count} fish of the same tier to merge (${picked}/${count} selected).`
-          : `Select ${count} fish of the same tier from the grid above first.`
+          ? `Select ${count} material fish to merge (${picked}/${count} selected).`
+          : `Select ${count} material fish from the grid above first.`
     }
   },
 }
