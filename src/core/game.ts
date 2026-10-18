@@ -397,22 +397,18 @@ export function release(state: GameState, uid: string): boolean {
 }
 
 export function syncMergeFilter(state: GameState): MergeFilter {
-  const raw = state.mergeFilter
-  if (!raw || typeof raw !== 'object') {
-    const fallback = defaultMergeFilter()
-    state.mergeFilter = fallback
-    return fallback
+  if (!state.mergeFilter || typeof state.mergeFilter !== 'object') {
+    state.mergeFilter = defaultMergeFilter()
+    return state.mergeFilter
   }
-  const validTiers: Tier[] = Array.isArray(raw.tiers)
-    ? raw.tiers.filter((t): t is Tier => t === 1 || t === 2 || t === 3 || t === 4)
+  const f = state.mergeFilter
+  f.zeroUsesOnly = Boolean(f.zeroUsesOnly)
+  f.excludeInTank = Boolean(f.excludeInTank)
+  const validTiers: Tier[] = Array.isArray(f.tiers)
+    ? f.tiers.filter((t): t is Tier => t === 1 || t === 2 || t === 3 || t === 4)
     : [1, 2, 3, 4]
-  const normalized: MergeFilter = {
-    zeroUsesOnly: Boolean(raw.zeroUsesOnly),
-    excludeInTank: Boolean(raw.excludeInTank),
-    tiers: [...new Set(validTiers)],
-  }
-  state.mergeFilter = normalized
-  return normalized
+  f.tiers = [...new Set(validTiers)]
+  return f
 }
 
 export function filterMergeCandidates(state: GameState): Fish[] {
