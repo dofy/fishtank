@@ -5,6 +5,7 @@ export type Tier = 0 | 1 | 2 | 3 | 4 | 5
 export type Grade = 1 | 2 | 3 | 4 | 5
 
 export type SpeciesId = string
+export type DecorId = string
 
 export interface Species {
   id: SpeciesId
@@ -12,10 +13,31 @@ export interface Species {
   name: string
   /** Lowest tier this species can appear at. */
   tier: Tier
-  /** True for the limited season-crafted creatures. */
-  seasonal?: boolean
   /** Procedural body description, consumed by every renderer. */
   body: BodyShape
+}
+
+export interface DecorItem {
+  id: DecorId
+  name: string
+  /** Aquarium level required to unlock this decoration. */
+  unlockLevel: number
+  /** Visual width in CSS pixels in the tank. */
+  width: number
+  /** Visual height in CSS pixels in the tank. */
+  height: number
+  /** Primary hue in degrees, 0..360. */
+  hue: number
+  sat: number
+  light: number
+}
+
+export interface PlacedDecor {
+  id: DecorId
+  /** Normalized horizontal coordinate across the tank bottom (0.05..0.95). */
+  x: number
+  /** Horizontal orientation: 1 (normal) or -1 (flipped). */
+  flip?: 1 | -1
 }
 
 /**
@@ -46,7 +68,7 @@ export interface Fish {
   speciesId: SpeciesId
   tier: Tier
   grade: Grade
-  /** Remaining breeding attempts (null for infinite starter goldfish). */
+  /** Remaining breeding attempts. */
   uses: number
   /** Initial breeding attempts rolled at birth, for x/y display. */
   maxUses?: number
@@ -65,6 +87,8 @@ export interface GameState {
   fish: Fish[]
   /** Fish uids currently placed in the visual aquarium tank (capped by tank capacity). */
   tankUids?: string[]
+  /** Decorations currently placed on the bottom of the aquarium tank. */
+  placedDecor?: PlacedDecor[]
   hearts: number
   /** Epoch ms the next heart finishes regenerating. */
   nextHeartAt: number
@@ -72,8 +96,6 @@ export interface GameState {
   level: number
   /** Species ids ever owned, for the collection book. */
   discovered: SpeciesId[]
-  /** Season recipe ids already crafted at least once. */
-  crafted: string[]
   theme: string
   locale?: Locale
   /** Epoch ms of the last simulation tick. */
@@ -88,12 +110,4 @@ export interface BreedOutcome {
   novel: boolean
   /** EXP gained from this breeding action. */
   expGained: number
-}
-
-export interface SeasonRecipe {
-  id: string
-  /** Species produced. */
-  output: SpeciesId
-  /** Material requirements: species id, count, minimum tier. */
-  materials: { speciesId: SpeciesId; count: number; minTier: Tier }[]
 }

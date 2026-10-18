@@ -16,18 +16,18 @@ Constants in `src/core/balance.ts` are tagged either **SOURCE** (taken directly 
 
 ## 2. Aquarium Level & Tank Capacity (SOURCE)
 
-| Level | Cumulative EXP | EXP Delta | Tank Capacity |
-| :---: | :---: | :---: | :---: |
-| 1 | 0 | — | 3 |
-| 2 | 10 | +10 | 4 |
-| 3 | 60 | +50 | 5 |
-| 4 | 260 | +200 | 6 |
-| 5 | 760 | +500 | 7 |
-| 6 | 1,760 | +1,000 | 8 |
-| 7 | 4,760 | +3,000 | 9 |
-| 8 | 12,760 | +8,000 | 10 |
-| 9 | 27,760 | +15,000 | 11 |
-| 10 | 57,760 | +30,000 | 12 |
+| Level | Cumulative EXP | EXP Delta | Tank Capacity | Unlocks |
+| :---: | :---: | :---: | :---: | :--- |
+| 1 | 0 | — | 3 | 3 Starter Fish + 3 Starter Decos (`kelp`, `rocks`, `shell`) |
+| 2 | 10 | +10 | 4 | Staghorn Coral (`coral`) |
+| 3 | 60 | +50 | 5 | Starfish Rock (`starfish`) |
+| 4 | 260 | +200 | 6 | Sunken Driftwood (`driftwood`) + Trade Hub |
+| 5 | 760 | +500 | 7 | Glowing Anemone (`anemone`) |
+| 6 | 1,760 | +1,000 | 8 | Stone Archway (`arch`) |
+| 7 | 4,760 | +3,000 | 9 | Treasure Chest (`chest`) |
+| 8 | 12,760 | +8,000 | 10 | Ancient Anchor (`anchor`) |
+| 9 | 27,760 | +15,000 | 11 | Sunken Castle (`castle`) |
+| 10 | 57,760 | +30,000 | 12 | Abyssal Idol (`statue`) |
 
 ## 3. Offspring Tier Probability Matrix (SOURCE)
 

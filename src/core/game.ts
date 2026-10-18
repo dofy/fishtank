@@ -18,8 +18,27 @@ import {
 } from './balance'
 import { detectLocale } from './i18n'
 import { Rng, rng as defaultRng } from './rng'
-import { SEASON_RECIPES, SPECIES, STARTER_SPECIES, poolForTier, species } from './species'
-import type { BreedOutcome, Fish, GameState, Grade, Locale, SpeciesId, Tier } from './types'
+import {
+  DECORATIONS,
+  SPECIES,
+  STARTER_DECOR,
+  STARTER_SPECIES,
+  decorItem,
+  hasDecor,
+  poolForTier,
+  species,
+} from './species'
+import type {
+  BreedOutcome,
+  DecorId,
+  Fish,
+  GameState,
+  Grade,
+  Locale,
+  PlacedDecor,
+  SpeciesId,
+  Tier,
+} from './types'
 
 export const SAVE_VERSION = 1
 
@@ -57,12 +76,12 @@ export function newGame(now = Date.now(), locale: Locale = detectLocale()): Game
     version: SAVE_VERSION,
     fish,
     tankUids: fish.map((f) => f.uid),
+    placedDecor: STARTER_DECOR.map((d) => ({ ...d })),
     hearts: HEART_MAX,
     nextHeartAt: now + HEART_REGEN_MS,
     exp: 0,
     level: 1,
     discovered: [...new Set(STARTER_SPECIES)],
-    crafted: [],
     theme: 'realistic',
     locale,
     lastTick: now,
@@ -82,7 +101,7 @@ export function capacity(state: GameState): number {
   return capacityForLevel(state.level)
 }
 
-/** Synchronize tankUids with existing fish and auto-fill open tank slots. */
+/** Synchronize tankUids with existing fish. */
 export function syncTank(state: GameState): string[] {
   const cap = capacity(state)
   const validIds = new Set(state.fish.map((f) => f.uid))
@@ -112,6 +131,80 @@ export function tankFish(state: GameState): Fish[] {
   const ids = new Set(syncTank(state))
   return state.fish.filter((f) => ids.has(f.uid))
 }
+
+// ---------------------------------------------------------------- decorations
+
+export function isDecorUnlocked(state: GameState, id: DecorId): boolean {
+  return hasDecor(id) && state.level >= decorItem(id).unlockLevel
+}
+
+export function syncDecor(state: GameState): PlacedDecor[] {
+  if (!Array.isArray(state.placedDecor)) {
+    state.placedDecor = STARTER_DECOR.map((d) => ({ ...d }))
+  }
+  const seen = new Set<string>()
+  const cleaned: PlacedDecor[] = []
+  for (const item of state.placedDecor) {
+    if (!item || typeof item.id !== 'string' || seen.has(item.id)) continue
+    if (!isDecorUnlocked(state, item.id)) continue
+    seen.add(item.id)
+    cleaned.push({
+      id: item.id,
+      x: Math.min(0.94, Math.max(0.06, Number.isFinite(item.x) ? item.x : 0.5)),
+      flip: item.flip === -1 ? -1 : 1,
+    })
+  }
+  state.placedDecor = cleaned
+  return cleaned
+}
+
+/** Find a non-overlapping default X spot when placing a new decoration. */
+function findOpenDecorX(existing: PlacedDecor[]): number {
+  const candidates = [0.5, 0.3, 0.7, 0.18, 0.82, 0.4, 0.6, 0.24, 0.76, 0.1, 0.9]
+  for (const c of candidates) {
+    if (existing.every((e) => Math.abs(e.x - c) > 0.07)) return c
+  }
+  return 0.2 + ((existing.length * 0.13) % 0.6)
+}
+
+export function toggleDecor(
+  state: GameState,
+  id: DecorId,
+): 'placed' | 'removed' | 'locked' {
+  if (!isDecorUnlocked(state, id)) return 'locked'
+  const list = syncDecor(state)
+  const idx = list.findIndex((d) => d.id === id)
+  if (idx !== -1) {
+    state.placedDecor = list.filter((d) => d.id !== id)
+    return 'removed'
+  }
+  const x = findOpenDecorX(list)
+  state.placedDecor = [...list, { id, x, flip: 1 }]
+  return 'placed'
+}
+
+export function moveDecor(state: GameState, id: DecorId, x: number): boolean {
+  const list = syncDecor(state)
+  const target = list.find((d) => d.id === id)
+  if (!target) return false
+  target.x = Math.min(0.94, Math.max(0.06, x))
+  return true
+}
+
+export function flipDecor(state: GameState, id: DecorId): boolean {
+  const list = syncDecor(state)
+  const target = list.find((d) => d.id === id)
+  if (!target) return false
+  target.flip = target.flip === -1 ? 1 : -1
+  return true
+}
+
+export function decorProgress(state: GameState): { unlocked: number; total: number } {
+  const unlocked = DECORATIONS.filter((d) => state.level >= d.unlockLevel).length
+  return { unlocked, total: DECORATIONS.length }
+}
+
+// ---------------------------------------------------------------- simulation
 
 export interface TickResult {
   maturedCount: number
@@ -156,6 +249,7 @@ export function tick(state: GameState, now = Date.now()): TickResult {
   }
 
   syncTank(state)
+  syncDecor(state)
   state.lastTick = now
   return result
 }
@@ -175,7 +269,6 @@ function rollGrade(parentGradeAvg: number, random: Rng): Grade {
 
 function rollUses(tier: Tier, random: Rng): number {
   if (tier === 0) return USES_BY_TIER[0]
-  // PC FISH rolls 1..5 breeding uses per specimen, weighted around USES_BY_TIER[tier]
   const center = USES_BY_TIER[tier]
   const weights = [1, 2, 3, 4, 5].map((u) => Math.max(1, 6 - Math.abs(u - center) * 2))
   return random.weighted(weights) + 1
@@ -186,7 +279,6 @@ export type BreedError =
   | 'needs-two'
   | 'not-adult'
   | 'no-uses'
-  | 'seasonal-parent'
 
 /** Attempt a pairing. Returns the child, or why it could not happen. */
 export function breed(
@@ -203,23 +295,17 @@ export function breed(
   if (state.hearts < HEART_COST_PER_BREED) return { error: 'no-hearts' }
   if (!isAdult(a, now) || !isAdult(b, now)) return { error: 'not-adult' }
   if ((a.tier > 0 && a.uses <= 0) || (b.tier > 0 && b.uses <= 0)) return { error: 'no-uses' }
-  if (species(a.speciesId).seasonal || species(b.speciesId).seasonal) {
-    return { error: 'seasonal-parent' }
-  }
 
   state.hearts -= HEART_COST_PER_BREED
   if (a.tier > 0) a.uses -= 1
   if (b.tier > 0) b.uses -= 1
 
-  // Starter goldfish return to fry state briefly after breeding (3 min parent cooldown)
   if (a.tier === 0) a.maturesAt = now + PARENT_COOLDOWN_MS
   if (b.tier === 0) b.maturesAt = now + PARENT_COOLDOWN_MS
 
   const odds = tierOdds(a.tier, b.tier)
   const tier = (random.weighted(odds) + 1) as Tier
 
-  // Species is drawn from the parents first, then from the tier pool, so a
-  // pairing can both deepen a line and discover something new.
   const parentOptions = [a.speciesId, b.speciesId].filter((id) => species(id).tier === tier)
   const pool = poolForTier(tier)
   const fromParents = parentOptions.length > 0 && random.next() < 0.45
@@ -229,7 +315,6 @@ export function breed(
   const uses = rollUses(tier, random)
   const child = makeFish(speciesId, tier, grade, now, { uses })
 
-  // Award immediate breeding EXP (half upfront, half on maturation) so active breeding levels the tank right away
   const totalExp = Math.round(EXP_BY_TIER[tier] * gradeExpMultiplier(grade))
   const immediateExp = Math.max(2, Math.floor(totalExp / 2))
   state.exp += immediateExp
@@ -238,7 +323,6 @@ export function breed(
 
   state.fish.push(child)
 
-  // Auto-place child into the aquarium tank if there is an open slot
   const currentTank = syncTank(state)
   if (currentTank.length < capacity(state)) {
     state.tankUids = [...currentTank, child.uid]
@@ -250,7 +334,7 @@ export function breed(
   return { child, tier, novel, expGained: immediateExp }
 }
 
-export type SynthError = 'wrong-count' | 'mixed-tier' | 'max-tier' | 'seasonal-material'
+export type SynthError = 'wrong-count' | 'mixed-tier' | 'max-tier' | 'starter-material'
 
 /** Consume exactly ten same-tier fish to mint one fish a tier higher. */
 export function synthesize(
@@ -264,8 +348,8 @@ export function synthesize(
     .map((uid) => state.fish.find((f) => f.uid === uid))
     .filter((f): f is Fish => Boolean(f))
   if (picked.length !== SYNTHESIS_INPUT_COUNT) return { error: 'wrong-count' }
-  if (picked.some((f) => species(f.speciesId).seasonal || f.tier === 0)) {
-    return { error: 'seasonal-material' }
+  if (picked.some((f) => f.tier === 0)) {
+    return { error: 'starter-material' }
   }
 
   const tier = picked[0]!.tier
@@ -288,58 +372,6 @@ export function synthesize(
   }
 
   if (!state.discovered.includes(speciesId)) state.discovered.push(speciesId)
-
-  return { child }
-}
-
-export interface MaterialStatus {
-  speciesId: SpeciesId
-  have: number
-  need: number
-  minTier: Tier
-  /** uids eligible to be consumed, newest last. */
-  eligible: string[]
-}
-
-export function recipeStatus(state: GameState, recipeId: string, now = Date.now()) {
-  const recipe = SEASON_RECIPES.find((r) => r.id === recipeId)
-  if (!recipe) throw new Error(`unknown recipe: ${recipeId}`)
-  const materials: MaterialStatus[] = recipe.materials.map((m) => {
-    const eligible = state.fish
-      .filter((f) => f.speciesId === m.speciesId && f.tier >= m.minTier && isAdult(f, now))
-      .map((f) => f.uid)
-    return { speciesId: m.speciesId, have: eligible.length, need: m.count, minTier: m.minTier, eligible }
-  })
-  const ready = materials.every((m) => m.have >= m.need)
-  return { recipe, materials, ready }
-}
-
-export type CraftError = 'missing-materials' | 'unknown-recipe'
-
-export function craft(
-  state: GameState,
-  recipeId: string,
-  now = Date.now(),
-): { child: Fish } | { error: CraftError } {
-  const found = SEASON_RECIPES.find((r) => r.id === recipeId)
-  if (!found) return { error: 'unknown-recipe' }
-  const status = recipeStatus(state, recipeId, now)
-  if (!status.ready) return { error: 'missing-materials' }
-
-  const consume = new Set<string>()
-  for (const m of status.materials) for (const uid of m.eligible.slice(0, m.need)) consume.add(uid)
-  state.fish = state.fish.filter((f) => !consume.has(f.uid))
-
-  const child = makeFish(found.output, 1, 1, now, { adult: true, uses: 0 })
-  state.fish.push(child)
-
-  const currentTank = syncTank(state)
-  if (currentTank.length < capacity(state)) {
-    state.tankUids = [...currentTank, child.uid]
-  }
-
-  if (!state.discovered.includes(found.output)) state.discovered.push(found.output)
-  if (!state.crafted.includes(recipeId)) state.crafted.push(recipeId)
 
   return { child }
 }

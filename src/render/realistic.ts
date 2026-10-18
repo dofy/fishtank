@@ -1,7 +1,7 @@
-import type { Grade, Tier } from '../core/types'
-import type { Renderer, PortraitRequest } from './renderer'
-import type { Agent, SceneView } from './scene'
-import { eyeAt, fishPath, hashString, patternBands, patternSpots } from './shape'
+import type { DecorItem, Grade, Tier } from '../core/types'
+import type { DecorPortraitRequest, PortraitRequest, Renderer } from './renderer'
+import type { Agent, DecorNode, SceneView } from './scene'
+import { decorLayers, eyeAt, fishPath, hashString, patternBands, patternSpots } from './shape'
 import { spriteFor, type ThemeManifest } from './theme'
 
 /** Soft-shaded reef look: gradients, caustics, drifting bubbles. */
@@ -19,8 +19,9 @@ export class RealisticRenderer implements Renderer {
     ctx.fillRect(0, 0, w, h)
 
     this.caustics(ctx, w, h, view.time)
-    this.decor(ctx, w, h)
+    this.sandFloor(ctx, w, h)
 
+    for (const d of view.decors) this.decorNode(ctx, d, h, view.time)
     for (const a of view.agents) this.agent(ctx, a, view.time)
 
     this.bubbles(ctx, w, h, view.time)
@@ -49,26 +50,90 @@ export class RealisticRenderer implements Renderer {
     ctx.restore()
   }
 
-  private decor(ctx: CanvasRenderingContext2D, w: number, h: number): void {
+  private sandFloor(ctx: CanvasRenderingContext2D, w: number, h: number): void {
     const s = this.manifest.scene
     ctx.fillStyle = s.sand
     ctx.beginPath()
     ctx.moveTo(0, h)
     ctx.lineTo(0, h - 18)
-    for (let x = 0; x <= w; x += 24) ctx.lineTo(x, h - 18 - Math.sin(x * 0.05) * 5)
+    for (let x = 0; x <= w; x += 24) ctx.lineTo(x, h - 18 - Math.sin(x * 0.05) * 4)
     ctx.lineTo(w, h)
     ctx.closePath()
     ctx.fill()
+  }
 
-    ctx.strokeStyle = s.decor
-    ctx.lineWidth = 5
-    ctx.lineCap = 'round'
-    for (const base of [w * 0.12, w * 0.18, w * 0.82, w * 0.88]) {
-      ctx.beginPath()
-      ctx.moveTo(base, h - 18)
-      ctx.quadraticCurveTo(base + 10, h - 70, base - 6, h - 120)
-      ctx.stroke()
+  private decorNode(ctx: CanvasRenderingContext2D, node: DecorNode, tankH: number, t: number): void {
+    const floorY = tankH - 14
+    ctx.save()
+    ctx.translate(node.x, floorY)
+    if (node.active) {
+      ctx.save()
+      ctx.strokeStyle = this.manifest.scene.accent
+      ctx.lineWidth = 2
+      ctx.setLineDash([4, 3])
+      ctx.strokeRect(
+        -node.item.width / 2 - 4,
+        -node.item.height - 4,
+        node.item.width + 8,
+        node.item.height + 6,
+      )
+      ctx.restore()
     }
+    ctx.scale(node.flip, 1)
+    this.drawDecor(ctx, node.item, node.item.width, node.item.height, t)
+    ctx.restore()
+  }
+
+  decorPortrait(ctx: CanvasRenderingContext2D, w: number, h: number, req: DecorPortraitRequest): void {
+    const item = req.item
+    const scale = Math.min((w * 0.72) / item.width, (h * 0.82) / item.height)
+    const dw = item.width * scale
+    const dh = item.height * scale
+    ctx.save()
+    if (req.dim) ctx.globalAlpha = 0.35
+    ctx.translate(w / 2, h - (h - dh) / 2)
+    this.drawDecor(ctx, item, dw, dh, 0)
+    ctx.restore()
+  }
+
+  private drawDecor(
+    ctx: CanvasRenderingContext2D,
+    item: DecorItem,
+    w: number,
+    h: number,
+    t: number,
+  ): void {
+    const sprite = spriteFor(this.manifest, `decor-${item.id}`)
+    if (sprite) {
+      ctx.drawImage(sprite, -w / 2, -h, w, h)
+      return
+    }
+
+    const layers = decorLayers(item.id, w, h, t)
+    const primaryTop = `hsl(${item.hue} ${item.sat * 100}% ${Math.min(82, item.light * 115)}%)`
+    const primaryBot = `hsl(${item.hue} ${item.sat * 100}% ${Math.max(18, item.light * 75)}%)`
+    const secondaryFill = `hsl(${item.hue} ${Math.max(10, item.sat * 75)}% ${Math.max(14, item.light * 65)}%)`
+    const detailFill = `hsl(${(item.hue + 38) % 360} 85% 74%)`
+
+    ctx.save()
+    ctx.shadowColor = 'rgba(0,0,0,0.28)'
+    ctx.shadowBlur = 5
+    ctx.shadowOffsetY = 2
+
+    for (const layer of layers) {
+      if (layer.role === 'secondary') {
+        ctx.fillStyle = secondaryFill
+      } else if (layer.role === 'primary') {
+        const grad = ctx.createLinearGradient(0, -h, 0, 0)
+        grad.addColorStop(0, primaryTop)
+        grad.addColorStop(1, primaryBot)
+        ctx.fillStyle = grad
+      } else {
+        ctx.fillStyle = detailFill
+      }
+      ctx.fill(layer.path)
+    }
+    ctx.restore()
   }
 
   private bubbles(ctx: CanvasRenderingContext2D, w: number, h: number, t: number): void {
@@ -123,8 +188,6 @@ export class RealisticRenderer implements Renderer {
     }
 
     const { path } = fishPath(bodyShape, len)
-    // Grade lifts saturation; tier lifts lightness. Both stay inside the
-    // theme palette so a recolour of the manifest recolours every fish.
     const sat = Math.min(1, bodyShape.sat + grade * 0.04)
     const light = Math.min(0.85, bodyShape.light + tier * 0.015)
     const main = `hsl(${bodyShape.hue} ${sat * 100}% ${light * 100}%)`
@@ -153,7 +216,6 @@ export class RealisticRenderer implements Renderer {
       ctx.fill()
     }
     if (grade >= 4) {
-      // High-grade fish catch a sheen along the dorsal line.
       const sheen = ctx.createLinearGradient(0, -height / 2, 0, 0)
       sheen.addColorStop(0, 'rgba(255,255,255,0.55)')
       sheen.addColorStop(1, 'rgba(255,255,255,0)')

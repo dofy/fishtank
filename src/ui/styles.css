@@ -56,6 +56,8 @@ header.hud {
   display: block;
   border: 1px solid var(--border);
   border-radius: var(--radius);
+  user-select: none;
+  touch-action: none;
 }
 
 nav.tabs { display: flex; flex-wrap: wrap; gap: 6px; }

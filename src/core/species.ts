@@ -1,10 +1,9 @@
-import type { SeasonRecipe, Species, SpeciesId, Tier } from './types'
+import type { DecorId, DecorItem, PlacedDecor, Species, SpeciesId, Tier } from './types'
 
 /**
- * Species table. The shipped list is deliberately small — the renderers
- * draw every entry procedurally from `body`, so adding a species is one
- * object here plus, if a theme wants bespoke art, one PNG in
- * public/themes/<theme>/sprites/<id>.png.
+ * Species table. The renderers draw every entry procedurally from `body`,
+ * so adding a species is one object here plus, if a theme wants bespoke art,
+ * one PNG in public/themes/<theme>/sprites/<id>.png.
  */
 export const SPECIES: Species[] = [
   // Tier 0 — starter stock, handed out at level 1.
@@ -38,14 +37,13 @@ export const SPECIES: Species[] = [
   // Tier 5 — Mythic.
   { id: 'prismkoi', name: 'Prism Koi', tier: 5, body: { length: 22, depth: 0.6, tail: 0.65, dorsal: 0.4, pattern: 'gradient', hue: 320, sat: 0.7, light: 0.6 } },
   { id: 'leviathanfry', name: 'Leviathan Fry', tier: 5, body: { length: 24, depth: 0.7, tail: 0.5, dorsal: 0.8, pattern: 'spots', hue: 190, sat: 0.55, light: 0.35 } },
-
-  // Seasonal — craft only, never bred or synthesised.
-  { id: 'frostblue', name: 'Frostblue Sunfish', tier: 1, seasonal: true, body: { length: 16, depth: 0.95, tail: 0.3, dorsal: 0.5, pattern: 'gradient', hue: 205, sat: 0.55, light: 0.72 } },
-  { id: 'limeback', name: 'Limeback Sea Turtle', tier: 1, seasonal: true, body: { length: 19, depth: 0.8, tail: 0.2, dorsal: 0.15, pattern: 'spots', hue: 88, sat: 0.5, light: 0.45 } },
-  { id: 'matsuri', name: 'Matsuri Octopus', tier: 1, seasonal: true, body: { length: 17, depth: 1, tail: 0.7, dorsal: 0.1, pattern: 'bands', hue: 352, sat: 0.65, light: 0.5 } },
 ]
 
 const BY_ID = new Map<SpeciesId, Species>(SPECIES.map((s) => [s.id, s]))
+
+export function hasSpecies(id: SpeciesId): boolean {
+  return BY_ID.has(id)
+}
 
 export function species(id: SpeciesId): Species {
   const s = BY_ID.get(id)
@@ -53,47 +51,48 @@ export function species(id: SpeciesId): Species {
   return s
 }
 
-/** Non-seasonal species that can appear at a given tier. */
+/** Species that can appear at a given tier. */
 export function poolForTier(tier: Tier): Species[] {
-  const pool = SPECIES.filter((s) => !s.seasonal && s.tier === tier)
-  return pool.length > 0 ? pool : SPECIES.filter((s) => !s.seasonal && s.tier <= tier)
+  const pool = SPECIES.filter((s) => s.tier === tier)
+  return pool.length > 0 ? pool : SPECIES.filter((s) => s.tier <= tier)
 }
 
 export const STARTER_SPECIES: SpeciesId[] = ['goldfin', 'goldfin', 'greyminnow']
 
 /**
- * Season recipes keep the original's shape: one keystone material plus
- * three stacks of three, every material at or above a required tier.
+ * Aquarium decorations unlocked across Levels 1..10 (matching PC FISH:
+ * 3 starter decorations at Level 1 + 1 new decoration per level up to Level 10).
+ * Custom sprites can be placed at public/themes/<theme>/sprites/decor-<id>.png.
  */
-export const SEASON_RECIPES: SeasonRecipe[] = [
-  {
-    id: 'season1-frostblue',
-    output: 'frostblue',
-    materials: [
-      { speciesId: 'copperband', count: 1, minTier: 1 },
-      { speciesId: 'moonhorn', count: 3, minTier: 1 },
-      { speciesId: 'neoncleaner', count: 3, minTier: 1 },
-      { speciesId: 'mossback', count: 3, minTier: 1 },
-    ],
-  },
-  {
-    id: 'season1-limeback',
-    output: 'limeback',
-    materials: [
-      { speciesId: 'blushingfire', count: 1, minTier: 2 },
-      { speciesId: 'banggai', count: 3, minTier: 1 },
-      { speciesId: 'goldbutterfly', count: 3, minTier: 2 },
-      { speciesId: 'neonstreak', count: 3, minTier: 2 },
-    ],
-  },
-  {
-    id: 'season1-matsuri',
-    output: 'matsuri',
-    materials: [
-      { speciesId: 'goldenmoorish', count: 1, minTier: 4 },
-      { speciesId: 'creampuff', count: 3, minTier: 2 },
-      { speciesId: 'skywing', count: 3, minTier: 3 },
-      { speciesId: 'royalgoldtail', count: 3, minTier: 3 },
-    ],
-  },
+export const DECORATIONS: DecorItem[] = [
+  { id: 'kelp', name: 'Seaweed Cluster', unlockLevel: 1, width: 48, height: 92, hue: 142, sat: 0.55, light: 0.42 },
+  { id: 'rocks', name: 'Reef Stones', unlockLevel: 1, width: 64, height: 42, hue: 205, sat: 0.16, light: 0.46 },
+  { id: 'shell', name: 'Pearl Giant Clam', unlockLevel: 1, width: 50, height: 44, hue: 330, sat: 0.55, light: 0.68 },
+  { id: 'coral', name: 'Staghorn Coral', unlockLevel: 2, width: 62, height: 74, hue: 12, sat: 0.78, light: 0.62 },
+  { id: 'starfish', name: 'Starfish Rock', unlockLevel: 3, width: 56, height: 48, hue: 26, sat: 0.85, light: 0.58 },
+  { id: 'driftwood', name: 'Sunken Driftwood', unlockLevel: 4, width: 84, height: 56, hue: 28, sat: 0.48, light: 0.36 },
+  { id: 'anemone', name: 'Glowing Anemone', unlockLevel: 5, width: 58, height: 64, hue: 286, sat: 0.72, light: 0.62 },
+  { id: 'arch', name: 'Stone Archway', unlockLevel: 6, width: 86, height: 78, hue: 198, sat: 0.14, light: 0.5 },
+  { id: 'chest', name: 'Treasure Chest', unlockLevel: 7, width: 60, height: 54, hue: 40, sat: 0.75, light: 0.52 },
+  { id: 'anchor', name: 'Ancient Anchor', unlockLevel: 8, width: 58, height: 82, hue: 210, sat: 0.22, light: 0.4 },
+  { id: 'castle', name: 'Sunken Castle', unlockLevel: 9, width: 88, height: 96, hue: 38, sat: 0.35, light: 0.66 },
+  { id: 'statue', name: 'Abyssal Idol', unlockLevel: 10, width: 64, height: 94, hue: 175, sat: 0.32, light: 0.46 },
+]
+
+const DECOR_BY_ID = new Map<DecorId, DecorItem>(DECORATIONS.map((d) => [d.id, d]))
+
+export function hasDecor(id: DecorId): boolean {
+  return DECOR_BY_ID.has(id)
+}
+
+export function decorItem(id: DecorId): DecorItem {
+  const d = DECOR_BY_ID.get(id)
+  if (!d) throw new Error(`unknown decor: ${id}`)
+  return d
+}
+
+export const STARTER_DECOR: PlacedDecor[] = [
+  { id: 'kelp', x: 0.14, flip: 1 },
+  { id: 'rocks', x: 0.5, flip: 1 },
+  { id: 'shell', x: 0.84, flip: 1 },
 ]

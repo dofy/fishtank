@@ -1,7 +1,7 @@
-import { newGame, tick } from './core/game'
+import { moveDecor, newGame, tick } from './core/game'
 import { load, save, wipe } from './core/save'
 import { species } from './core/species'
-import type { Locale } from './core/types'
+import type { DecorId, Locale } from './core/types'
 import { LcdRenderer } from './render/lcd'
 import { RealisticRenderer } from './render/realistic'
 import type { Renderer } from './render/renderer'
@@ -98,6 +98,68 @@ async function main(): Promise<void> {
 
   resizeCanvas()
   window.addEventListener('resize', resizeCanvas)
+
+  // Drag-and-drop decorations along the bottom of the tank
+  let draggingDecorId: DecorId | null = null
+
+  const canvasCoords = (event: PointerEvent): { x: number; y: number } => {
+    const rect = app.canvas.getBoundingClientRect()
+    return {
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top,
+    }
+  }
+
+  app.canvas.addEventListener('pointerdown', (event) => {
+    const pt = canvasCoords(event)
+    const hit = scene.hitDecor(pt.x, pt.y, cssHeight)
+    if (!hit) return
+    draggingDecorId = hit
+    scene.activeDecorId = hit
+    app.canvas.style.cursor = 'grabbing'
+    try {
+      app.canvas.setPointerCapture(event.pointerId)
+    } catch {
+      /* ignore */
+    }
+  })
+
+  app.canvas.addEventListener('pointermove', (event) => {
+    const pt = canvasCoords(event)
+    if (draggingDecorId && cssWidth > 0) {
+      moveDecor(state, draggingDecorId, pt.x / cssWidth)
+      scene.activeDecorId = draggingDecorId
+      app.canvas.style.cursor = 'grabbing'
+      return
+    }
+    const hover = scene.hitDecor(pt.x, pt.y, cssHeight)
+    scene.activeDecorId = hover
+    app.canvas.style.cursor = hover ? 'grab' : 'default'
+  })
+
+  const endDrag = (event: PointerEvent) => {
+    if (!draggingDecorId) return
+    draggingDecorId = null
+    save(state)
+    const pt = canvasCoords(event)
+    const hover = scene.hitDecor(pt.x, pt.y, cssHeight)
+    scene.activeDecorId = hover
+    app.canvas.style.cursor = hover ? 'grab' : 'default'
+    try {
+      app.canvas.releasePointerCapture(event.pointerId)
+    } catch {
+      /* ignore */
+    }
+  }
+
+  app.canvas.addEventListener('pointerup', endDrag)
+  app.canvas.addEventListener('pointercancel', endDrag)
+  app.canvas.addEventListener('pointerleave', () => {
+    if (!draggingDecorId) {
+      scene.activeDecorId = null
+      app.canvas.style.cursor = 'default'
+    }
+  })
 
   const startMs = performance.now()
   let lastMs = startMs
