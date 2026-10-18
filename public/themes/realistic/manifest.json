@@ -1,0 +1,29 @@
+{
+  "id": "realistic",
+  "name": "Realistic Reef",
+  "renderer": "realistic",
+  "pixelated": false,
+  "spriteDir": "sprites/",
+  "palette": {
+    "--bg": "#071722",
+    "--panel": "#0e2634",
+    "--panel-2": "#143244",
+    "--border": "#1f4a60",
+    "--text": "#e8f4f8",
+    "--muted": "#8fb2c0",
+    "--accent": "#4fd1c5",
+    "--accent-2": "#f6c177",
+    "--danger": "#e5484d",
+    "--radius": "10px",
+    "--font": "ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif",
+    "--cell-bg": "rgba(255,255,255,0.04)"
+  },
+  "scene": {
+    "waterTop": "#1b5e78",
+    "waterBottom": "#062330",
+    "sand": "#c8ab7a",
+    "ink": "#06141c",
+    "accent": "#4fd1c5",
+    "decor": "#2f7d55"
+  }
+}

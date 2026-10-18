@@ -1,0 +1,30 @@
+{
+  "id": "lcd",
+  "name": "Monochrome LCD",
+  "renderer": "lcd",
+  "pixelated": true,
+  "cell": 4,
+  "spriteDir": "sprites/",
+  "palette": {
+    "--bg": "#8a9a63",
+    "--panel": "#9cad74",
+    "--panel-2": "#93a46b",
+    "--border": "#3b4426",
+    "--text": "#20250f",
+    "--muted": "#4b5530",
+    "--accent": "#20250f",
+    "--accent-2": "#20250f",
+    "--danger": "#20250f",
+    "--radius": "0px",
+    "--font": "ui-monospace, 'SFMono-Regular', 'Courier New', monospace",
+    "--cell-bg": "rgba(32,37,15,0.07)"
+  },
+  "scene": {
+    "waterTop": "#9cad74",
+    "waterBottom": "#9cad74",
+    "sand": "#20250f",
+    "ink": "#20250f",
+    "accent": "#3b4426",
+    "decor": "#93a46b"
+  }
+}
