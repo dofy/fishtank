@@ -56,3 +56,64 @@ export const CLOSE_ICON =
 
 export const CLOCK_ICON =
   '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><path d="M8 4.5V8l2.5 1.5"/></svg>'
+
+export const BG_SCENERY_LEFT_SVG = `<svg viewBox="0 0 220 800" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMax slice">
+  <!-- Top caustic light rays -->
+  <path class="bg-ray" d="M0 0L165 0L95 360L0 290Z" fill="currentColor" opacity="0.045"/>
+  <path class="bg-ray" d="M35 0L210 0L150 280L20 210Z" fill="currentColor" opacity="0.03"/>
+  <!-- Ambient water rings & bubbles -->
+  <g class="bg-float-slow">
+    <circle cx="82" cy="180" r="26" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 6" opacity="0.16"/>
+    <circle cx="82" cy="180" r="6" fill="currentColor" opacity="0.12"/>
+    <circle cx="136" cy="295" r="5" stroke="currentColor" stroke-width="1.5" opacity="0.22"/>
+    <circle cx="118" cy="335" r="3" fill="currentColor" opacity="0.18"/>
+    <circle cx="144" cy="368" r="3.5" stroke="currentColor" stroke-width="1.2" opacity="0.2"/>
+    <circle cx="64" cy="450" r="6.5" stroke="currentColor" stroke-width="1.5" opacity="0.2"/>
+    <circle cx="78" cy="492" r="3.5" fill="currentColor" opacity="0.16"/>
+    <circle cx="55" cy="535" r="4.5" stroke="currentColor" stroke-width="1.3" opacity="0.18"/>
+  </g>
+  <!-- Distant schooling fish silhouettes -->
+  <g class="bg-float-mid" fill="currentColor" opacity="0.16">
+    <path d="M112 240c12-9 28-9 38 0l11-7-3 14 3 14-11-7c-10 9-26 9-38 0-5-4-5-10 0-14Z"/>
+    <circle cx="122" cy="246" r="1.8" fill="var(--bg)"/>
+    <path d="M62 276c9-6 20-6 27 0l8-5-2 10 2 10-8-5c-7 6-18 6-27 0-4-3-4-7 0-10Z" opacity="0.8"/>
+  </g>
+  <!-- Bottom reef ridge, swaying kelp & coral silhouettes -->
+  <g class="bg-sway" fill="currentColor">
+    <path d="M0 800V685c38-14 78-6 116 14 34 18 66 48 94 101H0Z" opacity="0.09"/>
+    <path d="M26 800c-12-62 16-118 4-178-10-48-24-88-6-138 6 44 26 82 22 134-4 54-24 108 4 182H26Z" opacity="0.18"/>
+    <path d="M64 800c-14-48 12-94 2-142-8-38-18-68-2-108 8 34 22 64 18 106-4 42-18 86 4 144H64Z" opacity="0.14"/>
+    <path d="M114 800v-42c0-18-16-28-24-44-6-12-2-26 6-24 8 2 12 16 20 26v-36c0-14 10-26 16-24 6 2 4 18 2 32 10-12 20-20 26-16 6 4-4 18-14 30-8 10-14 20-14 36v62h-18Z" opacity="0.15"/>
+  </g>
+</svg>`
+
+export const BG_SCENERY_RIGHT_SVG = `<svg viewBox="0 0 220 800" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMaxYMax slice">
+  <!-- Top caustic light rays -->
+  <path class="bg-ray" d="M220 0L55 0L125 360L220 290Z" fill="currentColor" opacity="0.045"/>
+  <path class="bg-ray" d="M185 0L10 0L70 280L200 210Z" fill="currentColor" opacity="0.03"/>
+  <!-- Drifting moon jellyfish & bubbles -->
+  <g class="bg-float-mid" stroke="currentColor" fill="currentColor">
+    <path d="M116 196c0-18 15-30 33-30s33 12 33 30c-11-4-22-4-33 0-11-4-22-4-33 0Z" fill="currentColor" stroke="none" opacity="0.15"/>
+    <path d="M132 198c-3 18 4 34-2 50M148 199c0 20-5 36 2 54M164 198c4 18-3 34 3 48" fill="none" stroke-width="1.8" stroke-linecap="round" opacity="0.15"/>
+  </g>
+  <g class="bg-float-slow">
+    <circle cx="92" cy="285" r="4.5" stroke="currentColor" stroke-width="1.4" opacity="0.2"/>
+    <circle cx="108" cy="322" r="2.8" fill="currentColor" opacity="0.16"/>
+    <circle cx="152" cy="400" r="22" stroke="currentColor" stroke-width="1.4" stroke-dasharray="3 6" opacity="0.15"/>
+    <circle cx="84" cy="465" r="5.5" stroke="currentColor" stroke-width="1.5" opacity="0.2"/>
+    <circle cx="102" cy="505" r="3.2" fill="currentColor" opacity="0.17"/>
+    <circle cx="136" cy="548" r="4.5" stroke="currentColor" stroke-width="1.3" opacity="0.18"/>
+  </g>
+  <!-- Distant fish silhouette -->
+  <g class="bg-float-slow" fill="currentColor" opacity="0.15">
+    <path d="M126 352c-10-7-23-7-31 0l-9-6 2 11-2 11 9-6c8 7 21 7 31 0 4-3 4-7 0-10Z"/>
+    <circle cx="118" cy="357" r="1.6" fill="var(--bg)"/>
+  </g>
+  <!-- Bottom reef ridge, crystal spires & sea fan silhouettes -->
+  <g class="bg-sway" fill="currentColor">
+    <path d="M220 800V690c-40-14-82-4-122 18-34 18-64 46-90 92h212Z" opacity="0.09"/>
+    <path d="M174 800l-18-118 22-38 16 42-6 114h-14Zm-28 0l-22-82 12-28 18 24 8 86h-16Zm52 0l8-74 14-20 8 26-14 68h-16Z" opacity="0.15"/>
+    <path d="M88 800c10-46-10-88 0-132 6-34 16-62 2-98-8 30-20 58-16 96 4 38 16 78-4 134h18Z" opacity="0.14"/>
+  </g>
+</svg>`
+

@@ -78,6 +78,8 @@ import {
 } from './dom'
 import {
   AUDIO_ICONS,
+  BG_SCENERY_LEFT_SVG,
+  BG_SCENERY_RIGHT_SVG,
   CLOCK_ICON,
   CLOSE_ICON,
   GITHUB_ICON,
@@ -93,7 +95,7 @@ import {
 
 export { formatClock, stars } from './dom'
 
-export const APP_VERSION = '1.4.2'
+export const APP_VERSION = '1.4.3'
 export const GITHUB_URL = 'https://github.com/dofy/fishtank'
 
 export interface AppHooks {
@@ -147,6 +149,7 @@ export class App {
   private showcaseLastMs = 0
 
   readonly canvas = document.createElement('canvas')
+  private readonly bgScenery = document.createElement('div')
   private readonly hud = document.createElement('header')
   private readonly nav = document.createElement('nav')
   private readonly body = document.createElement('section')
@@ -159,6 +162,9 @@ export class App {
     private renderer: Renderer,
     private readonly hooks: AppHooks,
   ) {
+    this.bgScenery.className = 'bg-scenery'
+    this.bgScenery.setAttribute('aria-hidden', 'true')
+    this.bgScenery.innerHTML = `<div class="bg-side bg-left">${BG_SCENERY_LEFT_SVG}</div><div class="bg-side bg-right">${BG_SCENERY_RIGHT_SVG}</div>`
     this.hud.className = 'hud'
     this.nav.className = 'tabs'
     this.body.className = 'panel'
@@ -178,6 +184,7 @@ export class App {
 
   mount(root: HTMLElement): void {
     root.replaceChildren(
+      this.bgScenery,
       this.hud,
       this.canvas,
       this.nav,
