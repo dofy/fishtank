@@ -82,22 +82,23 @@ export class Scene {
         continue
       }
       const seed = hashString(fish.uid)
-      const baseDepth = 0.2 + (((seed >> 10) % 1000) / 1000) * 0.52
+      const baseDepth = 0.28 + Math.random() * 0.56
       const shouldDrop = this.initialized
-      const spawnX = width * (0.15 + ((seed % 1000) / 1000) * 0.7)
+      const spawnX = width * (0.12 + Math.random() * 0.76)
+      const dropVy = 260 + Math.random() * 190
       this.agents.set(fish.uid, {
         fish,
         species: lookup(fish.speciesId),
         x: spawnX,
-        y: shouldDrop ? -28 : height * baseDepth,
-        dir: (seed & 1) === 0 ? 1 : -1,
+        y: shouldDrop ? -32 : height * baseDepth,
+        dir: Math.random() < 0.5 ? 1 : -1,
         speed: 18 + ((seed >> 3) % 20),
-        phase: ((seed >> 5) % 628) / 100,
+        phase: Math.random() * Math.PI * 2,
         scale: adult ? 1 : 0.65,
-        tilt: shouldDrop ? 0.42 : 0,
+        tilt: shouldDrop ? 0.52 : 0,
         baseDepth,
         dropping: shouldDrop,
-        vy: shouldDrop ? 230 : 0,
+        vy: shouldDrop ? dropVy : 0,
         splashed: !shouldDrop,
       })
     }
@@ -161,11 +162,11 @@ export class Scene {
             this.splashes.push({ x: a.x, y: waterlineY, age: 0, duration: 0.75 })
           }
           // Underwater deceleration + spring toward target depth
-          vy *= Math.exp(-5.2 * dt)
-          a.y += vy * dt + (targetY - a.y) * Math.min(1, dt * 3.8)
-          a.x += a.dir * a.speed * 0.5 * dt
-          a.tilt = (a.tilt ?? 0) * Math.exp(-6 * dt)
-          if (Math.abs(vy) < 12 && Math.abs(a.y - targetY) < 14) {
+          vy *= Math.exp(-3.1 * dt)
+          a.y = Math.min(maxY, a.y + vy * dt + (targetY - a.y) * Math.min(1, dt * 2.4))
+          a.x += a.dir * a.speed * 0.65 * dt
+          a.tilt = (a.tilt ?? 0) * Math.exp(-4.5 * dt)
+          if (Math.abs(vy) < 14 && Math.abs(a.y - targetY) < 16) {
             a.dropping = false
             a.vy = 0
             a.tilt = 0
