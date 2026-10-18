@@ -1028,12 +1028,16 @@ export class App {
     const tierEl = this.tierMetaLine(sp.tier)
     titles.append(nameEl, tierEl)
 
-    const closeBtn = makeButton('✕', () => {
+    const closeBtn = document.createElement('button')
+    closeBtn.type = 'button'
+    closeBtn.className = 'book-close-btn'
+    closeBtn.innerHTML =
+      '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg>'
+    closeBtn.addEventListener('click', () => {
       sound.play('click')
       this.bookDetailSpeciesId = null
       this.render()
     })
-    closeBtn.className = 'book-close-btn danger-confirm'
     top.append(titles, closeBtn)
 
     // Specimens of this species currently in inventory

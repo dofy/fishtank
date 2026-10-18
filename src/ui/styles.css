@@ -141,7 +141,11 @@ button.btn-secondary {
 :root[data-theme='lcd'] button.btn-primary[aria-disabled='true'] { background: var(--panel-2); color: var(--muted); }
 
 button.icon-btn { @apply inline-flex items-center gap-1.5; }
-button.danger-confirm { @apply bg-[var(--danger)] text-white border-[var(--danger)] font-bold; }
+button.danger-confirm {
+  @apply text-white font-bold;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--danger) 88%, #fff), color-mix(in srgb, var(--danger) 82%, #000));
+  border-color: color-mix(in srgb, var(--danger) 75%, #fff);
+}
 
 section.panel {
   @apply flex-1 min-h-0 overflow-y-auto overscroll-contain p-3 max-[720px]:p-2.5;
@@ -260,7 +264,18 @@ button.sort-btn { @apply py-[3px] px-2 text-[11px]; }
 }
 .book-detail-head { @apply flex items-start justify-between gap-2; }
 .book-detail-name { @apply text-[15px] font-bold; }
-button.book-close-btn { @apply py-[3px] px-2 text-xs leading-none; }
+button.book-close-btn {
+  @apply w-7 h-7 p-0 inline-flex items-center justify-center rounded-md text-[var(--muted)] hover:text-[var(--text)] hover:border-[var(--accent)] shrink-0;
+  background: var(--cell-bg);
+  border: 1px solid var(--border);
+  box-shadow: none;
+}
+button.book-close-btn svg {
+  @apply w-3.5 h-3.5 block pointer-events-none;
+}
+:root[data-theme='lcd'] button.book-close-btn {
+  @apply rounded-none border-2 border-[var(--border)];
+}
 .book-preview {
   @apply grid place-items-center py-1.5 bg-black/14;
   border: 1px solid var(--border);
