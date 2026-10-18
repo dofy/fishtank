@@ -291,7 +291,7 @@ button.variant-chip .meta { @apply text-[10px] pointer-events-none; }
 button.variant-chip.locked { @apply opacity-42 cursor-not-allowed; }
 
 .specimen-grid { @apply grid grid-cols-3 gap-1.5 max-h-[196px] overflow-y-auto pr-0.5; }
-.specimen-grid > p.note { @apply col-span-full m-0 py-2 text-center; }
+.specimen-grid > p.note { @apply col-span-full m-0 py-1; }
 .specimen-grid .cell { @apply py-[5px] px-1; }
 .specimen-grid .cell-art { @apply w-[72px] h-10 mt-1.5; }
 .specimen-grid .cell-art canvas { @apply !w-[72px] !h-10; }
