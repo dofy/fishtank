@@ -189,9 +189,28 @@ export class RealisticRenderer implements Renderer {
     s: SceneColors,
     night: boolean,
   ): void {
-    const floorY = tankH - 14
+    const isTop = node.item.mount === 'top'
+    const anchorY = isTop ? 4 + node.item.height : tankH - 14
     ctx.save()
-    ctx.translate(node.x, floorY)
+    ctx.translate(node.x, anchorY)
+
+    // Night ambient glow halo for top-mounted decorative lights
+    if (isTop && night) {
+      ctx.save()
+      ctx.globalCompositeOperation = 'screen'
+      const glowColor = `hsla(${node.item.hue}, 95%, 72%, 0.35)`
+      const rad = Math.max(node.item.width * 0.65, 58)
+      const halo = ctx.createRadialGradient(0, -node.item.height * 0.45, 4, 0, -node.item.height * 0.3, rad)
+      halo.addColorStop(0, glowColor)
+      halo.addColorStop(0.55, `hsla(${(node.item.hue + 40) % 360}, 90%, 65%, 0.14)`)
+      halo.addColorStop(1, 'rgba(0,0,0,0)')
+      ctx.fillStyle = halo
+      ctx.beginPath()
+      ctx.arc(0, -node.item.height * 0.35, rad, 0, Math.PI * 2)
+      ctx.fill()
+      ctx.restore()
+    }
+
     if (node.active) {
       ctx.save()
       ctx.strokeStyle = s.accent
@@ -260,11 +279,14 @@ export class RealisticRenderer implements Renderer {
         ctx.fill(layer.path)
       } else {
         ctx.save()
+        const isTop = item.mount === 'top'
         if (night) {
           ctx.shadowColor = detailFill
-          ctx.shadowBlur = 8
+          ctx.shadowBlur = isTop ? 14 : 8
+          ctx.fillStyle = isTop ? `hsl(${item.hue} 100% 84%)` : detailFill
+        } else {
+          ctx.fillStyle = isTop ? `hsla(${item.hue}, 55%, 78%, 0.55)` : detailFill
         }
-        ctx.fillStyle = detailFill
         ctx.fill(layer.path)
         ctx.restore()
       }

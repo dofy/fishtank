@@ -329,15 +329,162 @@ export function decorLayers(id: DecorId, w: number, h: number, time = 0): DecorL
     }
 
     case 'shell': {
+      // Clam opens for ~3.5s every 9s cycle, then snaps shut
+      const cycle = time % 9
+      const open =
+        time === 0
+          ? 0.9
+          : cycle < 1.2
+            ? Math.sin((cycle / 1.2) * (Math.PI / 2))
+            : cycle < 3.6
+              ? 1
+              : cycle < 4.4
+                ? Math.cos(((cycle - 3.6) / 0.8) * (Math.PI / 2))
+                : 0.08
       // Lower valve
       secondary.ellipse(0, -h * 0.22, w * 0.44, h * 0.22, 0, 0, Math.PI * 2)
-      // Upper open fan valve
+      // Upper hinged valve opening and closing
+      const topPeak = -h * (0.38 + open * 0.68)
+      const innerPeak = -h * (0.26 + open * 0.14)
       primary.moveTo(-w * 0.44, -h * 0.24)
-      primary.quadraticCurveTo(0, -h * 1.05, w * 0.44, -h * 0.24)
-      primary.quadraticCurveTo(0, -h * 0.38, -w * 0.44, -h * 0.24)
+      primary.quadraticCurveTo(0, topPeak, w * 0.44, -h * 0.24)
+      primary.quadraticCurveTo(0, innerPeak, -w * 0.44, -h * 0.24)
       primary.closePath()
-      // Pearl inside
-      detail.arc(0, -h * 0.32, Math.min(w, h) * 0.16, 0, Math.PI * 2)
+      // Pearl inside (visible when clam opens)
+      if (open > 0.2) {
+        const pr = Math.min(w, h) * 0.16 * Math.min(1, (open - 0.15) * 1.3)
+        detail.arc(0, -h * 0.3, pr, 0, Math.PI * 2)
+      }
+      break
+    }
+
+    case 'mushroom': {
+      // Base mossy stone
+      secondary.ellipse(0, -h * 0.16, w * 0.38, h * 0.16, 0, 0, Math.PI * 2)
+      const shrooms = [
+        { x: -w * 0.22, y: -h * 0.56, r: w * 0.18 },
+        { x: 0, y: -h * 0.82, r: w * 0.24 },
+        { x: w * 0.24, y: -h * 0.48, r: w * 0.16 },
+      ]
+      for (const s of shrooms) {
+        // Stems
+        addCapsule(secondary, s.x * 0.5, -h * 0.14, s.x, s.y, s.r * 0.26)
+        // Glowing umbrella caps
+        primary.moveTo(s.x - s.r, s.y)
+        primary.quadraticCurveTo(s.x, s.y - s.r * 1.15, s.x + s.r, s.y)
+        primary.closePath()
+        // Bioluminescent spots on cap
+        detail.moveTo(s.x + s.r * 0.22, s.y - s.r * 0.35)
+        detail.arc(s.x, s.y - s.r * 0.35, s.r * 0.22, 0, Math.PI * 2)
+      }
+      break
+    }
+
+    case 'crystal': {
+      // Dark geode rock base
+      secondary.ellipse(0, -h * 0.16, w * 0.4, h * 0.16, 0, 0, Math.PI * 2)
+      const shards = [
+        { bx: -w * 0.24, tx: -w * 0.36, ty: -h * 0.68, bw: w * 0.13 },
+        { bx: -w * 0.08, tx: -w * 0.14, ty: -h * 0.88, bw: w * 0.15 },
+        { bx: w * 0.05, tx: w * 0.08, ty: -h * 0.98, bw: w * 0.17 },
+        { bx: w * 0.22, tx: w * 0.34, ty: -h * 0.72, bw: w * 0.13 },
+      ]
+      for (const [idx, sh] of shards.entries()) {
+        const target = idx % 2 === 0 ? primary : detail
+        target.moveTo(sh.bx - sh.bw, -h * 0.1)
+        target.lineTo(sh.tx - sh.bw * 0.45, sh.ty + h * 0.12)
+        target.lineTo(sh.tx, sh.ty)
+        target.lineTo(sh.tx + sh.bw * 0.45, sh.ty + h * 0.12)
+        target.lineTo(sh.bx + sh.bw, -h * 0.1)
+        target.closePath()
+      }
+      break
+    }
+
+    case 'fairylights': {
+      // Draping cord + 7 glowing fairy bulbs hanging from the top (y: -h .. 0)
+      addCapsule(secondary, -w * 0.48, -h * 0.92, 0, -h * 0.45, 1.6)
+      addCapsule(secondary, 0, -h * 0.45, w * 0.48, -h * 0.92, 1.6)
+      const count = 7
+      for (let i = 0; i < count; i++) {
+        const u = i / (count - 1) - 0.5
+        const bx = u * w * 0.88
+        const sag = (1 - 4 * u * u) * (h * 0.44)
+        const by = -h * 0.88 + sag
+        primary.rect(bx - 2.5, by - 3, 5, 4)
+        const pulse = 1 + Math.sin(time * 3.2 + i * 1.1) * 0.14
+        const r = Math.min(w, h) * 0.15 * pulse
+        detail.moveTo(bx + r, by + r * 0.8)
+        detail.arc(bx, by + r * 0.8, r, 0, Math.PI * 2)
+      }
+      break
+    }
+
+    case 'starlamps': {
+      // 3 hanging star pendants at staggered heights
+      const stars = [
+        { ox: -w * 0.32, drop: h * 0.62, r: h * 0.22, phase: 0 },
+        { ox: 0, drop: h * 0.82, r: h * 0.26, phase: 1.2 },
+        { ox: w * 0.32, drop: h * 0.56, r: h * 0.21, phase: 2.4 },
+      ]
+      for (const st of stars) {
+        const sx = st.ox + Math.sin(time * 1.4 + st.phase) * 3
+        const sy = -h + st.drop
+        addCapsule(secondary, st.ox, -h, sx, sy - st.r * 0.6, 1.2)
+        const inner = st.r * 0.44
+        for (let i = 0; i < 10; i++) {
+          const ang = -Math.PI / 2 + (i * Math.PI) / 5
+          const rad = i % 2 === 0 ? st.r : inner
+          const px = sx + Math.cos(ang) * rad
+          const py = sy + Math.sin(ang) * rad
+          if (i === 0) detail.moveTo(px, py)
+          else detail.lineTo(px, py)
+        }
+        detail.closePath()
+      }
+      break
+    }
+
+    case 'lanterns': {
+      // 3 warm festival paper lanterns hanging from a cord
+      addCapsule(secondary, -w * 0.46, -h * 0.92, w * 0.46, -h * 0.92, 1.5)
+      const items = [
+        { ox: -w * 0.3, cy: -h * 0.52, rx: w * 0.11, ry: h * 0.26 },
+        { ox: 0, cy: -h * 0.44, rx: w * 0.13, ry: h * 0.3 },
+        { ox: w * 0.3, cy: -h * 0.52, rx: w * 0.11, ry: h * 0.26 },
+      ]
+      for (const [i, l] of items.entries()) {
+        const sx = l.ox + Math.sin(time * 1.3 + i) * 2.5
+        addCapsule(secondary, l.ox, -h * 0.92, sx, l.cy - l.ry, 1.3)
+        primary.moveTo(sx + l.rx, l.cy)
+        primary.ellipse(sx, l.cy, l.rx, l.ry, 0, 0, Math.PI * 2)
+        secondary.rect(sx - l.rx * 0.55, l.cy - l.ry - 2, l.rx * 1.1, 3)
+        secondary.rect(sx - l.rx * 0.5, l.cy + l.ry - 1, l.rx, 3)
+        detail.moveTo(sx + l.rx * 0.55, l.cy)
+        detail.ellipse(sx, l.cy, l.rx * 0.55, l.ry * 0.65, 0, 0, Math.PI * 2)
+      }
+      break
+    }
+
+    case 'jellylamps': {
+      // 3 neon jellyfish bell lamps hanging from top
+      const bells = [
+        { ox: -w * 0.3, cy: -h * 0.58, r: w * 0.12, phase: 0 },
+        { ox: 0, cy: -h * 0.46, r: w * 0.14, phase: 1.5 },
+        { ox: w * 0.3, cy: -h * 0.58, r: w * 0.12, phase: 3.0 },
+      ]
+      for (const b of bells) {
+        const sx = b.ox + Math.sin(time * 1.2 + b.phase) * 2.5
+        addCapsule(secondary, b.ox, -h, sx, b.cy - b.r * 0.85, 1.2)
+        primary.moveTo(sx - b.r, b.cy)
+        primary.quadraticCurveTo(sx, b.cy - b.r * 1.5, sx + b.r, b.cy)
+        primary.closePath()
+        detail.moveTo(sx + b.r * 0.55, b.cy - b.r * 0.25)
+        detail.arc(sx, b.cy - b.r * 0.25, b.r * 0.5, 0, Math.PI * 2)
+        addCapsule(detail, sx - b.r * 0.4, b.cy, sx - b.r * 0.5, b.cy + h * 0.28, 1.3)
+        addCapsule(detail, sx, b.cy, sx, b.cy + h * 0.34, 1.3)
+        addCapsule(detail, sx + b.r * 0.4, b.cy, sx + b.r * 0.5, b.cy + h * 0.28, 1.3)
+      }
       break
     }
 

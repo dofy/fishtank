@@ -1414,7 +1414,8 @@ export class App {
     kind: 'breed' | 'merge' = 'breed',
     parents: Fish[] = [],
   ): void {
-    const decor = DECORATIONS[Math.floor(Math.random() * DECORATIONS.length)] ?? DECORATIONS[0]!
+    const floorDecors = DECORATIONS.filter((d) => (d.mount ?? 'floor') === 'floor')
+    const decor = floorDecors[Math.floor(Math.random() * floorDecors.length)] ?? DECORATIONS[0]!
     const decorX = 0.28 + Math.random() * 0.44
     const decorFlip: 1 | -1 = Math.random() < 0.5 ? 1 : -1
     const sp = species(outcome.child.speciesId)

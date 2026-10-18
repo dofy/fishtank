@@ -114,15 +114,22 @@ export class Scene {
     }))
   }
 
-  /** Hit-test decorations on the tank floor (top-most / last placed first). */
+  /** Hit-test decorations on the tank floor or top ceiling (top-most / last placed first). */
   hitDecor(px: number, py: number, height: number): DecorId | null {
     const floorY = height - 14
     for (let i = this.decors.length - 1; i >= 0; i--) {
       const d = this.decors[i]!
       const hw = d.item.width * 0.5 + 8
-      const top = floorY - d.item.height - 8
-      if (px >= d.x - hw && px <= d.x + hw && py >= top && py <= height) {
-        return d.item.id
+      if (d.item.mount === 'top') {
+        const bottom = 4 + d.item.height + 10
+        if (px >= d.x - hw && px <= d.x + hw && py >= 0 && py <= bottom) {
+          return d.item.id
+        }
+      } else {
+        const top = floorY - d.item.height - 8
+        if (px >= d.x - hw && px <= d.x + hw && py >= top && py <= height) {
+          return d.item.id
+        }
       }
     }
     return null

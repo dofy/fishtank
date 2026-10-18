@@ -22,6 +22,8 @@ export interface DecorItem {
   name: string
   /** Aquarium level required to unlock this decoration. */
   unlockLevel: number
+  /** Where the decoration attaches in the tank ('floor' by default, 'top' for string lights/lamps). */
+  mount?: 'floor' | 'top'
   /** Visual width in CSS pixels in the tank. */
   width: number
   /** Visual height in CSS pixels in the tank. */

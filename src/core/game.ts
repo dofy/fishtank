@@ -210,12 +210,13 @@ export function syncDecor(state: GameState): PlacedDecor[] {
 }
 
 /** Find a non-overlapping default X spot when placing a new decoration. */
-function findOpenDecorX(existing: PlacedDecor[]): number {
+function findOpenDecorX(existing: PlacedDecor[], mount: 'floor' | 'top' = 'floor'): number {
+  const samePlane = existing.filter((e) => (decorItem(e.id).mount ?? 'floor') === mount)
   const candidates = [0.5, 0.3, 0.7, 0.18, 0.82, 0.4, 0.6, 0.24, 0.76, 0.1, 0.9]
   for (const c of candidates) {
-    if (existing.every((e) => Math.abs(e.x - c) > 0.07)) return c
+    if (samePlane.every((e) => Math.abs(e.x - c) > 0.08)) return c
   }
-  return 0.2 + ((existing.length * 0.13) % 0.6)
+  return 0.2 + ((samePlane.length * 0.15) % 0.6)
 }
 
 export function toggleDecor(
@@ -229,7 +230,8 @@ export function toggleDecor(
     state.placedDecor = list.filter((d) => d.id !== id)
     return 'removed'
   }
-  const x = findOpenDecorX(list)
+  const mount = decorItem(id).mount ?? 'floor'
+  const x = findOpenDecorX(list, mount)
   state.placedDecor = [...list, { id, x, flip: 1 }]
   return 'placed'
 }

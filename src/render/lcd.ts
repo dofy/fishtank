@@ -34,7 +34,7 @@ export class LcdRenderer implements Renderer {
     this.waterline(ctx, w, view.time, s)
     this.floor(ctx, w, h, s)
 
-    for (const d of view.decors) this.decorNode(ctx, d, h, view.time, s)
+    for (const d of view.decors) this.decorNode(ctx, d, h, view.time, s, night)
     for (const a of view.agents) this.agent(ctx, a, view.time, s)
     if (view.splashes) {
       for (const sp of view.splashes) this.splash(ctx, sp, s)
@@ -142,12 +142,28 @@ export class LcdRenderer implements Renderer {
     tankH: number,
     t: number,
     s: SceneColors,
+    night = false,
   ): void {
     const c = this.cell
-    const floorY = Math.round((tankH - c * 4) / c) * c
+    const isTop = node.item.mount === 'top'
+    const anchorY = isTop
+      ? Math.round((c * 2 + node.item.height) / c) * c
+      : Math.round((tankH - c * 4) / c) * c
     const bx = Math.round(node.x / c) * c
     ctx.save()
-    ctx.translate(bx, floorY)
+    ctx.translate(bx, anchorY)
+
+    if (isTop && night) {
+      const hw = Math.ceil(node.item.width / 2 / c) * c
+      const hh = Math.ceil(node.item.height / c) * c
+      ctx.fillStyle = s.accent
+      for (let y = -hh; y <= c * 3; y += c * 2) {
+        for (let x = -hw; x <= hw; x += c * 2) {
+          ctx.fillRect(x, y, c - 1, c - 1)
+        }
+      }
+    }
+
     if (node.active) {
       const hw = Math.ceil(node.item.width / 2 / c) * c + c
       const hh = Math.ceil(node.item.height / c) * c + c
