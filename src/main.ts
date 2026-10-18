@@ -127,8 +127,15 @@ async function main(): Promise<void> {
   const resizeCanvas = () => {
     const nextW = Math.max(280, Math.floor(app.canvas.clientWidth || root.clientWidth - 20 || 920))
     const vh = window.innerHeight || 720
-    const baseH = window.innerWidth <= 720 ? 185 : TANK_HEIGHT
-    const nextH = Math.max(150, Math.min(baseH, Math.floor(vh * 0.3)))
+    let nextH: number
+    if (app.isImmersive()) {
+      const hudRect = root.querySelector('header.hud')?.getBoundingClientRect()
+      const hudH = hudRect ? hudRect.height : 44
+      nextH = Math.max(240, Math.floor(vh - hudH - 26))
+    } else {
+      const baseH = window.innerWidth <= 720 ? 185 : TANK_HEIGHT
+      nextH = Math.max(150, Math.min(baseH, Math.floor(vh * 0.3)))
+    }
     const nextDpr = Math.min(2, window.devicePixelRatio || 1)
     if (nextW === cssWidth && nextH === cssHeight && nextDpr === dpr) return
     cssWidth = nextW

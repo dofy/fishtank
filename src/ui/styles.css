@@ -44,22 +44,24 @@ header.hud {
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  gap: 10px;
   padding: 6px 10px;
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   min-width: 0;
-  overflow: hidden;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+header.hud::-webkit-scrollbar {
+  display: none;
 }
 
 .hud-lv-group {
   display: flex;
   align-items: center;
   gap: 6px;
-  flex: 1 1 auto;
-  min-width: 0;
+  flex: 0 0 auto;
 }
 
 .hud-exp-text {
@@ -91,6 +93,23 @@ header.hud {
   color: var(--accent);
   font-variant-numeric: tabular-nums;
 }
+
+.hud-actions {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.hud .icon-only-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 7px;
+  flex-shrink: 0;
+}
+
 .hud .mode-btn {
   display: inline-flex;
   align-items: center;
@@ -101,7 +120,6 @@ header.hud {
   flex-shrink: 0;
 }
 .hud .lang-btn {
-  margin-left: 2px;
   padding: 3px 8px;
   font-size: 11px;
   font-weight: 600;
@@ -109,10 +127,9 @@ header.hud {
 }
 
 .bar {
-  flex: 1 1 56px;
-  max-width: 120px;
+  width: 52px;
+  flex: 0 0 52px;
   height: 6px;
-  min-width: 32px;
   background: var(--cell-bg);
   border: 1px solid var(--border);
   overflow: hidden;
@@ -127,6 +144,15 @@ header.hud {
   border-radius: var(--radius);
   user-select: none;
   touch-action: none;
+}
+
+:root[data-immersive='on'] nav.tabs,
+:root[data-immersive='on'] section.panel {
+  display: none;
+}
+
+:root[data-immersive='on'] #tank {
+  flex: 1 1 auto;
 }
 
 nav.tabs {
@@ -565,12 +591,18 @@ button.check-row.tier-4 .check-label { color: #c084fc; font-weight: 600; }
 }
 
 .book-detail {
-  background: var(--cell-bg);
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  max-height: calc(100dvh - 345px);
+  overflow-y: auto;
+  background: var(--panel);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 12px;
   display: grid;
   gap: 8px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.24);
 }
 
 .book-detail-head {
@@ -1114,6 +1146,12 @@ button.check-row[aria-checked='true'] .check-dot {
   }
 }
 
+@media (max-width: 920px) {
+  .hud .label {
+    display: none;
+  }
+}
+
 @media (max-width: 720px) {
   #app {
     padding: 6px 8px 8px;
@@ -1127,12 +1165,21 @@ button.check-row[aria-checked='true'] .check-dot {
 
   .hud .label,
   .hud-exp-text,
-  .hud .mode-btn .btn-text {
+  .hud .mode-btn:not(.immersive-btn) .btn-text {
+    display: none;
+  }
+
+  :root:not([data-immersive='on']) .hud .immersive-btn .btn-text {
     display: none;
   }
 
   .hud .mode-btn {
     padding: 4px 6px;
+  }
+
+  .book-detail {
+    position: static;
+    max-height: none;
   }
 
   .hud .stat {

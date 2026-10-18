@@ -1,6 +1,6 @@
 import type { DecorItem, Grade, Tier } from '../core/types'
 import type { DecorPortraitRequest, PortraitRequest, Renderer } from './renderer'
-import type { Agent, DecorNode, SceneView } from './scene'
+import type { Agent, DecorNode, SceneView, SplashEffect } from './scene'
 import { decorLayers, eyeAt, fishPath, hashString, patternBands, patternSpots } from './shape'
 import { type SceneColors, type ThemeManifest, sceneColorsFor, spriteFor } from './theme'
 
@@ -27,6 +27,9 @@ export class RealisticRenderer implements Renderer {
 
     for (const d of view.decors) this.decorNode(ctx, d, h, view.time, s, night)
     for (const a of view.agents) this.agent(ctx, a, view.time)
+    if (view.splashes) {
+      for (const sp of view.splashes) this.splash(ctx, sp)
+    }
 
     this.bubbles(ctx, w, h, view.time)
     this.lampsFixture(ctx, w, night)
@@ -286,13 +289,40 @@ export class RealisticRenderer implements Renderer {
     ctx.restore()
   }
 
+  private splash(ctx: CanvasRenderingContext2D, sp: SplashEffect): void {
+    const p = Math.min(1, sp.age / sp.duration)
+    ctx.save()
+    ctx.globalAlpha = (1 - p) * 0.85
+
+    // Expanding surface ripple ring
+    ctx.strokeStyle = '#ffffff'
+    ctx.lineWidth = 2
+    ctx.beginPath()
+    ctx.ellipse(sp.x, sp.y + 4, 8 + p * 34, 3 + p * 7, 0, 0, Math.PI * 2)
+    ctx.stroke()
+
+    // Flying water droplets & rising entry bubbles
+    ctx.fillStyle = '#e0f2fe'
+    const angles = [-2.4, -2.0, -1.65, -1.35, -1.0, -0.6]
+    for (const [i, ang] of angles.entries()) {
+      const speed = 38 + (i % 3) * 14
+      const dx = Math.cos(ang) * speed * p
+      const dy = Math.sin(ang) * speed * p + 68 * p * p
+      ctx.beginPath()
+      ctx.arc(sp.x + dx, sp.y + dy, Math.max(1.2, 3.2 * (1 - p * 0.6)), 0, Math.PI * 2)
+      ctx.fill()
+    }
+    ctx.restore()
+  }
+
   private agent(ctx: CanvasRenderingContext2D, a: Agent, t: number): void {
     const len = a.species.body.length * 4.2 * a.scale
     ctx.save()
-    ctx.translate(a.x, a.y + Math.sin(t * 2 + a.phase) * 3)
+    ctx.translate(a.x, a.y + (a.dropping ? 0 : Math.sin(t * 2 + a.phase) * 2.5))
     ctx.scale(a.dir, 1)
+    if (a.tilt) ctx.rotate(a.tilt)
     ctx.translate(-len / 2, 0)
-    this.body(ctx, a.species.body, len, a.fish.grade, a.fish.tier, a.fish.speciesId)
+    this.body(ctx, a.species.body, len, a.fish.grade, a.fish.tier, a.fish.speciesId, t + a.phase)
     ctx.restore()
   }
 
@@ -301,7 +331,7 @@ export class RealisticRenderer implements Renderer {
     ctx.save()
     if (req.dim) ctx.globalAlpha = 0.35
     ctx.translate((w - len) / 2, h / 2)
-    this.body(ctx, req.species.body, len, req.grade, req.tier, req.species.id)
+    this.body(ctx, req.species.body, len, req.grade, req.tier, req.species.id, 0)
     ctx.restore()
   }
 
@@ -312,6 +342,7 @@ export class RealisticRenderer implements Renderer {
     grade: Grade,
     tier: Tier,
     speciesId: string,
+    animPhase = 0,
   ): void {
     const sprite = spriteFor(this.manifest, speciesId)
     const height = len * bodyShape.depth
@@ -320,7 +351,7 @@ export class RealisticRenderer implements Renderer {
       return
     }
 
-    const { path } = fishPath(bodyShape, len)
+    const { path } = fishPath(bodyShape, len, animPhase)
     const hueOffset = [0, 0, 18, -22, 42, 135][grade] ?? 0
     const hue = (bodyShape.hue + hueOffset + 360) % 360
     const sat = Math.min(1, bodyShape.sat + grade * 0.04)
@@ -360,7 +391,7 @@ export class RealisticRenderer implements Renderer {
     ctx.restore()
 
     if (bodyShape.form !== 'jellyfish') {
-      const eye = eyeAt(bodyShape, len)
+      const eye = eyeAt(bodyShape, len, animPhase)
       ctx.fillStyle = '#f8f8f8'
       ctx.beginPath()
       ctx.arc(eye.x, eye.y, eye.r, 0, Math.PI * 2)

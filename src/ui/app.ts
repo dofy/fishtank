@@ -89,6 +89,11 @@ const AUDIO_ICONS = {
   off: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h2.5L9 3v10L5.5 10H3V6Z"/><path d="m11 6 4 4m0-4-4 4"/></svg>',
 }
 
+const IMMERSIVE_ICONS = {
+  enter: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6V2.5H6M10 2.5h3.5V6M13.5 10v3.5H10M6 13.5H2.5V10"/></svg>',
+  exit: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3.5 5.5 8l4.5 4.5M6 8h7.5"/></svg>',
+}
+
 export interface AppHooks {
   onThemeChange(id: string): void
   onColorModeChange(mode: ColorMode): void
@@ -131,6 +136,7 @@ export class App {
   private bookDetailSpeciesId: SpeciesId | null = null
   private bookDetailGrade: Grade = 1
   private bookSelectedUid: string | null = null
+  private immersive = false
   private portraitCache = new Map<string, HTMLCanvasElement>()
   private showcase: ShowcaseState | null = null
   private showcaseCanvas: HTMLCanvasElement | null = null
@@ -167,7 +173,23 @@ export class App {
 
   mount(root: HTMLElement): void {
     root.replaceChildren(this.hud, this.canvas, this.nav, this.body, this.modal, this.toastHost)
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && this.immersive) {
+        this.setImmersive(false)
+      }
+    })
     this.render()
+  }
+
+  isImmersive(): boolean {
+    return this.immersive
+  }
+
+  private setImmersive(next: boolean): void {
+    this.immersive = next
+    document.documentElement.dataset.immersive = next ? 'on' : 'off'
+    this.render()
+    window.dispatchEvent(new Event('resize'))
   }
 
   setState(state: GameState): void {
@@ -292,9 +314,9 @@ export class App {
 
     const audioCfg = syncAudioConfig(s.audio)
     const anyAudioOn = audioCfg.sfxEnabled || audioCfg.bgmEnabled
-    const audioBtn = makeIconButton(
+    const audioBtn = makeOnlyIconButton(
       anyAudioOn ? AUDIO_ICONS.on : AUDIO_ICONS.off,
-      anyAudioOn ? c.audioOn : c.audioOff,
+      `${c.settingsAudioHeading}: ${anyAudioOn ? c.audioOn : c.audioOff}`,
       () => {
         const nextOn = !anyAudioOn
         const updated: AudioConfig = {
@@ -306,8 +328,8 @@ export class App {
         if (nextOn) sound.play('click')
       },
     )
-    audioBtn.className = 'mode-btn'
-    audioBtn.title = `${c.settingsAudioHeading}: ${anyAudioOn ? c.audioOn : c.audioOff}`
+    audioBtn.className = 'icon-only-btn'
+    audioBtn.setAttribute('aria-pressed', String(anyAudioOn))
 
     const mode: ColorMode = s.colorMode ?? 'auto'
     const modeLabel =
@@ -327,15 +349,28 @@ export class App {
     })
     langBtn.className = 'lang-btn'
 
+    const immersiveBtn = makeIconButton(
+      this.immersive ? IMMERSIVE_ICONS.exit : IMMERSIVE_ICONS.enter,
+      this.immersive ? c.exitImmersiveBtn : c.immersiveBtn,
+      () => {
+        sound.play('click')
+        this.setImmersive(!this.immersive)
+      },
+    )
+    immersiveBtn.className = `mode-btn immersive-btn${this.immersive ? ' btn-primary' : ''}`
+    immersiveBtn.title = this.immersive ? c.exitImmersiveBtn : c.immersiveBtn
+
+    const actions = document.createElement('div')
+    actions.className = 'hud-actions'
+    actions.append(audioBtn, modeBtn, langBtn, immersiveBtn)
+
     this.hud.replaceChildren(
       lvGroup,
       stat(STAT_ICONS.tank, c.hudTank, `${placed}/${cap}`),
       stat(STAT_ICONS.bag, c.hudBag, `${s.fish.length}`),
       heartStat,
       stat(STAT_ICONS.book, c.hudSpecies, `${prog.owned}/${prog.total}`),
-      audioBtn,
-      modeBtn,
-      langBtn,
+      actions,
     )
   }
 
@@ -975,6 +1010,9 @@ export class App {
             this.bookDetailSpeciesId = sp.id
             this.bookDetailGrade = bestOwnedGrade
             this.bookSelectedUid = ownedCopies[0]?.uid ?? null
+            if (window.innerWidth <= 720) {
+              this.body.scrollTo({ top: 0, behavior: 'smooth' })
+            }
           }
         } else {
           this.say(c.bookLockedMsg(`${stars(sp.tier)} ${tierName(sp.tier, this.locale)}`), 'bad')
@@ -1965,6 +2003,23 @@ function makeIconButton(
   txt.className = 'btn-text'
   txt.textContent = text
   b.append(ico, txt)
+  b.addEventListener('click', onClick)
+  return b
+}
+
+function makeOnlyIconButton(
+  svgHtml: string,
+  title: string,
+  onClick: (event: MouseEvent) => void,
+): HTMLButtonElement {
+  const b = document.createElement('button')
+  b.type = 'button'
+  b.title = title
+  b.setAttribute('aria-label', title)
+  const ico = document.createElement('span')
+  ico.className = 'ico'
+  ico.innerHTML = svgHtml
+  b.append(ico)
   b.addEventListener('click', onClick)
   return b
 }

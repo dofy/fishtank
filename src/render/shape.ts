@@ -4,18 +4,23 @@ import type { BodyShape, DecorId } from '../core/types'
  * Geometry shared by every renderer: one Path2D per creature, drawn in a local
  * space that spans x = 0..len and y = -h/2..h/2, facing +x.
  */
-export function fishPath(body: BodyShape, len: number): { path: Path2D; height: number } {
+export function fishPath(
+  body: BodyShape,
+  len: number,
+  animPhase = 0,
+): { path: Path2D; height: number } {
   const h = len * body.depth
   const form = body.form ?? 'fish'
   const path = new Path2D()
 
   switch (form) {
     case 'jellyfish': {
-      // Umbrella bell dome + scalloped rim + trailing tentacles
+      // Umbrella bell dome + scalloped rim + trailing tentacles with pulsing motion
+      const pulse = animPhase ? Math.sin(animPhase * 2.2) : 0
       const cx = len * 0.5
-      const domeTop = -h * 0.48
+      const domeTop = -h * (0.48 + pulse * 0.05)
       const rimY = -h * 0.02
-      const rx = len * 0.36
+      const rx = len * (0.36 - pulse * 0.04)
       path.moveTo(cx - rx, rimY)
       path.bezierCurveTo(cx - rx, domeTop, cx + rx, domeTop, cx + rx, rimY)
       const lobes = 4
@@ -28,16 +33,18 @@ export function fishPath(body: BodyShape, len: number): { path: Path2D; height: 
       path.closePath()
 
       const tentacleOffsets = [-0.65, -0.22, 0.22, 0.65]
+      const wave = animPhase ? Math.sin(animPhase * 2.2 - 0.8) * (len * 0.06) : 0
       for (const [idx, off] of tentacleOffsets.entries()) {
         const tx = cx + off * rx * 0.8
-        const sway = idx % 2 === 0 ? len * 0.06 : -len * 0.06
+        const sway = (idx % 2 === 0 ? len * 0.05 : -len * 0.05) + wave
+        const endY = h * (0.45 + pulse * 0.05)
         addCapsule(path, tx, rimY + h * 0.02, tx + sway, h * 0.22, Math.max(1.2, len * 0.026))
         addCapsule(
           path,
           tx + sway,
           h * 0.22,
-          tx - sway * 0.7,
-          h * 0.46,
+          tx - sway * 0.6 + wave * 0.5,
+          endY,
           Math.max(1, len * 0.022),
         )
       }
@@ -46,6 +53,7 @@ export function fishPath(body: BodyShape, len: number): { path: Path2D; height: 
 
     case 'seahorse': {
       const cx = len * 0.48
+      const flutter = animPhase ? Math.sin(animPhase * 7.5) * (h * 0.04) : 0
       // Head & coronet
       path.ellipse(cx + len * 0.04, -h * 0.3, len * 0.13, h * 0.12, -0.15, 0, Math.PI * 2)
       // Tubular snout facing +x
@@ -65,8 +73,8 @@ export function fishPath(body: BodyShape, len: number): { path: Path2D; height: 
       // Fluttering dorsal fin on the back
       const fin = new Path2D()
       fin.moveTo(cx - len * 0.08, -h * 0.08)
-      fin.lineTo(cx - len * 0.23, -h * 0.15)
-      fin.lineTo(cx - len * 0.21, h * 0.05)
+      fin.lineTo(cx - len * 0.23, -h * 0.15 + flutter)
+      fin.lineTo(cx - len * 0.21, h * 0.05 + flutter)
       fin.lineTo(cx - len * 0.07, h * 0.06)
       fin.closePath()
       path.addPath(fin)
@@ -97,14 +105,15 @@ export function fishPath(body: BodyShape, len: number): { path: Path2D; height: 
       const waves = form === 'seasnake' ? 2.3 : 1.7
       const amp = h * (form === 'seasnake' ? 0.28 : 0.22)
       const baseThick = h * (form === 'seasnake' ? 0.15 : 0.2)
+      const travel = animPhase * 3.8
 
       for (let i = 0; i < segs; i++) {
         const t0 = i / segs
         const t1 = (i + 1) / segs
         const x0 = len * (0.06 + t0 * 0.88)
         const x1 = len * (0.06 + t1 * 0.88)
-        const y0 = Math.sin(t0 * Math.PI * waves) * amp
-        const y1 = Math.sin(t1 * Math.PI * waves) * amp
+        const y0 = Math.sin(t0 * Math.PI * waves + travel) * amp
+        const y1 = Math.sin(t1 * Math.PI * waves + travel) * amp
         const r = Math.max(1.3, baseThick * (0.38 + 0.62 * Math.sin(t0 * Math.PI)))
         addCapsule(path, x0, y0, x1, y1, r)
       }
@@ -115,13 +124,14 @@ export function fishPath(body: BodyShape, len: number): { path: Path2D; height: 
           const t1 = (i + 1) / segs
           const x0 = len * (0.06 + t0 * 0.88)
           const x1 = len * (0.06 + t1 * 0.88)
-          const y0 = Math.sin(t0 * Math.PI * waves) * amp - baseThick * 0.9
-          const y1 = Math.sin(t1 * Math.PI * waves) * amp - baseThick * 0.9
+          const y0 = Math.sin(t0 * Math.PI * waves + travel) * amp - baseThick * 0.9
+          const y1 = Math.sin(t1 * Math.PI * waves + travel) * amp - baseThick * 0.9
           addCapsule(path, x0, y0, x1, y1, Math.max(1, baseThick * 0.45))
         }
       } else {
         // Paddle tail for sea snake
-        path.ellipse(len * 0.08, 0, len * 0.06, baseThick * 1.1, 0, 0, Math.PI * 2)
+        const tailY = Math.sin(travel) * amp
+        path.ellipse(len * 0.08, tailY, len * 0.06, baseThick * 1.1, 0, 0, Math.PI * 2)
       }
       return { path, height: h }
     }
@@ -131,26 +141,38 @@ export function fishPath(body: BodyShape, len: number): { path: Path2D; height: 
       const discStart = tailLen
       const nose = len * 0.95
       const midX = discStart + (nose - discStart) * 0.48
+      const flap = animPhase ? Math.sin(animPhase * 2.6) * (h * 0.08) : 0
       // Diamond pectoral wings
       path.moveTo(nose, 0)
-      path.quadraticCurveTo(midX + len * 0.1, -h * 0.48, midX - len * 0.06, -h * 0.48)
+      path.quadraticCurveTo(
+        midX + len * 0.1,
+        -h * 0.48 + flap,
+        midX - len * 0.06,
+        -h * 0.48 + flap,
+      )
       path.quadraticCurveTo(discStart + len * 0.04, -h * 0.16, discStart, 0)
-      path.quadraticCurveTo(discStart + len * 0.04, h * 0.16, midX - len * 0.06, h * 0.48)
-      path.quadraticCurveTo(midX + len * 0.1, h * 0.48, nose, 0)
+      path.quadraticCurveTo(
+        discStart + len * 0.04,
+        h * 0.16,
+        midX - len * 0.06,
+        h * 0.48 - flap,
+      )
+      path.quadraticCurveTo(midX + len * 0.1, h * 0.48 - flap, nose, 0)
       path.closePath()
       // Whip tail
-      addCapsule(path, discStart + len * 0.04, 0, len * 0.03, 0, Math.max(1.2, h * 0.035))
+      addCapsule(path, discStart + len * 0.04, 0, len * 0.03, flap * 0.4, Math.max(1.2, h * 0.035))
       return { path, height: h }
     }
 
     case 'turtle': {
+      const stroke = animPhase ? Math.sin(animPhase * 2.8) * 0.25 : 0
       // Domed carapace shell
       path.ellipse(len * 0.46, -h * 0.03, len * 0.3, h * 0.32, 0, 0, Math.PI * 2)
       // Head extending forward
       path.ellipse(len * 0.83, -h * 0.05, len * 0.11, h * 0.13, -0.1, 0, Math.PI * 2)
       // Front flippers
-      path.ellipse(len * 0.62, -h * 0.34, len * 0.16, h * 0.08, -0.55, 0, Math.PI * 2)
-      path.ellipse(len * 0.62, h * 0.3, len * 0.16, h * 0.08, 0.55, 0, Math.PI * 2)
+      path.ellipse(len * 0.62, -h * 0.34, len * 0.16, h * 0.08, -0.55 + stroke, 0, Math.PI * 2)
+      path.ellipse(len * 0.62, h * 0.3, len * 0.16, h * 0.08, 0.55 - stroke, 0, Math.PI * 2)
       // Rear flippers
       path.ellipse(len * 0.22, -h * 0.24, len * 0.11, h * 0.06, 0.45, 0, Math.PI * 2)
       path.ellipse(len * 0.22, h * 0.2, len * 0.11, h * 0.06, -0.45, 0, Math.PI * 2)
@@ -161,6 +183,7 @@ export function fishPath(body: BodyShape, len: number): { path: Path2D; height: 
     default: {
       const tail = len * body.tail
       const nose = len - tail
+      const wag = animPhase ? Math.sin(animPhase * 4.5) * (h * 0.08) : 0
 
       // Body: a lens from the snout to the caudal peduncle.
       path.moveTo(nose, 0)
@@ -172,9 +195,9 @@ export function fishPath(body: BodyShape, len: number): { path: Path2D; height: 
       // Caudal fin.
       const fin = new Path2D()
       fin.moveTo(tail * 0.62, 0)
-      fin.lineTo(0, -h * 0.5)
-      fin.lineTo(tail * 0.35, 0)
-      fin.lineTo(0, h * 0.5)
+      fin.lineTo(0, -h * 0.5 + wag)
+      fin.lineTo(tail * 0.35, wag * 0.5)
+      fin.lineTo(0, h * 0.5 + wag)
       fin.closePath()
       path.addPath(fin)
 
@@ -194,7 +217,11 @@ export function fishPath(body: BodyShape, len: number): { path: Path2D; height: 
 }
 
 /** Eye position in the same local space. */
-export function eyeAt(body: BodyShape, len: number): { x: number; y: number; r: number } {
+export function eyeAt(
+  body: BodyShape,
+  len: number,
+  animPhase = 0,
+): { x: number; y: number; r: number } {
   const h = len * body.depth
   const form = body.form ?? 'fish'
   switch (form) {
@@ -206,7 +233,7 @@ export function eyeAt(body: BodyShape, len: number): { x: number; y: number; r: 
     case 'seasnake': {
       const waves = form === 'seasnake' ? 2.3 : 1.7
       const amp = h * (form === 'seasnake' ? 0.28 : 0.22)
-      const headY = Math.sin(0.92 * Math.PI * waves) * amp
+      const headY = Math.sin(0.92 * Math.PI * waves + animPhase * 3.8) * amp
       return { x: len * 0.88, y: headY - h * 0.04, r: Math.max(1, len * 0.042) }
     }
     case 'ray':

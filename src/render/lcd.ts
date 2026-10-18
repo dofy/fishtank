@@ -1,6 +1,6 @@
 import type { BodyShape, DecorItem, Grade, Tier } from '../core/types'
 import type { DecorPortraitRequest, PortraitRequest, Renderer } from './renderer'
-import type { Agent, DecorNode, SceneView } from './scene'
+import type { Agent, DecorNode, SceneView, SplashEffect } from './scene'
 import { decorLayers, eyeAt, fishPath, hashString, patternBands, patternSpots } from './shape'
 import { type SceneColors, type ThemeManifest, sceneColorsFor, spriteFor } from './theme'
 
@@ -36,6 +36,9 @@ export class LcdRenderer implements Renderer {
 
     for (const d of view.decors) this.decorNode(ctx, d, h, view.time, s)
     for (const a of view.agents) this.agent(ctx, a, view.time, s)
+    if (view.splashes) {
+      for (const sp of view.splashes) this.splash(ctx, sp, s)
+    }
 
     this.lampsFixture(ctx, w, s, night)
 
@@ -231,18 +234,34 @@ export class LcdRenderer implements Renderer {
     }
   }
 
+  private splash(ctx: CanvasRenderingContext2D, sp: SplashEffect, s: SceneColors): void {
+    const c = this.cell
+    const p = Math.min(1, sp.age / sp.duration)
+    const span = Math.round((8 + p * 26) / c) * c
+    const bx = Math.round(sp.x / c) * c
+    const by = Math.round(sp.y / c) * c
+    ctx.fillStyle = s.ink
+    ctx.fillRect(bx - span, by, c - 1, c - 1)
+    ctx.fillRect(bx + span, by, c - 1, c - 1)
+    if (p < 0.65) {
+      const dy = Math.round((Math.sin(p * Math.PI) * 14) / c) * c
+      ctx.fillRect(bx - span * 0.5, by - dy, c - 1, c - 1)
+      ctx.fillRect(bx + span * 0.5, by - dy, c - 1, c - 1)
+    }
+  }
+
   private agent(ctx: CanvasRenderingContext2D, a: Agent, t: number, s: SceneColors): void {
     const len = a.species.body.length * 4.2 * a.scale
     const c = this.cell
     const x = Math.round((a.x - len / 2) / c) * c
-    const y = Math.round((a.y + Math.sin(t * 2 + a.phase) * c) / c) * c
+    const y = Math.round((a.y + (a.dropping ? 0 : Math.sin(t * 2 + a.phase) * c)) / c) * c
     ctx.save()
     ctx.translate(x, y)
     if (a.dir === -1) {
       ctx.translate(len, 0)
       ctx.scale(-1, 1)
     }
-    this.body(ctx, a.species.body, len, a.fish.grade, a.fish.tier, a.fish.speciesId, s)
+    this.body(ctx, a.species.body, len, a.fish.grade, a.fish.tier, a.fish.speciesId, s, t + a.phase)
     ctx.restore()
   }
 
@@ -253,7 +272,7 @@ export class LcdRenderer implements Renderer {
     ctx.save()
     if (req.dim) ctx.globalAlpha = 0.4
     ctx.translate(Math.round((w - len) / 2), Math.round(h / 2))
-    this.body(ctx, req.species.body, len, req.grade, req.tier, req.species.id, s)
+    this.body(ctx, req.species.body, len, req.grade, req.tier, req.species.id, s, 0)
     ctx.restore()
   }
 
@@ -265,6 +284,7 @@ export class LcdRenderer implements Renderer {
     tier: Tier,
     speciesId: string,
     s: SceneColors,
+    animPhase = 0,
   ): void {
     const height = len * bodyShape.depth
     const sprite = spriteFor(this.manifest, speciesId)
@@ -275,7 +295,7 @@ export class LcdRenderer implements Renderer {
     }
 
     const c = this.cell
-    const { path } = fishPath(bodyShape, len)
+    const { path } = fishPath(bodyShape, len, animPhase)
     const ink = s.ink
     const bands = patternBands(bodyShape, len)
     const spots = patternSpots(bodyShape, len, hashString(speciesId))
@@ -306,7 +326,7 @@ export class LcdRenderer implements Renderer {
     }
 
     if (bodyShape.form !== 'jellyfish') {
-      const eye = eyeAt(bodyShape, len)
+      const eye = eyeAt(bodyShape, len, animPhase)
       ctx.fillStyle = s.waterTop
       ctx.fillRect(Math.round(eye.x / c) * c, Math.round(eye.y / c) * c, c - 1, c - 1)
     }
