@@ -154,6 +154,8 @@ export interface Copy {
   mergeAutoPickBtn: string
   mergeEmptyByFilter: string
   mergeAutoPickedMsg: (picked: number, total: number) => string
+  mergeAlreadyFullMsg: (total: number) => string
+  mergeNothingToClearMsg: string
   mergeBtn: (picked: number, total: number) => string
   mergedMsg: (name: string, starsStr: string, tierStr: string) => string
   mergeNote: string
@@ -168,6 +170,7 @@ export interface Copy {
   decorLockedMsg: (name: string, lv: number) => string
   decorNote: string
   bookHeading: string
+  bookLockedMsg: (tierStr: string) => string
   settingsThemeHeading: string
   settingsThemeNote: string
   settingsColorModeHeading: string
@@ -199,8 +202,8 @@ export interface Copy {
     usesStr: string,
     stateStr: string,
   ) => string
-  breedError: (code: string) => string
-  synthError: (code: string, count: number) => string
+  breedError: (code: string, extra?: string) => string
+  synthError: (code: string, count: number, picked?: number) => string
 }
 
 const ZH: Copy = {
@@ -260,9 +263,13 @@ const ZH: Copy = {
   mergeAutoPickBtn: '按条件自动选择 10 条',
   mergeEmptyByFilter: '当前筛选条件下没有符合要求的鱼（可取消勾选“只显示剩余繁殖次数为 0”或勾选更多稀有度）。',
   mergeAutoPickedMsg: (picked, total) =>
-    picked > 0
+    picked >= total
       ? `已按筛选条件自动选中 ${picked}/${total} 条同星级鱼。`
-      : '当前筛选条件下没有可自动选择的鱼。',
+      : picked > 0
+        ? `当前符合条件的同星级鱼最多只有 ${picked}/${total} 条，还差 ${total - picked} 条才能合成。`
+        : '当前筛选条件下没有可自动选择的鱼。',
+  mergeAlreadyFullMsg: (total) => `已选满 ${total} 条材料鱼，可直接点击“开始合成”或先取消已选鱼。`,
+  mergeNothingToClearMsg: '当前没有已选中的合成材料鱼。',
   mergeBtn: (picked, total) => `开始合成 (${picked}/${total})`,
   mergedMsg: (name, starsStr, tierStr) => `合成成功：获得 ${name}（${starsStr} ${tierStr}）！`,
   mergeNote:
@@ -276,10 +283,11 @@ const ZH: Copy = {
   decorPlacedMsg: (name) => `已将「${name}」放入鱼缸底部，可在上方鱼缸中直接按住拖拽调整位置！`,
   decorRemovedMsg: (name) => `已从鱼缸收起「${name}」。`,
   decorFlippedMsg: (name) => `已翻转「${name}」的朝向。`,
-  decorLockedMsg: (name, lv) => `「${name}」将在鱼缸达到 Lv.${lv} 时自动解锁。`,
+  decorLockedMsg: (name, lv) => `「${name}」尚未解锁，需鱼缸等级达到 Lv.${lv}。`,
   decorNote:
     '随着鱼缸等级提升（Lv.1–Lv.10），每升一级都会解锁新的海底装饰品。点击已解锁的装饰卡片可放入或收起；放入后直接在上方鱼缸底部按住装饰品左右拖动即可随意摆放位置！',
   bookHeading: '生物图鉴',
+  bookLockedMsg: (tierStr) => `该鱼种（${tierStr}）尚未解锁，可通过繁殖或合成发现新品种！`,
   settingsThemeHeading: '画面风格（支持素材替换）',
   settingsThemeNote:
     '每个主题位于 public/themes/<主题名>/ 目录下，包含配色清单与渲染器配置；将 <speciesId>.png 或 decor-<id>.png 放入对应 sprites/ 目录即可直接替换鱼类或装饰品外观，无需修改代码。',
@@ -306,28 +314,36 @@ const ZH: Copy = {
   describeFry: (clock) => `成长/冷却中（剩余 ${clock}）`,
   describeFish: (name, starsStr, tierStr, grade, usesStr, stateStr) =>
     `${name} — ${starsStr} ${tierStr}，品阶 ${grade}，繁殖次数 ${usesStr}，${stateStr}。`,
-  breedError: (code) => {
+  breedError: (code, extra) => {
     switch (code) {
       case 'no-hearts':
-        return '爱心不足，每 7 分钟自动恢复 1 颗爱心。'
+        return extra
+          ? `爱心不足（0/5）！距离下一颗爱心恢复还需 ${extra}。`
+          : '爱心不足，每 7 分钟自动恢复 1 颗爱心。'
       case 'not-adult':
-        return '所选亲代正在成长或冷却中，请等待倒计时结束。'
+        return extra
+          ? `${extra}正在成长或冷却中，请等待倒计时结束。`
+          : '所选亲代正在成长或冷却中，请等待倒计时结束。'
       case 'no-uses':
         return '所选亲代中有繁殖次数已耗尽的鱼。'
       default:
-        return '请先点击上方卡片选择两条不同的成年鱼。'
+        return extra
+          ? `请先选择两条不同的成年鱼进行配对（当前已选 ${extra}/2）。`
+          : '请先点击上方卡片选择两条不同的成年鱼。'
     }
   },
-  synthError: (code, count) => {
+  synthError: (code, count, picked) => {
     switch (code) {
       case 'mixed-tier':
-        return '所有 10 条材料鱼必须具有相同的星级。'
+        return '所有 10 条材料鱼必须具有相同的星级（请先取消已选的其他星级鱼）。'
       case 'max-tier':
         return '神话（5★）已是最高星级，无法继续向上合成。'
       case 'starter-material':
         return '初始鱼不能作为合成材料消耗。'
       default:
-        return `请先点击上方卡片选择满 ${count} 条同星级的鱼。`
+        return picked !== undefined
+          ? `合成需要选满 ${count} 条同星级的鱼（当前已选 ${picked}/${count}）。`
+          : `请先点击上方卡片选择满 ${count} 条同星级的鱼。`
     }
   },
 }
@@ -391,9 +407,13 @@ const EN: Copy = {
   mergeEmptyByFilter:
     'No fish match the current filters (try unchecking "0 remaining uses" or enabling more rarity tiers).',
   mergeAutoPickedMsg: (picked, total) =>
-    picked > 0
+    picked >= total
       ? `Auto-selected ${picked}/${total} same-tier fish matching filters.`
-      : 'No matching fish available to auto-select.',
+      : picked > 0
+        ? `Only ${picked}/${total} matching same-tier fish available (${total - picked} more needed to merge).`
+        : 'No matching fish available to auto-select.',
+  mergeAlreadyFullMsg: (total) => `Already selected ${total}/${total} fish. Click Merge or deselect one first.`,
+  mergeNothingToClearMsg: 'No selected merge materials to clear.',
   mergeBtn: (picked, total) => `Merge (${picked}/${total})`,
   mergedMsg: (name, starsStr, tierStr) => `Merged into ${name}, ${starsStr} ${tierStr}.`,
   mergeNote:
@@ -407,10 +427,11 @@ const EN: Copy = {
   decorPlacedMsg: (name) => `Placed "${name}" on the tank floor. Drag it left or right directly inside the tank!`,
   decorRemovedMsg: (name) => `Stored "${name}".`,
   decorFlippedMsg: (name) => `Flipped "${name}".`,
-  decorLockedMsg: (name, lv) => `"${name}" unlocks when your aquarium reaches Level ${lv}.`,
+  decorLockedMsg: (name, lv) => `"${name}" is locked until your aquarium reaches Level ${lv}.`,
   decorNote:
     'New decorations unlock at every aquarium level (Lv.1–Lv.10). Click an unlocked card to place or store it, and drag placed decorations directly along the bottom of the tank canvas!',
   bookHeading: 'Collection',
+  bookLockedMsg: (tierStr) => `Undiscovered ${tierStr} species. Breed or merge fish to unlock it!`,
   settingsThemeHeading: 'Art theme',
   settingsThemeNote:
     'A theme is a folder under public/themes/. Its manifest supplies the palette, the renderer and an optional sprites/ directory; dropping <speciesId>.png or decor-<id>.png in there replaces that art everywhere with no code change.',
@@ -438,28 +459,36 @@ const EN: Copy = {
   describeFry: (clock) => `cooldown/fry (${clock} left)`,
   describeFish: (name, starsStr, tierStr, grade, usesStr, stateStr) =>
     `${name} — ${starsStr} ${tierStr}, grade ${grade}, uses ${usesStr}, ${stateStr}.`,
-  breedError: (code) => {
+  breedError: (code, extra) => {
     switch (code) {
       case 'no-hearts':
-        return 'Out of hearts. One regenerates every seven minutes.'
+        return extra
+          ? `Out of hearts (0/5)! Next heart regenerates in ${extra}.`
+          : 'Out of hearts. One regenerates every seven minutes.'
       case 'not-adult':
-        return 'Both parents must finish growing or cooling down first.'
+        return extra
+          ? `${extra} is still growing or cooling down.`
+          : 'Both parents must finish growing or cooling down first.'
       case 'no-uses':
         return 'One parent has no breeding attempts left.'
       default:
-        return 'Pick two different adults from the grid above first.'
+        return extra
+          ? `Select 2 different adult fish first (${extra}/2 selected).`
+          : 'Pick two different adults from the grid above first.'
     }
   },
-  synthError: (code, count) => {
+  synthError: (code, count, picked) => {
     switch (code) {
       case 'mixed-tier':
-        return 'All ten materials must share one tier.'
+        return 'All 10 materials must share the same rarity tier.'
       case 'max-tier':
         return 'Mythic is the ceiling; it cannot be merged upward.'
       case 'starter-material':
         return 'Starter fish cannot be consumed as merge materials.'
       default:
-        return `Select ${count} fish of the same tier from the grid above first.`
+        return picked !== undefined
+          ? `Select ${count} fish of the same tier to merge (${picked}/${count} selected).`
+          : `Select ${count} fish of the same tier from the grid above first.`
     }
   },
 }

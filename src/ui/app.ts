@@ -116,6 +116,7 @@ export class App {
   private readonly nav = document.createElement('nav')
   private readonly body = document.createElement('section')
   private readonly modal = document.createElement('div')
+  private readonly toastHost = document.createElement('div')
 
   constructor(
     private state: GameState,
@@ -126,6 +127,7 @@ export class App {
     this.nav.className = 'tabs'
     this.body.className = 'panel'
     this.modal.className = 'modal-host'
+    this.toastHost.className = 'toast-host'
     this.canvas.id = 'tank'
   }
 
@@ -138,7 +140,7 @@ export class App {
   }
 
   mount(root: HTMLElement): void {
-    root.replaceChildren(this.hud, this.canvas, this.nav, this.body, this.modal)
+    root.replaceChildren(this.hud, this.canvas, this.nav, this.body, this.modal, this.toastHost)
     this.render()
   }
 
@@ -164,6 +166,40 @@ export class App {
   private say(text: string, kind: 'good' | 'bad' | '' = ''): void {
     this.message = text
     this.messageKind = kind
+    if (text) {
+      this.showToast(text, kind)
+    }
+  }
+
+  private showToast(text: string, kind: 'good' | 'bad' | '' = ''): void {
+    // Keep at most 2 older toasts on screen
+    while (this.toastHost.children.length >= 3) {
+      this.toastHost.firstElementChild?.remove()
+    }
+
+    const toast = document.createElement('div')
+    toast.className = `toast${kind ? ` ${kind}` : ''}`
+    toast.setAttribute('role', 'status')
+
+    const icon = document.createElement('span')
+    icon.className = 'toast-icon'
+    icon.textContent = kind === 'bad' ? '!' : kind === 'good' ? '✓' : 'i'
+
+    const body = document.createElement('span')
+    body.className = 'toast-text'
+    body.textContent = text
+
+    toast.append(icon, body)
+
+    const dismiss = () => {
+      if (!toast.isConnected) return
+      toast.classList.add('toast-out')
+      window.setTimeout(() => toast.remove(), 180)
+    }
+
+    toast.addEventListener('click', dismiss)
+    this.toastHost.append(toast)
+    window.setTimeout(dismiss, kind === 'bad' ? 3400 : 2600)
   }
 
   /**
@@ -407,14 +443,21 @@ export class App {
           locked: !adult,
           onClick: () => {
             if (!adult) {
-              this.say(c.breedError('not-adult'), 'bad')
+              const name = speciesName(fish.speciesId, this.locale)
+              const remain = formatClock(Math.max(0, (fish.maturesAt ?? now) - now))
+              this.say(c.breedError('not-adult', `「${name}」（⏱ ${remain}）`), 'bad')
               this.render(now)
               return
+            }
+            if (!picked && this.state.hearts <= 0) {
+              const wait = formatClock(Math.max(0, this.state.nextHeartAt - now))
+              this.say(c.breedError('no-hearts', wait), 'bad')
+            } else {
+              this.say('')
             }
             this.breedPick = picked
               ? this.breedPick.filter((u) => u !== fish.uid)
               : [...this.breedPick, fish.uid].slice(-2)
-            this.say('')
             this.render(now)
           },
         }),
@@ -436,17 +479,27 @@ export class App {
 
     const row = document.createElement('div')
     row.className = 'row'
-    const canBreed = Boolean(a && b)
+    const canBreed = Boolean(a && b && this.state.hearts > 0)
     const go = makeButton(c.breedBtn(this.breedPick.length), () => {
-      if (!a || !b) {
-        this.say(c.breedError('needs-two'), 'bad')
-        this.render(now)
+      const clickNow = Date.now()
+      if (this.state.hearts <= 0) {
+        const wait = formatClock(Math.max(0, this.state.nextHeartAt - clickNow))
+        this.say(c.breedError('no-hearts', wait), 'bad')
+        this.render(clickNow)
         return
       }
-      const clickNow = Date.now()
+      if (!a || !b) {
+        this.say(c.breedError('needs-two', String(this.breedPick.length)), 'bad')
+        this.render(clickNow)
+        return
+      }
       const result = breed(this.state, a.uid, b.uid, clickNow)
       if ('error' in result) {
-        this.say(c.breedError(result.error), 'bad')
+        const wait =
+          result.error === 'no-hearts'
+            ? formatClock(Math.max(0, this.state.nextHeartAt - clickNow))
+            : undefined
+        this.say(c.breedError(result.error, wait), 'bad')
       } else {
         const name = speciesName(result.child.speciesId, this.locale)
         const tName = tierName(result.tier, this.locale)
@@ -592,6 +645,8 @@ export class App {
               this.say(c.synthError('max-tier', SYNTHESIS_INPUT_COUNT), 'bad')
             } else if (wrongTier) {
               this.say(c.synthError('mixed-tier', SYNTHESIS_INPUT_COUNT), 'bad')
+            } else if (!picked && this.mergePick.length >= SYNTHESIS_INPUT_COUNT) {
+              this.say(c.mergeAlreadyFullMsg(SYNTHESIS_INPUT_COUNT), 'bad')
             } else {
               this.mergePick = picked
                 ? this.mergePick.filter((u) => u !== fish.uid)
@@ -614,7 +669,10 @@ export class App {
     const ready = this.mergePick.length === SYNTHESIS_INPUT_COUNT
     const go = makeButton(c.mergeBtn(this.mergePick.length, SYNTHESIS_INPUT_COUNT), () => {
       if (this.mergePick.length !== SYNTHESIS_INPUT_COUNT) {
-        this.say(c.synthError('wrong-count', SYNTHESIS_INPUT_COUNT), 'bad')
+        this.say(
+          c.synthError('wrong-count', SYNTHESIS_INPUT_COUNT, this.mergePick.length),
+          'bad',
+        )
         this.render(now)
         return
       }
@@ -638,13 +696,18 @@ export class App {
       this.mergePick = picked
       this.say(
         c.mergeAutoPickedMsg(picked.length, SYNTHESIS_INPUT_COUNT),
-        picked.length === SYNTHESIS_INPUT_COUNT ? 'good' : '',
+        picked.length === SYNTHESIS_INPUT_COUNT ? 'good' : 'bad',
       )
       this.render(now)
     })
     autoBtn.setAttribute('aria-disabled', String(mergeCandidates.length === 0))
 
     const clear = makeButton(c.clearBtn, () => {
+      if (this.mergePick.length === 0) {
+        this.say(c.mergeNothingToClearMsg, 'bad')
+        this.render(now)
+        return
+      }
       this.mergePick = []
       this.say('')
       this.render(now)
@@ -737,7 +800,7 @@ export class App {
             `${speciesName(sp.id, this.locale)} — ${stars(sp.tier)} ${tierName(sp.tier, this.locale)}`,
           )
         } else {
-          this.say('???')
+          this.say(c.bookLockedMsg(`${stars(sp.tier)} ${tierName(sp.tier, this.locale)}`), 'bad')
         }
         this.render()
       }
