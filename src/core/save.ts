@@ -1,4 +1,5 @@
 import { SAVE_VERSION, newGame, tick } from './game'
+import { detectLocale } from './i18n'
 import type { GameState } from './types'
 
 const KEY = 'fishtank.save.v1'
@@ -10,6 +11,9 @@ export function load(now = Date.now()): GameState {
     const parsed = JSON.parse(raw) as GameState
     if (parsed.version !== SAVE_VERSION) return newGame(now)
     if (!Array.isArray(parsed.fish)) return newGame(now)
+    if (parsed.locale !== 'zh' && parsed.locale !== 'en') {
+      parsed.locale = detectLocale()
+    }
     // Offline progress: one catch-up tick covers however long the tab was shut.
     tick(parsed, now)
     return parsed

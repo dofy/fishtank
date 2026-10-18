@@ -15,9 +15,10 @@ import {
   levelForExp,
   matrixKey,
 } from './balance'
+import { detectLocale } from './i18n'
 import { Rng, rng as defaultRng } from './rng'
 import { SEASON_RECIPES, SPECIES, STARTER_SPECIES, poolForTier, species } from './species'
-import type { BreedOutcome, Fish, GameState, Grade, SpeciesId, Tier } from './types'
+import type { BreedOutcome, Fish, GameState, Grade, Locale, SpeciesId, Tier } from './types'
 
 export const SAVE_VERSION = 1
 
@@ -47,7 +48,7 @@ export function makeFish(
   }
 }
 
-export function newGame(now = Date.now()): GameState {
+export function newGame(now = Date.now(), locale: Locale = detectLocale()): GameState {
   const fish = STARTER_SPECIES.map((id) => makeFish(id, 0, 1, now, { adult: true }))
   return {
     version: SAVE_VERSION,
@@ -59,6 +60,7 @@ export function newGame(now = Date.now()): GameState {
     discovered: [...STARTER_SPECIES],
     crafted: [],
     theme: 'realistic',
+    locale,
     lastTick: now,
   }
 }

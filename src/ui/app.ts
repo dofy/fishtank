@@ -2,7 +2,6 @@ import {
   HEART_MAX,
   MAX_LEVEL,
   SYNTHESIS_INPUT_COUNT,
-  TIER_NAMES,
   TRADE_HUB_LEVEL,
   USES_BY_TIER,
   nextLevelExp,
@@ -18,23 +17,19 @@ import {
   synthesize,
   tierOdds,
 } from '../core/game'
+import { type Copy, copy, detectLocale, speciesName, themeName, tierName } from '../core/i18n'
 import { SEASON_RECIPES, SPECIES, species } from '../core/species'
-import type { Fish, GameState, Grade, Species, Tier } from '../core/types'
+import type { Fish, GameState, Grade, Locale, Species, Tier } from '../core/types'
 import type { Renderer } from '../render/renderer'
 
 type Tab = 'tank' | 'breed' | 'merge' | 'season' | 'book' | 'settings'
 
-const TABS: { id: Tab; label: string }[] = [
-  { id: 'tank', label: 'Tank' },
-  { id: 'breed', label: 'Breed' },
-  { id: 'merge', label: 'Merge' },
-  { id: 'season', label: 'Season' },
-  { id: 'book', label: 'Book' },
-  { id: 'settings', label: 'Settings' },
-]
+const TAB_IDS: readonly Tab[] = ['tank', 'breed', 'merge', 'season', 'book', 'settings']
 
 export interface AppHooks {
   onThemeChange(id: string): void
+  onLocaleChange(locale: Locale): void
+  onSave(): void
   onReset(): void
   themes: { id: string; name: string }[]
 }
@@ -43,8 +38,10 @@ export class App {
   private tab: Tab = 'tank'
   private breedPick: string[] = []
   private mergePick: string[] = []
+  private confirmingReset = false
   private message = ''
   private messageKind: 'good' | 'bad' | '' = ''
+  private portraitCache = new Map<string, HTMLCanvasElement>()
 
   readonly canvas = document.createElement('canvas')
   private readonly hud = document.createElement('header')
@@ -62,6 +59,14 @@ export class App {
     this.canvas.id = 'tank'
   }
 
+  private get locale(): Locale {
+    return this.state.locale ?? detectLocale()
+  }
+
+  private get t(): Copy {
+    return copy(this.locale)
+  }
+
   mount(root: HTMLElement): void {
     root.replaceChildren(this.hud, this.canvas, this.nav, this.body)
     this.render()
@@ -69,10 +74,19 @@ export class App {
 
   setState(state: GameState): void {
     this.state = state
+    this.breedPick = []
+    this.mergePick = []
+    this.confirmingReset = false
   }
 
   setRenderer(renderer: Renderer): void {
     this.renderer = renderer
+    this.portraitCache.clear()
+    this.render()
+  }
+
+  invalidatePortraits(): void {
+    this.portraitCache.clear()
     this.render()
   }
 
@@ -81,7 +95,28 @@ export class App {
     this.messageKind = kind
   }
 
+  /**
+   * Lightweight in-place timer update called every second.
+   * Never replaces DOM nodes so button/card clicks are never interrupted.
+   */
+  updateTimers(now = Date.now()): void {
+    const s = this.state
+    const heartEl = this.hud.querySelector<HTMLElement>('[data-heart-timer]')
+    if (heartEl) {
+      heartEl.textContent =
+        s.hearts >= HEART_MAX ? this.t.hudFull : formatClock(Math.max(0, s.nextHeartAt - now))
+    }
+    const timers = this.body.querySelectorAll<HTMLElement>('[data-matures-at]')
+    for (const el of timers) {
+      const target = Number(el.dataset.maturesAt)
+      if (!Number.isNaN(target)) {
+        el.textContent = formatClock(Math.max(0, target - now))
+      }
+    }
+  }
+
   render(now = Date.now()): void {
+    document.documentElement.lang = this.locale === 'zh' ? 'zh-CN' : 'en'
     this.renderHud(now)
     this.renderNav()
     this.renderBody(now)
@@ -89,35 +124,47 @@ export class App {
 
   private renderHud(now: number): void {
     const s = this.state
+    const c = this.t
     const next = nextLevelExp(s.level)
     const prev = s.level > 1 ? (nextLevelExp(s.level - 1) ?? 0) : 0
     const span = next === null ? 1 : next - prev
     const filled = next === null ? 1 : Math.min(1, Math.max(0, (s.exp - prev) / span))
     const heartWait =
-      s.hearts >= HEART_MAX ? 'full' : formatClock(Math.max(0, s.nextHeartAt - now))
+      s.hearts >= HEART_MAX ? c.hudFull : formatClock(Math.max(0, s.nextHeartAt - now))
+
+    const nextHeartStat = stat(c.hudNextHeart, heartWait)
+    const valueEl = nextHeartStat.querySelector('b')
+    if (valueEl) valueEl.dataset.heartTimer = '1'
+
+    const langBtn = makeButton(c.langToggle, () => {
+      const nextLocale: Locale = this.locale === 'zh' ? 'en' : 'zh'
+      this.hooks.onLocaleChange(nextLocale)
+    })
+    langBtn.className = 'lang-btn'
 
     this.hud.replaceChildren(
-      stat('Level', `${s.level}${s.level >= MAX_LEVEL ? ' (max)' : ''}`),
+      stat(c.hudLevel, `${s.level}${s.level >= MAX_LEVEL ? c.hudMax : ''}`),
       bar(filled),
-      stat('EXP', next === null ? `${s.exp}` : `${s.exp} / ${next}`),
-      stat('Tank', `${s.fish.length} / ${capacity(s)}`),
-      stat('Hearts', `${s.hearts} / ${HEART_MAX}`),
-      stat('Next heart', heartWait),
-      stat('Species', `${collectionProgress(s).owned} / ${collectionProgress(s).total}`),
+      stat(c.hudExp, next === null ? `${s.exp}` : `${s.exp} / ${next}`),
+      stat(c.hudTank, `${s.fish.length} / ${capacity(s)}`),
+      stat(c.hudHearts, `${s.hearts} / ${HEART_MAX}`),
+      nextHeartStat,
+      stat(c.hudSpecies, `${collectionProgress(s).owned} / ${collectionProgress(s).total}`),
+      langBtn,
     )
   }
 
   private renderNav(): void {
+    const c = this.t
     this.nav.replaceChildren(
-      ...TABS.map((t) => {
-        const b = document.createElement('button')
-        b.textContent = t.label
-        b.setAttribute('aria-pressed', String(this.tab === t.id))
-        b.onclick = () => {
-          this.tab = t.id
+      ...TAB_IDS.map((id) => {
+        const b = makeButton(c.tabs[id], () => {
+          this.tab = id
+          this.confirmingReset = false
           this.say('')
           this.render()
-        }
+        })
+        b.setAttribute('aria-pressed', String(this.tab === id))
         return b
       }),
     )
@@ -146,7 +193,7 @@ export class App {
         break
     }
     const log = document.createElement('div')
-    log.className = `log ${this.messageKind}`
+    log.className = `log${this.messageKind ? ` ${this.messageKind}` : ''}`
     log.textContent = this.message
     nodes.push(log)
     this.body.replaceChildren(...nodes)
@@ -155,7 +202,8 @@ export class App {
   // ---------------------------------------------------------------- tank
 
   private tankPanel(now: number): Node[] {
-    const title = heading('Your fish')
+    const c = this.t
+    const title = heading(c.tankHeading)
     const grid = document.createElement('div')
     grid.className = 'grid'
     const sorted = [...this.state.fish].sort((a, b) => a.bornAt - b.bornAt)
@@ -163,47 +211,57 @@ export class App {
       grid.append(
         this.fishCell(fish, now, {
           onClick: () => {
-            this.say(describe(fish, now))
-            this.render()
+            this.say(this.describe(fish, now))
+            this.render(now)
           },
           action: () => {
             if (this.state.fish.length <= 1) {
-              this.say('The last fish stays.', 'bad')
-            } else if (release(this.state, fish.uid)) {
-              this.say(`Released ${species(fish.speciesId).name}.`)
+              this.say(c.lastFishStays, 'bad')
+            } else {
+              const name = speciesName(fish.speciesId, this.locale)
+              if (release(this.state, fish.uid)) {
+                this.breedPick = this.breedPick.filter((u) => u !== fish.uid)
+                this.mergePick = this.mergePick.filter((u) => u !== fish.uid)
+                this.hooks.onSave()
+                this.say(c.releasedMsg(name))
+              }
             }
-            this.render()
+            this.render(now)
           },
-          actionLabel: 'Release',
+          actionLabel: c.releaseBtn,
         }),
       )
     }
-    const note = document.createElement('p')
-    note.className = 'note'
-    note.textContent =
-      'Fry mature on a timer and bank EXP the moment they become adults. EXP is what raises the aquarium level, and the level is what raises tank capacity.'
-    return [title, grid, note]
+    return [title, grid, note(c.tankNote)]
   }
 
   // --------------------------------------------------------------- breed
 
   private breedPanel(now: number): Node[] {
-    const out: Node[] = [heading('Pick two adults')]
-    const eligible = this.state.fish.filter((f) => isAdult(f, now) && f.uses > 0 && !species(f.speciesId).seasonal)
+    const c = this.t
+    const eligible = this.state.fish.filter(
+      (f) => isAdult(f, now) && f.uses > 0 && !species(f.speciesId).seasonal,
+    )
+    const eligibleIds = new Set(eligible.map((f) => f.uid))
+    this.breedPick = this.breedPick.filter((uid) => eligibleIds.has(uid)).slice(-2)
+
+    const out: Node[] = [heading(c.breedHeading(this.breedPick.length))]
 
     const grid = document.createElement('div')
     grid.className = 'grid'
     for (const fish of eligible) {
-      const picked = this.breedPick.includes(fish.uid)
+      const idx = this.breedPick.indexOf(fish.uid)
+      const picked = idx !== -1
       grid.append(
         this.fishCell(fish, now, {
           selected: picked,
+          pickOrder: picked ? idx + 1 : undefined,
           onClick: () => {
             this.breedPick = picked
               ? this.breedPick.filter((u) => u !== fish.uid)
               : [...this.breedPick, fish.uid].slice(-2)
             this.say('')
-            this.render()
+            this.render(now)
           },
         }),
       )
@@ -211,38 +269,51 @@ export class App {
     out.push(grid)
 
     if (eligible.length < 2) {
-      out.push(note('Needs two adults with breeding attempts left. Fry have to grow up first, and an exhausted fish can still be merged.'))
+      out.push(note(c.breedNotEnoughAdults))
     }
 
     const [aUid, bUid] = this.breedPick
-    const a = aUid ? this.state.fish.find((f) => f.uid === aUid) : undefined
-    const b = bUid ? this.state.fish.find((f) => f.uid === bUid) : undefined
+    const a = aUid ? eligible.find((f) => f.uid === aUid) : undefined
+    const b = bUid ? eligible.find((f) => f.uid === bUid) : undefined
 
     if (a && b) {
-      out.push(heading('Offspring odds', 'h3'), oddsTable(a.tier, b.tier))
+      out.push(heading(c.oddsHeading, 'h3'), this.oddsTable(a.tier, b.tier))
     }
 
     const row = document.createElement('div')
     row.className = 'row'
-    const go = document.createElement('button')
-    go.textContent = 'Breed (1 heart)'
-    go.disabled = !a || !b
-    go.onclick = () => {
-      if (!a || !b) return
-      const result = breed(this.state, a.uid, b.uid, Date.now())
-      if ('error' in result) {
-        this.say(breedError(result.error), 'bad')
-      } else {
-        const name = species(result.child.speciesId).name
-        this.say(
-          `${name} hatched at ${stars(result.tier)} ${TIER_NAMES[result.tier]}, grade ${result.child.grade}.${result.novel ? ' New species for the book.' : ''}`,
-          'good',
-        )
-        this.breedPick = []
+    const canBreed = Boolean(a && b)
+    const go = makeButton(c.breedBtn(this.breedPick.length), () => {
+      if (!a || !b) {
+        this.say(c.breedError('needs-two'), 'bad')
+        this.render(now)
+        return
       }
-      this.render()
-    }
+      const clickNow = Date.now()
+      const result = breed(this.state, a.uid, b.uid, clickNow)
+      if ('error' in result) {
+        this.say(c.breedError(result.error), 'bad')
+      } else {
+        const name = speciesName(result.child.speciesId, this.locale)
+        const tName = tierName(result.tier, this.locale)
+        this.say(c.hatchedMsg(name, stars(result.tier), tName, result.child.grade, result.novel), 'good')
+        this.breedPick = []
+        this.hooks.onSave()
+      }
+      this.render(clickNow)
+    })
+    go.setAttribute('aria-disabled', String(!canBreed))
     row.append(go)
+
+    if (this.breedPick.length > 0) {
+      const clear = makeButton(c.clearBtn, () => {
+        this.breedPick = []
+        this.say('')
+        this.render(now)
+      })
+      row.append(clear)
+    }
+
     out.push(row)
     return out
   }
@@ -250,35 +321,52 @@ export class App {
   // --------------------------------------------------------------- merge
 
   private mergePanel(now: number): Node[] {
-    const out: Node[] = [heading(`Merge ${SYNTHESIS_INPUT_COUNT} fish of one tier`)]
+    const c = this.t
+    const liveIds = new Set(
+      this.state.fish
+        .filter((f) => !species(f.speciesId).seasonal && f.tier < 5)
+        .map((f) => f.uid),
+    )
+    this.mergePick = this.mergePick.filter((uid) => liveIds.has(uid)).slice(0, SYNTHESIS_INPUT_COUNT)
+
     const pickTier = this.mergePick.length
       ? this.state.fish.find((f) => f.uid === this.mergePick[0])?.tier
       : undefined
+    if (pickTier !== undefined) {
+      this.mergePick = this.mergePick.filter(
+        (uid) => this.state.fish.find((f) => f.uid === uid)?.tier === pickTier,
+      )
+    }
+
+    const out: Node[] = [heading(c.mergeHeading(SYNTHESIS_INPUT_COUNT, this.mergePick.length))]
 
     const grid = document.createElement('div')
     grid.className = 'grid'
     for (const fish of this.state.fish) {
-      const seasonal = species(fish.speciesId).seasonal
+      const seasonal = Boolean(species(fish.speciesId).seasonal)
       const wrongTier = pickTier !== undefined && fish.tier !== pickTier
-      const picked = this.mergePick.includes(fish.uid)
+      const idx = this.mergePick.indexOf(fish.uid)
+      const picked = idx !== -1
+      const locked = seasonal || wrongTier || fish.tier >= 5
       grid.append(
         this.fishCell(fish, now, {
           selected: picked,
-          locked: Boolean(seasonal) || wrongTier || fish.tier >= 5,
+          pickOrder: picked ? idx + 1 : undefined,
+          locked,
           onClick: () => {
             if (seasonal) {
-              this.say('Seasonal creatures are never consumed as materials.', 'bad')
+              this.say(c.synthError('seasonal-material', SYNTHESIS_INPUT_COUNT), 'bad')
             } else if (fish.tier >= 5) {
-              this.say('Mythic is the ceiling; it cannot be merged upward.', 'bad')
+              this.say(c.synthError('max-tier', SYNTHESIS_INPUT_COUNT), 'bad')
             } else if (wrongTier) {
-              this.say('All ten materials must share one tier.', 'bad')
+              this.say(c.synthError('mixed-tier', SYNTHESIS_INPUT_COUNT), 'bad')
             } else {
               this.mergePick = picked
                 ? this.mergePick.filter((u) => u !== fish.uid)
                 : [...this.mergePick, fish.uid].slice(0, SYNTHESIS_INPUT_COUNT)
               this.say('')
             }
-            this.render()
+            this.render(now)
           },
         }),
       )
@@ -287,44 +375,54 @@ export class App {
 
     const row = document.createElement('div')
     row.className = 'row'
-    const go = document.createElement('button')
-    go.textContent = `Merge (${this.mergePick.length}/${SYNTHESIS_INPUT_COUNT})`
-    go.disabled = this.mergePick.length !== SYNTHESIS_INPUT_COUNT
-    go.onclick = () => {
-      const result = synthesize(this.state, this.mergePick, Date.now())
-      if ('error' in result) {
-        this.say(synthError(result.error), 'bad')
-      } else {
-        this.say(
-          `Merged into ${species(result.child.speciesId).name}, ${stars(result.child.tier)} ${TIER_NAMES[result.child.tier]}.`,
-          'good',
-        )
-        this.mergePick = []
+    const ready = this.mergePick.length === SYNTHESIS_INPUT_COUNT
+    const go = makeButton(c.mergeBtn(this.mergePick.length, SYNTHESIS_INPUT_COUNT), () => {
+      if (this.mergePick.length !== SYNTHESIS_INPUT_COUNT) {
+        this.say(c.synthError('wrong-count', SYNTHESIS_INPUT_COUNT), 'bad')
+        this.render(now)
+        return
       }
-      this.render()
-    }
-    const clear = document.createElement('button')
-    clear.textContent = 'Clear'
-    clear.onclick = () => {
+      const clickNow = Date.now()
+      const result = synthesize(this.state, this.mergePick, clickNow)
+      if ('error' in result) {
+        this.say(c.synthError(result.error, SYNTHESIS_INPUT_COUNT), 'bad')
+      } else {
+        const name = speciesName(result.child.speciesId, this.locale)
+        const tName = tierName(result.child.tier, this.locale)
+        this.say(c.mergedMsg(name, stars(result.child.tier), tName), 'good')
+        this.mergePick = []
+        this.hooks.onSave()
+      }
+      this.render(clickNow)
+    })
+    go.setAttribute('aria-disabled', String(!ready))
+
+    const clear = makeButton(c.clearBtn, () => {
       this.mergePick = []
-      this.render()
-    }
+      this.say('')
+      this.render(now)
+    })
+    clear.setAttribute('aria-disabled', String(this.mergePick.length === 0))
+
     row.append(go, clear)
-    out.push(
-      row,
-      note('Ten go in, one comes out a tier higher, carrying the best grade among them. Spend exhausted duplicates here, never a fish that still has breeding attempts.'),
-    )
+    out.push(row, note(c.mergeNote))
     return out
   }
 
   // -------------------------------------------------------------- season
 
   private seasonPanel(now: number): Node[] {
-    const out: Node[] = [heading('Season crafting')]
+    const c = this.t
+    const out: Node[] = [heading(c.seasonHeading)]
     for (const recipe of SEASON_RECIPES) {
       const status = recipeStatus(this.state, recipe.id, now)
-      const outSpecies = species(recipe.output)
-      out.push(heading(`${outSpecies.name}${this.state.crafted.includes(recipe.id) ? ' — crafted' : ''}`, 'h3'))
+      const outName = speciesName(recipe.output, this.locale)
+      out.push(
+        heading(
+          `${outName}${this.state.crafted.includes(recipe.id) ? c.craftedSuffix : ''}`,
+          'h3',
+        ),
+      )
 
       const grid = document.createElement('div')
       grid.className = 'grid'
@@ -334,11 +432,11 @@ export class App {
         const cell = document.createElement('div')
         cell.className = 'cell locked'
         cell.append(
-          badge(ready ? 'ready' : material.have > 0 ? 'partial' : 'none'),
+          this.badge(ready ? 'ready' : material.have > 0 ? 'partial' : 'none'),
           count(`${material.have}/${material.need}`),
           this.portrait(sp, material.minTier, 1, !ready),
-          label(sp.name, 'name'),
-          label(`min ${stars(material.minTier)}`, 'meta'),
+          label(speciesName(sp.id, this.locale), 'name'),
+          label(c.minTierLabel(stars(material.minTier)), 'meta'),
         )
         grid.append(cell)
       }
@@ -346,95 +444,146 @@ export class App {
 
       const row = document.createElement('div')
       row.className = 'row'
-      const go = document.createElement('button')
-      go.textContent = 'Craft'
-      go.disabled = !status.ready
-      go.onclick = () => {
-        const result = craft(this.state, recipe.id, Date.now())
-        if ('error' in result) this.say(craftError(result.error), 'bad')
-        else this.say(`Crafted ${species(result.child.speciesId).name}.`, 'good')
-        this.render()
-      }
+      const go = makeButton(c.craftBtn, () => {
+        const clickNow = Date.now()
+        const result = craft(this.state, recipe.id, clickNow)
+        if ('error' in result) {
+          this.say(c.craftError(result.error), 'bad')
+        } else {
+          this.say(c.craftedMsg(speciesName(result.child.speciesId, this.locale)), 'good')
+          this.hooks.onSave()
+        }
+        this.render(clickNow)
+      })
+      go.setAttribute('aria-disabled', String(!status.ready))
       row.append(go)
       out.push(row)
     }
-    out.push(
-      note('Materials must be adults at or above the listed tier. A green badge means that slot is satisfied; crafting consumes the oldest matching fish first.'),
-    )
+    out.push(note(c.seasonNote))
     return out
   }
 
   // ---------------------------------------------------------------- book
 
   private bookPanel(): Node[] {
+    const c = this.t
     const grid = document.createElement('div')
     grid.className = 'grid'
     for (const sp of SPECIES) {
       const owned = this.state.discovered.includes(sp.id)
       const cell = document.createElement('div')
       cell.className = `cell${owned ? '' : ' locked'}`
+      cell.onclick = () => {
+        if (owned) {
+          this.say(
+            `${speciesName(sp.id, this.locale)} — ${stars(sp.tier)} ${tierName(sp.tier, this.locale)}${sp.seasonal ? c.seasonalSuffix : ''}`,
+          )
+        } else {
+          this.say('???')
+        }
+        this.render()
+      }
       cell.append(
         this.portrait(sp, sp.tier, owned ? 3 : 1, !owned),
-        label(owned ? sp.name : '???', 'name'),
-        label(`${TIER_NAMES[sp.tier]}${sp.seasonal ? ' · seasonal' : ''}`, 'meta'),
+        label(owned ? speciesName(sp.id, this.locale) : '???', 'name'),
+        label(`${tierName(sp.tier, this.locale)}${sp.seasonal ? c.seasonalSuffix : ''}`, 'meta'),
       )
       grid.append(cell)
     }
-    return [heading('Collection'), grid]
+    return [heading(c.bookHeading), grid]
   }
 
   // ------------------------------------------------------------ settings
 
   private settingsPanel(): Node[] {
-    const out: Node[] = [heading('Art theme')]
-    const row = document.createElement('div')
-    row.className = 'row'
+    const c = this.t
+    const out: Node[] = [heading(c.settingsThemeHeading)]
+    const themeRow = document.createElement('div')
+    themeRow.className = 'row'
     for (const theme of this.hooks.themes) {
-      const b = document.createElement('button')
-      b.textContent = theme.name
+      const b = makeButton(themeName(theme.id, theme.name, this.locale), () => {
+        this.hooks.onThemeChange(theme.id)
+      })
       b.setAttribute('aria-pressed', String(this.state.theme === theme.id))
-      b.onclick = () => this.hooks.onThemeChange(theme.id)
-      row.append(b)
+      themeRow.append(b)
     }
+
+    const langRow = document.createElement('div')
+    langRow.className = 'row'
+    const zhBtn = makeButton('简体中文', () => this.hooks.onLocaleChange('zh'))
+    zhBtn.setAttribute('aria-pressed', String(this.locale === 'zh'))
+    const enBtn = makeButton('English', () => this.hooks.onLocaleChange('en'))
+    enBtn.setAttribute('aria-pressed', String(this.locale === 'en'))
+    langRow.append(zhBtn, enBtn)
+
     out.push(
-      row,
-      note('A theme is a folder under public/themes/. Its manifest supplies the palette, the renderer and an optional sprites/ directory; dropping <speciesId>.png in there replaces that fish everywhere with no code change.'),
-      heading('Trade hub', 'h3'),
+      themeRow,
+      note(c.settingsThemeNote),
+      heading(c.settingsLangHeading, 'h3'),
+      langRow,
+      heading(c.settingsTradeHeading, 'h3'),
       note(
         this.state.level >= TRADE_HUB_LEVEL
-          ? 'Unlocked. This build keeps trading out of scope: there is no economy, no server and no market.'
-          : `Locked until aquarium level ${TRADE_HUB_LEVEL}, mirroring the original's gate.`,
+          ? c.settingsTradeUnlocked
+          : c.settingsTradeLocked(TRADE_HUB_LEVEL),
       ),
-      heading('Save', 'h3'),
+      heading(c.settingsSaveHeading, 'h3'),
     )
+
     const danger = document.createElement('div')
     danger.className = 'row'
-    const reset = document.createElement('button')
-    reset.textContent = 'Reset progress'
-    reset.onclick = () => {
-      if (confirm('Delete this aquarium and start over? This cannot be undone.')) this.hooks.onReset()
+    if (!this.confirmingReset) {
+      const reset = makeButton(c.resetBtn, () => {
+        this.confirmingReset = true
+        this.render()
+      })
+      danger.append(reset)
+    } else {
+      const confirmBtn = makeButton(c.confirmResetBtn, () => {
+        this.confirmingReset = false
+        this.hooks.onReset()
+        this.say(this.t.resetDoneMsg, 'good')
+        this.render()
+      })
+      confirmBtn.className = 'danger-confirm'
+      const cancelBtn = makeButton(c.cancelBtn, () => {
+        this.confirmingReset = false
+        this.render()
+      })
+      danger.append(confirmBtn, cancelBtn)
     }
-    danger.append(reset)
-    out.push(danger, note('Progress lives in localStorage on this device only.'))
+    out.push(danger, note(c.settingsSaveNote))
     return out
   }
 
   // ------------------------------------------------------------- helpers
 
   private portrait(sp: Species, tier: Tier, grade: Grade, dim = false): HTMLCanvasElement {
-    const canvas = document.createElement('canvas')
     const dpr = Math.min(2, window.devicePixelRatio || 1)
     const w = 96
     const h = 52
+    const key = `${this.renderer.manifest.id}:${sp.id}:${tier}:${grade}:${dim ? 1 : 0}:${dpr}`
+
+    let cached = this.portraitCache.get(key)
+    if (!cached) {
+      cached = document.createElement('canvas')
+      cached.width = w * dpr
+      cached.height = h * dpr
+      const ctx = cached.getContext('2d')
+      if (ctx) {
+        ctx.scale(dpr, dpr)
+        this.renderer.portrait(ctx, w, h, { species: sp, tier, grade, dim })
+      }
+      this.portraitCache.set(key, cached)
+    }
+
+    const canvas = document.createElement('canvas')
     canvas.width = w * dpr
     canvas.height = h * dpr
     canvas.style.width = `${w}px`
     canvas.style.height = `${h}px`
-    const ctx = canvas.getContext('2d')
-    if (ctx) {
-      ctx.scale(dpr, dpr)
-      this.renderer.portrait(ctx, w, h, { species: sp, tier, grade, dim })
-    }
+    const outCtx = canvas.getContext('2d')
+    if (outCtx) outCtx.drawImage(cached, 0, 0)
     return canvas
   }
 
@@ -443,6 +592,7 @@ export class App {
     now: number,
     opts: {
       selected?: boolean
+      pickOrder?: number
       locked?: boolean
       onClick?: () => void
       action?: () => void
@@ -454,29 +604,79 @@ export class App {
     const cell = document.createElement('div')
     cell.className = `cell${opts.locked ? ' locked' : ''}`
     cell.setAttribute('aria-pressed', String(Boolean(opts.selected)))
-    if (opts.onClick && !opts.locked) cell.onclick = opts.onClick
+    if (opts.onClick) cell.onclick = opts.onClick
 
     cell.append(
-      badge(adult && fish.uses > 0 ? 'ready' : adult ? 'none' : 'partial'),
+      this.badge(adult && fish.uses > 0 ? 'ready' : adult ? 'none' : 'partial'),
       count(`${fish.uses}/${USES_BY_TIER[fish.tier]}`),
       this.portrait(sp, fish.tier, fish.grade, !adult),
-      label(sp.name, 'name'),
-      label(`${stars(fish.tier)} · grade ${fish.grade}`, 'meta'),
+      label(speciesName(sp.id, this.locale), 'name'),
+      label(`${stars(fish.tier)} · ${this.t.gradeLabel(fish.grade)}`, 'meta'),
     )
+    if (opts.pickOrder !== undefined) {
+      cell.append(label(`#${opts.pickOrder}`, 'pick-order'))
+    }
     if (!adult && fish.maturesAt !== null) {
-      cell.append(label(formatClock(fish.maturesAt - now), 'timer'))
+      const timerEl = label(formatClock(fish.maturesAt - now), 'timer')
+      timerEl.dataset.maturesAt = String(fish.maturesAt)
+      cell.append(timerEl)
     }
     if (opts.action && opts.actionLabel) {
-      const b = document.createElement('button')
-      b.textContent = opts.actionLabel
-      b.onclick = (event) => {
+      const b = makeButton(opts.actionLabel, (event) => {
         event.stopPropagation()
         opts.action?.()
-      }
+      })
       cell.append(b)
     }
     return cell
   }
+
+  private badge(kind: 'ready' | 'partial' | 'none'): HTMLElement {
+    const c = this.t
+    const el = document.createElement('div')
+    el.className = `badge${kind === 'ready' ? '' : ' idle'}`
+    el.textContent = kind === 'none' ? '·' : '↓'
+    el.title =
+      kind === 'ready'
+        ? c.badgeReadyTitle
+        : kind === 'partial'
+          ? c.badgePartialTitle
+          : c.badgeNoneTitle
+    return el
+  }
+
+  private oddsTable(a: Tier, b: Tier): HTMLElement {
+    const odds = tierOdds(a, b)
+    const table = document.createElement('table')
+    table.className = 'odds'
+    const head = document.createElement('tr')
+    head.append(
+      th(this.t.pairingCol),
+      ...odds.map((_, i) => th(tierName((i + 1) as Tier, this.locale))),
+    )
+    const row = document.createElement('tr')
+    row.append(td(`${stars(a)} + ${stars(b)}`), ...odds.map((value) => td(`${value}%`)))
+    table.append(head, row)
+    return table
+  }
+
+  private describe(fish: Fish, now: number): string {
+    const c = this.t
+    const name = speciesName(fish.speciesId, this.locale)
+    const tName = tierName(fish.tier, this.locale)
+    const stateStr = isAdult(fish, now)
+      ? c.describeAdult
+      : c.describeFry(formatClock((fish.maturesAt ?? now) - now))
+    return c.describeFish(name, stars(fish.tier), tName, fish.grade, fish.uses, stateStr)
+  }
+}
+
+function makeButton(text: string, onClick: (event: MouseEvent) => void): HTMLButtonElement {
+  const b = document.createElement('button')
+  b.type = 'button'
+  b.textContent = text
+  b.addEventListener('click', onClick)
+  return b
 }
 
 function stat(labelText: string, value: string): HTMLElement {
@@ -524,31 +724,6 @@ function count(text: string): HTMLElement {
   return label(text, 'count')
 }
 
-function badge(kind: 'ready' | 'partial' | 'none'): HTMLElement {
-  const el = document.createElement('div')
-  el.className = `badge${kind === 'ready' ? '' : ' idle'}`
-  el.textContent = kind === 'none' ? '·' : '↓'
-  el.title =
-    kind === 'ready'
-      ? 'Available to use now'
-      : kind === 'partial'
-        ? 'Present but not usable yet'
-        : 'Nothing to use'
-  return el
-}
-
-function oddsTable(a: Tier, b: Tier): HTMLElement {
-  const odds = tierOdds(a, b)
-  const table = document.createElement('table')
-  table.className = 'odds'
-  const head = document.createElement('tr')
-  head.append(th('Pairing'), ...odds.map((_, i) => th(TIER_NAMES[i + 1] ?? '')))
-  const row = document.createElement('tr')
-  row.append(td(`${stars(a)} + ${stars(b)}`), ...odds.map((value) => td(`${value}%`)))
-  table.append(head, row)
-  return table
-}
-
 function th(text: string): HTMLElement {
   const el = document.createElement('th')
   el.textContent = text
@@ -570,53 +745,4 @@ export function formatClock(ms: number): string {
   const m = Math.floor(total / 60)
   const s = total % 60
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
-}
-
-function describe(fish: Fish, now: number): string {
-  const sp = species(fish.speciesId)
-  const state = isAdult(fish, now) ? 'adult' : `fry, ${formatClock((fish.maturesAt ?? now) - now)} to adulthood`
-  return `${sp.name} — ${stars(fish.tier)} ${TIER_NAMES[fish.tier]}, grade ${fish.grade}, ${fish.uses} breeding attempts left, ${state}.`
-}
-
-function breedError(error: string): string {
-  switch (error) {
-    case 'no-hearts':
-      return 'Out of hearts. One regenerates every seven minutes.'
-    case 'tank-full':
-      return 'Tank is full. Raise the aquarium level or release a fish.'
-    case 'not-adult':
-      return 'Both parents must be adults.'
-    case 'no-uses':
-      return 'One parent has no breeding attempts left.'
-    case 'seasonal-parent':
-      return 'Seasonal creatures cannot breed.'
-    default:
-      return 'Pick two different adults.'
-  }
-}
-
-function synthError(error: string): string {
-  switch (error) {
-    case 'mixed-tier':
-      return 'All ten materials must share one tier.'
-    case 'max-tier':
-      return 'Mythic cannot be merged upward.'
-    case 'seasonal-material':
-      return 'Seasonal creatures are never consumed as materials.'
-    case 'tank-full':
-      return 'Tank is full.'
-    default:
-      return `Select exactly ${SYNTHESIS_INPUT_COUNT} fish.`
-  }
-}
-
-function craftError(error: string): string {
-  switch (error) {
-    case 'missing-materials':
-      return 'Materials are short.'
-    case 'tank-full':
-      return 'Tank is full.'
-    default:
-      return 'Unknown recipe.'
-  }
 }

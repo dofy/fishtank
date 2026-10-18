@@ -1,6 +1,7 @@
 import { newGame, tick } from './core/game'
 import { load, save, wipe } from './core/save'
 import { species } from './core/species'
+import type { Locale } from './core/types'
 import { LcdRenderer } from './render/lcd'
 import { RealisticRenderer } from './render/realistic'
 import type { Renderer } from './render/renderer'
@@ -53,9 +54,18 @@ async function main(): Promise<void> {
       app.setRenderer(renderer)
       save(state)
     },
+    onLocaleChange: (locale: Locale) => {
+      state.locale = locale
+      app.render(Date.now())
+      save(state)
+    },
+    onSave: () => {
+      save(state)
+    },
     onReset: () => {
+      const currentLocale = state.locale
       wipe()
-      state = newGame(Date.now())
+      state = newGame(Date.now(), currentLocale)
       state.theme = manifest.id
       app.setState(state)
       app.render(Date.now())
@@ -64,7 +74,7 @@ async function main(): Promise<void> {
   })
 
   app.mount(root)
-  onSpriteLoad(() => app.render(Date.now()))
+  onSpriteLoad(() => app.invalidatePortraits())
 
   const ctx = app.canvas.getContext('2d')
   if (!ctx) throw new Error('2D canvas context unavailable')
@@ -114,9 +124,13 @@ async function main(): Promise<void> {
 
   window.setInterval(() => {
     const now = Date.now()
-    tick(state, now)
-    save(state)
-    app.render(now)
+    const res = tick(state, now)
+    if (res.maturedCount > 0 || res.heartsGained > 0 || res.levelUps > 0) {
+      save(state)
+      app.render(now)
+    } else {
+      app.updateTimers(now)
+    }
   }, 1000)
 
   window.addEventListener('visibilitychange', () => {

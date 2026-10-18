@@ -56,6 +56,8 @@ export interface Fish {
   expBanked: boolean
 }
 
+export type Locale = 'zh' | 'en'
+
 export interface GameState {
   version: number
   fish: Fish[]
@@ -69,6 +71,7 @@ export interface GameState {
   /** Season recipe ids already crafted at least once. */
   crafted: string[]
   theme: string
+  locale?: Locale
   /** Epoch ms of the last simulation tick. */
   lastTick: number
 }
