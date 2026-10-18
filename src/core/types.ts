@@ -51,13 +51,45 @@ export type BodyForm =
   | 'ray'
   | 'turtle'
 
+export type SilhouetteId =
+  | 'goldfish'
+  | 'minnow'
+  | 'beak-butterfly'
+  | 'unicorn-tang'
+  | 'wrasse'
+  | 'catfish'
+  | 'damsel'
+  | 'banner-cardinal'
+  | 'saucer-jelly'
+  | 'crown-butterfly'
+  | 'tetra'
+  | 'fire-goby'
+  | 'spiky-puffer'
+  | 'spiny-seahorse'
+  | 'krait'
+  | 'lyretail'
+  | 'glider-fish'
+  | 'rhomboid-barb'
+  | 'electric-eel'
+  | 'ribbon-jelly'
+  | 'moorish-idol'
+  | 'manta'
+  | 'ribbon-eel'
+  | 'leafy-seahorse'
+  | 'sea-turtle'
+  | 'veil-koi'
+  | 'sea-dragon'
+  | 'crown-jelly'
+
 /**
  * Renderer-neutral body description. A theme may either draw this
  * procedurally or ignore it and blit `sprites/<speciesId>.png` instead.
  */
 export interface BodyShape {
-  /** Silhouette form. Defaults to 'fish'. */
+  /** Locomotion family. Defaults to 'fish'. */
   form?: BodyForm
+  /** Distinct anatomical silhouette for procedural rendering. */
+  silhouette?: SilhouetteId
   /** Body length relative to a 16 px grid cell. */
   length: number
   /** Body height relative to its length, 0..1. */

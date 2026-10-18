@@ -188,10 +188,13 @@ async function main(): Promise<void> {
   app.canvas.addEventListener('pointerdown', (event) => {
     const pt = canvasCoords(event)
 
-    // 1. Click a fish to startle it and make it dart away
+    // 1. Click a fish to startle it (or trigger electric eel discharge after 6 clicks in 30s)
     const fishUid = scene.hitFish(pt.x, pt.y)
     if (fishUid) {
-      if (scene.scareFish(fishUid, pt.x, pt.y, logicalWidth, logicalHeight)) {
+      const res = scene.scareFish(fishUid, pt.x, pt.y, logicalWidth, logicalHeight)
+      if (res === 'zapped') {
+        sound.play('zap')
+      } else if (res === 'scared') {
         sound.play('scare')
       }
       return
@@ -275,7 +278,14 @@ async function main(): Promise<void> {
     night = resolveDarkMode(state.colorMode ?? 'auto')
 
     scene.sync(state, species, logicalWidth, logicalHeight, wallNow)
-    scene.update(dt, logicalWidth, logicalHeight, elapsed, () => sound.play('eat'))
+    scene.update(
+      dt,
+      logicalWidth,
+      logicalHeight,
+      elapsed,
+      () => sound.play('eat'),
+      () => sound.play('zap'),
+    )
 
     ctx.save()
     ctx.setTransform(dpr * zoom, 0, 0, dpr * zoom, 0, 0)

@@ -298,8 +298,11 @@ export class LcdRenderer implements Renderer {
   private agent(ctx: CanvasRenderingContext2D, a: Agent, t: number, s: SceneColors): void {
     const len = a.species.body.length * 4.2 * a.scale
     const c = this.cell
-    const x = Math.round((a.x - len / 2) / c) * c
-    const y = Math.round((a.y + (a.dropping ? 0 : Math.sin(t * 2 + a.phase) * c)) / c) * c
+    const shocked = (a.shockedTimer ?? 0) > 0
+    const discharging = (a.dischargingTimer ?? 0) > 0
+    const jitter = (shocked || discharging) && Math.floor(t * 24) % 2 === 0 ? c : 0
+    const x = Math.round((a.x - len / 2) / c) * c + jitter
+    const y = Math.round((a.y + (a.dropping || shocked ? 0 : Math.sin(t * 2 + a.phase) * c)) / c) * c
     ctx.save()
     ctx.translate(x, y)
     if (a.dir === -1) {
@@ -307,6 +310,16 @@ export class LcdRenderer implements Renderer {
       ctx.scale(-1, 1)
     }
     this.body(ctx, a.species.body, len, a.fish.grade, a.fish.tier, a.fish.speciesId, s, t + a.phase)
+    if (shocked || discharging) {
+      const h = len * a.species.body.depth
+      ctx.fillStyle = s.ink
+      const step = Math.floor(t * 16)
+      for (let i = 0; i < 4; i++) {
+        const sx = Math.round((len * (0.2 + i * 0.22)) / c) * c
+        const sy = ((i + step) % 2 === 0 ? -1 : 1) * Math.round((h * 0.55) / c) * c
+        ctx.fillRect(sx, sy, c - 1, c - 1)
+      }
+    }
     ctx.restore()
   }
 

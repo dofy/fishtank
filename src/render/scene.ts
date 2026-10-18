@@ -27,10 +27,20 @@ export interface Agent {
   splashed?: boolean
   /** Remaining seconds of startle/flee burst when clicked. */
   scaredTimer?: number
+  /** Horizontal escape speed while startled. */
+  scaredVx?: number
   /** Vertical escape velocity while startled. */
   scaredVy?: number
+  /** Recent click timestamps (ms) within 30s window, for electric eel 6-click discharge. */
+  clickTimestamps?: number[]
   /** Remaining seconds of satiety cooldown after eating a pellet (9s). */
   eatCooldown?: number
+  /** Remaining seconds that this fish is stunned by an electric eel discharge (3s). */
+  shockedTimer?: number
+  /** Remaining seconds that this electric eel is actively emitting lightning. */
+  dischargingTimer?: number
+  /** Cooldown before this electric eel can discharge again. */
+  zapCooldown?: number
 }
 
 export interface SplashEffect {
@@ -118,6 +128,7 @@ export class Scene {
         dropping: shouldDrop,
         vy: shouldDrop ? dropVy : 0,
         splashed: !shouldDrop,
+        zapCooldown: 8 + Math.random() * 14,
       })
     }
     for (const uid of [...this.agents.keys()]) {
@@ -169,25 +180,44 @@ export class Scene {
     return null
   }
 
-  /** Startle a fish so it darts away from the click point. */
-  scareFish(uid: string, clickX: number, clickY: number, width: number, height: number): boolean {
+  /** Startle a fish so it darts a long horizontal distance away from the click point. */
+  scareFish(
+    uid: string,
+    clickX: number,
+    clickY: number,
+    width: number,
+    height: number,
+    now = Date.now(),
+  ): 'scared' | 'zapped' | false {
     const a = this.agents.get(uid)
     if (!a || a.dropping) return false
+
+    // Track clicks within a 30s sliding window; 6 clicks on a Volt Electric Eel triggers immediate discharge
+    const recent = (a.clickTimestamps ?? []).filter((ts) => now - ts <= 30_000)
+    recent.push(now)
+    a.clickTimestamps = recent
+    if (a.fish.speciesId === 'volteel' && recent.length >= 6) {
+      a.clickTimestamps = []
+      this.triggerDischarge(a)
+      return 'zapped'
+    }
+
     const halfLen = a.species.body.length * 4.2 * a.scale * 0.5
     const margin = Math.max(40, halfLen + 14)
 
-    // Pick escape direction away from the pointer, or away from the nearest wall
+    // Pick horizontal escape direction with ample room to dart across the tank
     let escapeDir: 1 | -1 = a.x >= clickX ? 1 : -1
-    if (a.x < margin + 50) escapeDir = 1
-    else if (a.x > width - margin - 50) escapeDir = -1
+    if (escapeDir === -1 && a.x < margin + 160) escapeDir = 1
+    else if (escapeDir === 1 && a.x > width - margin - 160) escapeDir = -1
 
     a.dir = escapeDir
-    a.scaredTimer = 0.85
+    a.scaredTimer = 1.35
+    a.scaredVx = 310 + Math.random() * 90
     const dy = a.y - clickY
-    a.scaredVy = (dy >= 0 ? 1 : -1) * (65 + Math.random() * 45)
+    a.scaredVy = (dy >= 0 ? 1 : -1) * (55 + Math.random() * 40)
     a.baseDepth = Math.min(0.82, Math.max(0.22, (a.y + a.scaredVy * 0.4) / Math.max(1, height)))
     this.splashes.push({ x: a.x, y: a.y, age: 0, duration: 0.45 })
-    return true
+    return 'scared'
   }
 
   /** Drop one food pellet at (px, py) that sinks toward the bottom and disappears on the floor. */
@@ -203,12 +233,25 @@ export class Scene {
     })
   }
 
+  /** Trigger an electric discharge from an electric eel, stunning all other fish for 3s. */
+  private triggerDischarge(eel: Agent, onZap?: () => void): void {
+    eel.dischargingTimer = 0.85
+    eel.zapCooldown = 22 + Math.random() * 18
+    for (const other of this.agents.values()) {
+      if (other.fish.uid === eel.fish.uid || other.dropping) continue
+      other.shockedTimer = 3.0
+      other.scaredTimer = 0
+    }
+    onZap?.()
+  }
+
   update(
     dt: number,
     width: number,
     height: number,
     time: number,
     onEat?: () => void,
+    onZap?: () => void,
   ): void {
     // Update water entry splashes
     for (const s of this.splashes) s.age += dt
@@ -230,6 +273,25 @@ export class Scene {
       if (a.eatCooldown && a.eatCooldown > 0) {
         a.eatCooldown = Math.max(0, a.eatCooldown - dt)
       }
+      if (a.dischargingTimer && a.dischargingTimer > 0) {
+        a.dischargingTimer = Math.max(0, a.dischargingTimer - dt)
+      }
+      if (a.zapCooldown && a.zapCooldown > 0) {
+        a.zapCooldown = Math.max(0, a.zapCooldown - dt)
+      }
+
+      // Low-probability spontaneous electric discharge when Volt Electric Eel is swimming
+      if (
+        a.fish.speciesId === 'volteel' &&
+        !a.dropping &&
+        (!a.zapCooldown || a.zapCooldown <= 0) &&
+        (!a.shockedTimer || a.shockedTimer <= 0) &&
+        this.agents.size > 1 &&
+        Math.random() < dt * 0.04
+      ) {
+        this.triggerDischarge(a, onZap)
+      }
+
       const targetY = Math.min(maxY, Math.max(minY, height * (a.baseDepth ?? 0.45)))
       const halfLen = a.species.body.length * 4.2 * a.scale * 0.5
       const margin = Math.max(36, halfLen + 10)
@@ -261,15 +323,27 @@ export class Scene {
         continue
       }
 
-      // 2. Startled escape burst when clicked
+      // 1.5. Stunned for 3s when shocked by an electric eel
+      if (a.shockedTimer && a.shockedTimer > 0) {
+        a.shockedTimer = Math.max(0, a.shockedTimer - dt)
+        a.y = Math.min(maxY, Math.max(minY, a.y + Math.sin(time * 36 + a.phase) * 6 * dt))
+        a.tilt = Math.sin(time * 52 + a.phase) * 0.16
+        if (a.shockedTimer <= 0) {
+          a.tilt = 0
+        }
+        continue
+      }
+
+      // 2. Startled escape burst when clicked (or brisk swim-away after eating)
       if (a.scaredTimer && a.scaredTimer > 0) {
         a.scaredTimer = Math.max(0, a.scaredTimer - dt)
-        const burst = 1 + a.scaredTimer * 2.8
-        a.x += a.dir * a.speed * burst * dt
+        const vx = a.scaredVx ?? a.speed * 3.5
+        a.x += a.dir * vx * dt
+        a.scaredVx = Math.max(a.speed * 1.4, vx * Math.exp(-1.45 * dt))
         a.y += (a.scaredVy ?? 0) * dt
-        a.scaredVy = (a.scaredVy ?? 0) * Math.exp(-3.5 * dt)
-        a.phase += dt * 10
-        a.tilt = ((a.scaredVy ?? 0) / 120) * 0.25
+        a.scaredVy = (a.scaredVy ?? 0) * Math.exp(-3.2 * dt)
+        a.phase += dt * 11
+        a.tilt = ((a.scaredVy ?? 0) / 140) * 0.22
 
         if (a.x < margin) {
           a.x = margin
@@ -317,7 +391,8 @@ export class Scene {
           // Swim away after eating: pick a fresh cruising depth and briskly glide away
           a.dir = Math.random() < 0.65 ? (-a.dir as 1 | -1) : a.dir
           a.baseDepth = 0.25 + Math.random() * 0.52
-          a.scaredTimer = 0.45
+          a.scaredTimer = 0.65
+          a.scaredVx = 125 + Math.random() * 45
           a.scaredVy = (Math.random() - 0.5) * 55
           this.splashes.push({ x: nearestFood.x, y: nearestFood.y, age: 0.2, duration: 0.45 })
           onEat?.()

@@ -16,14 +16,15 @@ A browser idle aquarium game inspired by [PC FISH: Taskbar Aquarium](https://sto
 
 - **Authentic Progression & Balance / 还原核心数值平衡**
   - **Hearts & Breeding**: 1 heart per breeding attempt, regenerates 1 heart every 7 minutes (cap 5). Starter fish have infinite (`∞`) breeding uses; bred fish roll `1–5` uses.
-  - **Aquarium Level (`Lv.1–Lv.10`)**: Breeding and fry maturation grant EXP, expanding visual tank display capacity from `3` up to `12` fish while keeping inventory unlimited.
+  - **Aquarium Level (`Lv.1–Lv.10`)**: Breeding and fry maturation grant EXP, expanding both visual fish display slots and decoration placement slots from `3` up to `12` while keeping inventory unlimited.
   - **Two-Axis Quality**: Rarity Tier (`Starter` / `1★ Common` → `5★ Mythic`) × Visual Grade (`Grade 1–5`, granting up to `2.0x` EXP and distinct color variants).
   - **Exact Breeding Matrix & 10-to-1 Synthesis**: Reproduces the official parent-tier probability matrix and 10-fish synthesis (with rarity/0-use filters and optimal `1+9` grade inheritance auto-select). See [`docs/BALANCE.md`](docs/BALANCE.md).
-- **28 Marine Species & 7 Distinct Locomotion Forms / 多形态海洋生物与专属运动轨迹**
-  - Includes standard reef fish, **Jellyfish** (vertical pulsing propulsion), **Seahorses** (upright figure-8 hovering & fluttering dorsal fin), **Electric / Ribbon Eels** & **Sea Snakes** (S-wave slithering), **Manta Rays** (sweeping glide arcs), and **Sea Turtles** (flipper-stroke bursts).
-  - Placing a fish into the tank triggers a randomized **drop-from-above plunge and water splash** animation.
-- **18 Draggable Tank Decorations & Night Lamps / 可拖拽海底造景与夜晚灯光联动**
-  - Unlocks floor ornaments (swaying kelp, periodically opening pearl giant clam, luminous sea shrooms, amethyst geode, sunken castle, etc.) and **top-hanging lights** (rainbow string lights, starlight pendants, festival lanterns, neon jelly chandelier) across `Lv.1–Lv.10`.
+- **28 Distinct Species Silhouettes & Interactive Tank / 28 种独立生物外轮廓与鱼缸互动**
+  - Every species has a bespoke anatomical silhouette (beak butterflyfish, unicorn tang, Moorish idol whip-streamer, spiky puffer, glider flying fish, leafy sea dragon, saucer/ribbon/crown jellyfish, electric/ribbon eels, manta ray, sea turtle, etc.) and locomotion trajectory.
+  - **Interactive Feeding & Startle**: Click empty water to drop sinking food pellets one by one (nearby fish chase and eat 1 pellet per 9s satiety cooldown then swim away); click a fish to startle it into a long horizontal dash.
+  - **Electric Eel Discharge**: A *Volt Electric Eel* in the tank occasionally discharges (or immediately when clicked 6 times within 30s), stunning all other fish with lightning arcs for 3 seconds!
+- **18 Asymmetric Draggable Decorations & Night Lamps / 非对称可拖拽造景与夜晚灯光联动**
+  - Unlocks 18 asymmetric floor ornaments (with wide height contrast from low clams/pebbles up to towering kelp & sunken castles exceeding 50% tank height) and **top-hanging lights** across `Lv.1–Lv.10` (up to `3 → 12` placed at once by level).
   - Drag any placed decoration directly inside the tank canvas (last dragged item automatically rises to the top layer).
 - **Auto / Day / Night Color Modes & Immersive Mode / 昼夜模式与全屏沉浸模式**
   - Supports **Auto** (follows system appearance), **Day (Light)**, and **Night (Dark)** modes. In Night mode, aquarium overhead lamps and top-hanging fairy lights automatically illuminate the water with volumetric light cones.

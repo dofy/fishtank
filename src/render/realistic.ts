@@ -36,6 +36,16 @@ export class RealisticRenderer implements Renderer {
       for (const sp of view.splashes) this.splash(ctx, sp)
     }
 
+    // Tank-wide electric flash when a Volt Electric Eel discharges
+    const dischargingEel = view.agents.find((a) => (a.dischargingTimer ?? 0) > 0.35)
+    if (dischargingEel) {
+      const intensity = ((dischargingEel.dischargingTimer ?? 0) - 0.35) / 0.5
+      ctx.save()
+      ctx.fillStyle = `rgba(125, 211, 252, ${intensity * 0.22})`
+      ctx.fillRect(0, 0, w, h)
+      ctx.restore()
+    }
+
     this.bubbles(ctx, w, h, view.time)
     this.lampsFixture(ctx, w, night)
 
@@ -459,12 +469,62 @@ export class RealisticRenderer implements Renderer {
 
   private agent(ctx: CanvasRenderingContext2D, a: Agent, t: number): void {
     const len = a.species.body.length * 4.2 * a.scale
+    const shocked = (a.shockedTimer ?? 0) > 0
+    const discharging = (a.dischargingTimer ?? 0) > 0
+    const jitterX = shocked || discharging ? Math.sin(t * 68 + a.phase) * 2.4 : 0
+    const bobY = a.dropping || shocked ? 0 : Math.sin(t * 2 + a.phase) * 2.5
+
     ctx.save()
-    ctx.translate(a.x, a.y + (a.dropping ? 0 : Math.sin(t * 2 + a.phase) * 2.5))
+    ctx.translate(a.x + jitterX, a.y + bobY)
     ctx.scale(a.dir, 1)
     if (a.tilt) ctx.rotate(a.tilt)
     ctx.translate(-len / 2, 0)
     this.body(ctx, a.species.body, len, a.fish.grade, a.fish.tier, a.fish.speciesId, t + a.phase)
+    if (discharging || shocked) {
+      this.electricArcs(ctx, len, len * a.species.body.depth, t + a.phase, discharging)
+    }
+    ctx.restore()
+  }
+
+  private electricArcs(
+    ctx: CanvasRenderingContext2D,
+    len: number,
+    height: number,
+    t: number,
+    intense: boolean,
+  ): void {
+    ctx.save()
+    if (intense) {
+      const halo = ctx.createRadialGradient(len * 0.5, 0, 4, len * 0.5, 0, len * 0.75)
+      halo.addColorStop(0, 'rgba(254, 240, 138, 0.55)')
+      halo.addColorStop(0.5, 'rgba(56, 189, 248, 0.35)')
+      halo.addColorStop(1, 'rgba(56, 189, 248, 0)')
+      ctx.fillStyle = halo
+      ctx.beginPath()
+      ctx.arc(len * 0.5, 0, len * 0.75, 0, Math.PI * 2)
+      ctx.fill()
+    }
+
+    ctx.strokeStyle = intense ? '#fef08a' : '#7dd3fc'
+    ctx.shadowColor = '#38bdf8'
+    ctx.shadowBlur = intense ? 10 : 6
+    ctx.lineWidth = intense ? 2.2 : 1.6
+    ctx.lineCap = 'round'
+    ctx.lineJoin = 'round'
+
+    const bolts = intense ? 5 : 3
+    for (let i = 0; i < bolts; i++) {
+      const seed = Math.floor(t * 18) + i * 7
+      const bx = len * (0.15 + ((seed * 29) % 70) / 100)
+      const by = (((seed * 43) % 100) / 100 - 0.5) * height * 1.15
+      const reach = (intense ? 16 : 10) * (i % 2 === 0 ? 1 : -1)
+      ctx.beginPath()
+      ctx.moveTo(bx - 7, by - 4)
+      ctx.lineTo(bx + 2, by - reach * 0.55)
+      ctx.lineTo(bx - 2, by + 2)
+      ctx.lineTo(bx + 8, by + reach * 0.5)
+      ctx.stroke()
+    }
     ctx.restore()
   }
 

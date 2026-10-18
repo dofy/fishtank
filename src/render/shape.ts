@@ -11,42 +11,82 @@ export function fishPath(
 ): { path: Path2D; height: number } {
   const h = len * body.depth
   const form = body.form ?? 'fish'
+  const sil = body.silhouette
   const path = new Path2D()
 
   switch (form) {
     case 'jellyfish': {
-      // Umbrella bell dome + scalloped rim + trailing tentacles with pulsing motion
       const pulse = animPhase ? Math.sin(animPhase * 2.2) : 0
       const cx = len * 0.5
-      const domeTop = -h * (0.48 + pulse * 0.05)
-      const rimY = -h * 0.02
-      const rx = len * (0.36 - pulse * 0.04)
-      path.moveTo(cx - rx, rimY)
-      path.bezierCurveTo(cx - rx, domeTop, cx + rx, domeTop, cx + rx, rimY)
-      const lobes = 4
-      const lobeW = (rx * 2) / lobes
-      for (let i = lobes - 1; i >= 0; i--) {
-        const x1 = cx - rx + (i + 0.5) * lobeW
-        const x0 = cx - rx + i * lobeW
-        path.quadraticCurveTo(x1, rimY + h * 0.09, x0, rimY)
+      const wave = animPhase ? Math.sin(animPhase * 2.2 - 0.8) * (len * 0.06) : 0
+
+      if (sil === 'saucer-jelly') {
+        // Moon Jellyfish: wide, flat saucer umbrella + 7 short delicate fringe tentacles
+        const domeTop = -h * (0.36 + pulse * 0.04)
+        const rimY = -h * 0.02
+        const rx = len * (0.42 - pulse * 0.03)
+        path.moveTo(cx - rx, rimY)
+        path.bezierCurveTo(cx - rx, domeTop, cx + rx, domeTop, cx + rx, rimY)
+        const lobes = 6
+        const lobeW = (rx * 2) / lobes
+        for (let i = lobes - 1; i >= 0; i--) {
+          const x1 = cx - rx + (i + 0.5) * lobeW
+          const x0 = cx - rx + i * lobeW
+          path.quadraticCurveTo(x1, rimY + h * 0.06, x0, rimY)
+        }
+        path.closePath()
+        for (let i = -3; i <= 3; i++) {
+          const tx = cx + (i / 3.2) * rx * 0.85
+          const lenT = h * (0.28 + (3 - Math.abs(i)) * 0.04)
+          addCapsule(path, tx, rimY + h * 0.02, tx + wave * 0.6 + i * 1.2, rimY + lenT, Math.max(1, len * 0.018))
+        }
+        return { path, height: h }
       }
+
+      if (sil === 'crown-jelly') {
+        // Astral Crown Jelly: 3-spired royal coronet dome + flared collar + 5 beaded streamers
+        const rimY = -h * 0.04
+        const rx = len * (0.38 - pulse * 0.03)
+        // Crown spires on top of bell
+        path.moveTo(cx - rx, rimY)
+        path.lineTo(cx - rx * 0.82, -h * 0.36)
+        path.lineTo(cx - rx * 0.42, -h * 0.24)
+        path.lineTo(cx, -h * (0.5 + pulse * 0.04))
+        path.lineTo(cx + rx * 0.42, -h * 0.24)
+        path.lineTo(cx + rx * 0.82, -h * 0.36)
+        path.lineTo(cx + rx, rimY)
+        path.closePath()
+        // Flared skirt collar
+        path.ellipse(cx, rimY + h * 0.03, rx * 1.08, h * 0.07, 0, 0, Math.PI * 2)
+        // 5 undulating tentacles with glowing nodes
+        for (let i = -2; i <= 2; i++) {
+          const tx = cx + i * rx * 0.36
+          const drop = h * (i === 0 ? 0.48 : Math.abs(i) === 1 ? 0.4 : 0.3)
+          const midX = tx + wave * (i % 2 === 0 ? 1 : -0.8)
+          addCapsule(path, tx, rimY + h * 0.06, midX, h * 0.22, Math.max(1.2, len * 0.024))
+          addCapsule(path, midX, h * 0.22, tx - wave * 0.5, drop, Math.max(1, len * 0.02))
+          path.moveTo(tx - wave * 0.5 + len * 0.038, drop)
+          path.arc(tx - wave * 0.5, drop, Math.max(1.5, len * 0.038), 0, Math.PI * 2)
+        }
+        return { path, height: h }
+      }
+
+      // Default / 'ribbon-jelly' (Sakura Jellyfish): tall mushroom bell + 3 flowing S-curve oral ribbons
+      const domeTop = -h * (0.48 + pulse * 0.05)
+      const rimY = -h * 0.04
+      const rx = len * (0.33 - pulse * 0.03)
+      path.moveTo(cx - rx, rimY)
+      path.bezierCurveTo(cx - rx * 0.95, domeTop, cx + rx * 0.95, domeTop, cx + rx, rimY)
+      path.quadraticCurveTo(cx, rimY + h * 0.1, cx - rx, rimY)
       path.closePath()
 
-      const tentacleOffsets = [-0.65, -0.22, 0.22, 0.65]
-      const wave = animPhase ? Math.sin(animPhase * 2.2 - 0.8) * (len * 0.06) : 0
-      for (const [idx, off] of tentacleOffsets.entries()) {
-        const tx = cx + off * rx * 0.8
-        const sway = (idx % 2 === 0 ? len * 0.05 : -len * 0.05) + wave
-        const endY = h * (0.45 + pulse * 0.05)
-        addCapsule(path, tx, rimY + h * 0.02, tx + sway, h * 0.22, Math.max(1.2, len * 0.026))
-        addCapsule(
-          path,
-          tx + sway,
-          h * 0.22,
-          tx - sway * 0.6 + wave * 0.5,
-          endY,
-          Math.max(1, len * 0.022),
-        )
+      for (const off of [-0.52, 0, 0.52]) {
+        const tx = cx + off * rx
+        const s1 = wave + off * len * 0.08
+        const s2 = -wave * 0.8 + off * len * 0.12
+        const r = off === 0 ? Math.max(1.6, len * 0.036) : Math.max(1.2, len * 0.024)
+        addCapsule(path, tx, rimY + h * 0.03, tx + s1, h * 0.22, r)
+        addCapsule(path, tx + s1, h * 0.22, tx + s2, h * 0.46, r * 0.78)
       }
       return { path, height: h }
     }
@@ -54,23 +94,24 @@ export function fishPath(
     case 'seahorse': {
       const cx = len * 0.48
       const flutter = animPhase ? Math.sin(animPhase * 7.5) * (h * 0.04) : 0
-      // Head & coronet
+      // Head
       path.ellipse(cx + len * 0.04, -h * 0.3, len * 0.13, h * 0.12, -0.15, 0, Math.PI * 2)
-      // Tubular snout facing +x
+      // Snout
+      const snoutLen = sil === 'leafy-seahorse' ? 0.34 : 0.26
       addCapsule(
         path,
         cx + len * 0.1,
         -h * 0.29,
-        cx + len * 0.29,
+        cx + len * snoutLen,
         -h * 0.26,
-        Math.max(1.5, h * 0.048),
+        Math.max(1.5, h * 0.046),
       )
-      // Arching neck & plump belly
+      // Arching neck & belly
       path.moveTo(cx - len * 0.04, -h * 0.24)
       path.quadraticCurveTo(cx + len * 0.22, -h * 0.04, cx + len * 0.04, h * 0.18)
       path.quadraticCurveTo(cx - len * 0.16, h * 0.02, cx - len * 0.04, -h * 0.24)
       path.closePath()
-      // Fluttering dorsal fin on the back
+      // Dorsal fin
       const fin = new Path2D()
       fin.moveTo(cx - len * 0.08, -h * 0.08)
       fin.lineTo(cx - len * 0.23, -h * 0.15 + flutter)
@@ -96,42 +137,100 @@ export function fishPath(
         h * 0.31,
         Math.max(1, len * 0.024),
       )
+
+      if (sil === 'leafy-seahorse') {
+        // Golden Leafy Sea Dragon: tall royal coronet + leaf fronds along neck, back, and tail
+        addCapsule(path, cx, -h * 0.38, cx - len * 0.08, -h * 0.49, Math.max(1.2, len * 0.025))
+        addCapsule(path, cx + len * 0.04, -h * 0.39, cx + len * 0.05, -h * 0.5, Math.max(1.2, len * 0.025))
+        path.ellipse(cx - len * 0.18, -h * 0.24, len * 0.09, h * 0.038, 0.5, 0, Math.PI * 2)
+        path.ellipse(cx + len * 0.19, -h * 0.1, len * 0.08, h * 0.035, -0.4, 0, Math.PI * 2)
+        path.ellipse(cx - len * 0.2, h * 0.22, len * 0.09, h * 0.038, -0.5, 0, Math.PI * 2)
+      } else {
+        // Coral Spiny Seahorse: thorny tubercles along crown and spine
+        path.moveTo(cx - len * 0.02, -h * 0.38)
+        path.lineTo(cx - len * 0.06, -h * 0.46)
+        path.lineTo(cx + len * 0.04, -h * 0.4)
+        path.closePath()
+      }
       return { path, height: h }
     }
 
     case 'eel':
     case 'seasnake': {
       const segs = 14
-      const waves = form === 'seasnake' ? 2.3 : 1.7
-      const amp = h * (form === 'seasnake' ? 0.28 : 0.22)
-      const baseThick = h * (form === 'seasnake' ? 0.15 : 0.2)
+      const isRibbon = sil === 'ribbon-eel'
+      const isDragon = sil === 'sea-dragon'
+      const waves = isRibbon ? 2.6 : form === 'seasnake' ? 2.2 : 1.4
+      const amp = h * (isRibbon ? 0.28 : form === 'seasnake' ? 0.25 : 0.18)
+      const baseThick = h * (isRibbon ? 0.14 : form === 'seasnake' ? 0.16 : 0.24)
       const travel = animPhase * 3.8
 
       for (let i = 0; i < segs; i++) {
         const t0 = i / segs
         const t1 = (i + 1) / segs
-        const x0 = len * (0.06 + t0 * 0.88)
-        const x1 = len * (0.06 + t1 * 0.88)
+        const x0 = len * (0.06 + t0 * 0.86)
+        const x1 = len * (0.06 + t1 * 0.86)
         const y0 = Math.sin(t0 * Math.PI * waves + travel) * amp
         const y1 = Math.sin(t1 * Math.PI * waves + travel) * amp
-        const r = Math.max(1.3, baseThick * (0.38 + 0.62 * Math.sin(t0 * Math.PI)))
+        const r = Math.max(1.3, baseThick * (0.4 + 0.6 * Math.sin(t0 * Math.PI)))
         addCapsule(path, x0, y0, x1, y1, r)
       }
-      // Ribbon dorsal crest for electric/ribbon eel
-      if (form === 'eel') {
+
+      if (sil === 'electric-eel') {
+        // Volt Electric Eel: deep ventral undulating electric organ + jagged dorsal spark spikes
         for (let i = 2; i < segs - 1; i++) {
           const t0 = i / segs
           const t1 = (i + 1) / segs
-          const x0 = len * (0.06 + t0 * 0.88)
-          const x1 = len * (0.06 + t1 * 0.88)
-          const y0 = Math.sin(t0 * Math.PI * waves + travel) * amp - baseThick * 0.9
-          const y1 = Math.sin(t1 * Math.PI * waves + travel) * amp - baseThick * 0.9
-          addCapsule(path, x0, y0, x1, y1, Math.max(1, baseThick * 0.45))
+          const x0 = len * (0.06 + t0 * 0.86)
+          const x1 = len * (0.06 + t1 * 0.86)
+          const y0 = Math.sin(t0 * Math.PI * waves + travel) * amp + baseThick * 0.95
+          const y1 = Math.sin(t1 * Math.PI * waves + travel) * amp + baseThick * 0.95
+          addCapsule(path, x0, y0, x1, y1, Math.max(1.2, baseThick * 0.55))
+          if (i % 3 === 0) {
+            const sy = Math.sin(t0 * Math.PI * waves + travel) * amp - baseThick * 0.8
+            path.moveTo(x0 - len * 0.03, sy + baseThick * 0.4)
+            path.lineTo(x0 + len * 0.01, sy - baseThick * 0.95)
+            path.lineTo(x0 + len * 0.04, sy + baseThick * 0.4)
+            path.closePath()
+          }
         }
-      } else {
-        // Paddle tail for sea snake
+      } else if (isRibbon) {
+        // Aurora Ribbon Eel: continuous tall dorsal crest + flared snout leaf-nostrils
+        for (let i = 1; i < segs; i++) {
+          const t0 = i / segs
+          const t1 = (i + 1) / segs
+          const x0 = len * (0.06 + t0 * 0.86)
+          const x1 = len * (0.06 + t1 * 0.86)
+          const y0 = Math.sin(t0 * Math.PI * waves + travel) * amp - baseThick * 1.15
+          const y1 = Math.sin(t1 * Math.PI * waves + travel) * amp - baseThick * 1.15
+          addCapsule(path, x0, y0, x1, y1, Math.max(1.1, baseThick * 0.65))
+        }
+        const headY = Math.sin(Math.PI * waves + travel) * amp
+        path.ellipse(len * 0.95, headY - baseThick * 0.5, len * 0.045, baseThick * 0.5, -0.4, 0, Math.PI * 2)
+      } else if (isDragon) {
+        // Leviathan Sea Serpent: dragon horns, dorsal spines & trident tail fan
+        const headY = Math.sin(Math.PI * waves + travel) * amp
+        addCapsule(path, len * 0.86, headY - baseThick * 0.5, len * 0.74, headY - baseThick * 2.1, Math.max(1.2, baseThick * 0.38))
+        addCapsule(path, len * 0.88, headY + baseThick * 0.5, len * 0.8, headY + baseThick * 1.7, Math.max(1, baseThick * 0.3))
+        for (let i = 3; i < segs - 1; i += 3) {
+          const t0 = i / segs
+          const sx = len * (0.06 + t0 * 0.86)
+          const sy = Math.sin(t0 * Math.PI * waves + travel) * amp
+          path.moveTo(sx - len * 0.035, sy - baseThick * 0.5)
+          path.lineTo(sx - len * 0.01, sy - baseThick * 1.8)
+          path.lineTo(sx + len * 0.035, sy - baseThick * 0.5)
+          path.closePath()
+        }
         const tailY = Math.sin(travel) * amp
-        path.ellipse(len * 0.08, tailY, len * 0.06, baseThick * 1.1, 0, 0, Math.PI * 2)
+        path.moveTo(len * 0.09, tailY)
+        path.lineTo(0, tailY - baseThick * 1.6)
+        path.lineTo(len * 0.03, tailY)
+        path.lineTo(0, tailY + baseThick * 1.6)
+        path.closePath()
+      } else {
+        // Banded Sea Snake: smooth body with broad oar paddle tail
+        const tailY = Math.sin(travel) * amp
+        path.ellipse(len * 0.08, tailY, len * 0.065, baseThick * 1.2, 0, 0, Math.PI * 2)
       }
       return { path, height: h }
     }
@@ -139,7 +238,7 @@ export function fishPath(
     case 'ray': {
       const tailLen = len * 0.34
       const discStart = tailLen
-      const nose = len * 0.95
+      const nose = len * 0.92
       const midX = discStart + (nose - discStart) * 0.48
       const flap = animPhase ? Math.sin(animPhase * 2.6) * (h * 0.08) : 0
       // Diamond pectoral wings
@@ -159,6 +258,9 @@ export function fishPath(
       )
       path.quadraticCurveTo(midX + len * 0.1, h * 0.48 - flap, nose, 0)
       path.closePath()
+      // Manta cephalic horn lobes at the front
+      addCapsule(path, nose - len * 0.06, -h * 0.1, len * 0.98, -h * 0.15, Math.max(1.2, h * 0.045))
+      addCapsule(path, nose - len * 0.06, h * 0.1, len * 0.98, h * 0.15, Math.max(1.2, h * 0.045))
       // Whip tail
       addCapsule(path, discStart + len * 0.04, 0, len * 0.03, flap * 0.4, Math.max(1.2, h * 0.035))
       return { path, height: h }
@@ -166,14 +268,10 @@ export function fishPath(
 
     case 'turtle': {
       const stroke = animPhase ? Math.sin(animPhase * 2.8) * 0.25 : 0
-      // Domed carapace shell
       path.ellipse(len * 0.46, -h * 0.03, len * 0.3, h * 0.32, 0, 0, Math.PI * 2)
-      // Head extending forward
       path.ellipse(len * 0.83, -h * 0.05, len * 0.11, h * 0.13, -0.1, 0, Math.PI * 2)
-      // Front flippers
       path.ellipse(len * 0.62, -h * 0.34, len * 0.16, h * 0.08, -0.55 + stroke, 0, Math.PI * 2)
       path.ellipse(len * 0.62, h * 0.3, len * 0.16, h * 0.08, 0.55 - stroke, 0, Math.PI * 2)
-      // Rear flippers
       path.ellipse(len * 0.22, -h * 0.24, len * 0.11, h * 0.06, 0.45, 0, Math.PI * 2)
       path.ellipse(len * 0.22, h * 0.2, len * 0.11, h * 0.06, -0.45, 0, Math.PI * 2)
       return { path, height: h }
@@ -181,36 +279,309 @@ export function fishPath(
 
     case 'fish':
     default: {
-      // Shift by +tail/2 so the drawn silhouette [0..nose] is horizontally centered at len/2
       const tail = len * body.tail
       const ox = tail * 0.5
-      const nose = ox + (len - tail)
+      const span = len - tail
+      const nose = ox + span
       const wag = animPhase ? Math.sin(animPhase * 4.5) * (h * 0.08) : 0
 
-      // Body: a lens from the snout to the caudal peduncle.
+      if (sil === 'spiky-puffer') {
+        // Cream Puff Puffer: inflated round ball with radiating spines & small paddle tail
+        const cx = len * 0.54
+        const rx = len * 0.34
+        const ry = h * 0.42
+        path.ellipse(cx, 0, rx, ry, 0, 0, Math.PI * 2)
+        // Small paddle tail
+        path.moveTo(cx - rx * 0.85, 0)
+        path.lineTo(len * 0.08, -h * 0.2 + wag)
+        path.lineTo(len * 0.08, h * 0.2 + wag)
+        path.closePath()
+        // Spines around the perimeter
+        for (let i = 0; i < 10; i++) {
+          const ang = (i / 10) * Math.PI * 2
+          if (Math.abs(Math.cos(ang)) > 0.88 && Math.cos(ang) < 0) continue
+          const bx = cx + Math.cos(ang) * rx * 0.92
+          const by = Math.sin(ang) * ry * 0.92
+          const tx = cx + Math.cos(ang) * (rx + h * 0.1)
+          const ty = Math.sin(ang) * (ry + h * 0.1)
+          addCapsule(path, bx, by, tx, ty, Math.max(1, len * 0.022))
+        }
+        return { path, height: h }
+      }
+
+      if (sil === 'glider-fish') {
+        // Skywing Flying Fish: sleek torpedo + large swept-back delta wings top & bottom
+        const bodyH = h * 0.46
+        path.ellipse(ox + span * 0.55, 0, span * 0.46, bodyH * 0.5, 0, 0, Math.PI * 2)
+        // Swept-back high glider wing
+        const wing = new Path2D()
+        wing.moveTo(ox + span * 0.68, -bodyH * 0.2)
+        wing.lineTo(ox + span * 0.18, -h * 0.5 + wag * 0.6)
+        wing.lineTo(ox + span * 0.36, -bodyH * 0.15)
+        wing.closePath()
+        path.addPath(wing)
+        // Lower pelvic glider wing
+        const pWing = new Path2D()
+        pWing.moveTo(ox + span * 0.58, bodyH * 0.2)
+        pWing.lineTo(ox + span * 0.22, h * 0.46 - wag * 0.5)
+        pWing.lineTo(ox + span * 0.38, bodyH * 0.15)
+        pWing.closePath()
+        path.addPath(pWing)
+        // Hypocercal forked tail (longer lower lobe)
+        const fin = new Path2D()
+        fin.moveTo(ox + tail * 0.5, 0)
+        fin.lineTo(ox * 0.5, -h * 0.34 + wag)
+        fin.lineTo(ox + tail * 0.25, 0)
+        fin.lineTo(ox * 0.2, h * 0.46 + wag)
+        fin.closePath()
+        path.addPath(fin)
+        return { path, height: h }
+      }
+
+      if (sil === 'moorish-idol') {
+        // Golden Moorish Idol: steep triangular disc + tubular snout + ultra-long dorsal pennant whip
+        path.moveTo(nose, h * 0.04)
+        path.lineTo(nose - len * 0.13, -h * 0.05)
+        path.quadraticCurveTo(ox + span * 0.58, -h * 0.46, ox + tail * 0.55, -h * 0.14)
+        path.quadraticCurveTo(ox + tail * 0.3, 0, ox + tail * 0.55, h * 0.16)
+        path.quadraticCurveTo(ox + span * 0.58, h * 0.46, nose - len * 0.12, h * 0.1)
+        path.closePath()
+        // Long whip streamer trailing past the tail
+        addCapsule(path, ox + span * 0.56, -h * 0.36, ox * 0.15, -h * 0.46 + wag * 1.4, Math.max(1.3, len * 0.032))
+        // Ventral spike fins
+        path.moveTo(ox + span * 0.62, h * 0.3)
+        path.lineTo(ox + span * 0.42, h * 0.5)
+        path.lineTo(ox + span * 0.52, h * 0.26)
+        path.closePath()
+        // Forked tail
+        path.moveTo(ox + tail * 0.55, 0)
+        path.lineTo(ox * 0.6, -h * 0.28 + wag)
+        path.lineTo(ox + tail * 0.3, 0)
+        path.lineTo(ox * 0.6, h * 0.28 + wag)
+        path.closePath()
+        return { path, height: h }
+      }
+
+      if (sil === 'banner-cardinal') {
+        // Banggai Starfin: diamond body + twin symmetrical high sickle dorsal & anal sails + long forked tail
+        const bodyH = h * 0.52
+        path.moveTo(nose, 0)
+        path.quadraticCurveTo(ox + span * 0.58, -bodyH * 0.6, ox + tail * 0.55, -bodyH * 0.18)
+        path.quadraticCurveTo(ox + tail * 0.3, 0, ox + tail * 0.55, bodyH * 0.18)
+        path.quadraticCurveTo(ox + span * 0.58, bodyH * 0.6, nose, 0)
+        path.closePath()
+        // High sickle dorsal sail
+        addCapsule(path, ox + span * 0.6, -bodyH * 0.3, ox + span * 0.24, -h * 0.48, Math.max(1.4, len * 0.042))
+        // Matching sickle anal sail
+        addCapsule(path, ox + span * 0.56, bodyH * 0.3, ox + span * 0.22, h * 0.48, Math.max(1.4, len * 0.042))
+        // Deeply forked streamer tail
+        addCapsule(path, ox + tail * 0.55, 0, ox * 0.3, -h * 0.38 + wag, Math.max(1.2, len * 0.032))
+        addCapsule(path, ox + tail * 0.55, 0, ox * 0.3, h * 0.38 + wag, Math.max(1.2, len * 0.032))
+        return { path, height: h }
+      }
+
+      if (sil === 'beak-butterfly') {
+        // Copperband Butterflyfish: forceps beak snout + steep diamond body + fan tail
+        const beak = len * 0.16
+        const bodyNose = nose - beak
+        addCapsule(path, bodyNose - len * 0.02, 0, nose, 0, Math.max(1.4, h * 0.055))
+        path.moveTo(bodyNose, 0)
+        path.quadraticCurveTo(ox + span * 0.52, -h * 0.52, ox + tail * 0.5, -h * 0.18)
+        path.lineTo(ox + tail * 0.5, h * 0.18)
+        path.quadraticCurveTo(ox + span * 0.52, h * 0.52, bodyNose, 0)
+        path.closePath()
+        // Fan tail
+        path.moveTo(ox + tail * 0.55, 0)
+        path.lineTo(ox * 0.6, -h * 0.26 + wag)
+        path.quadraticCurveTo(ox * 0.25, wag, ox * 0.6, h * 0.26 + wag)
+        path.closePath()
+        return { path, height: h }
+      }
+
+      if (sil === 'unicorn-tang') {
+        // Moonhorn Tang: oval body + frontal unicorn horn + lunate crescent tail
+        path.ellipse(ox + span * 0.54, 0, span * 0.42, h * 0.38, 0, 0, Math.PI * 2)
+        // Unicorn horn jutting forward from forehead
+        addCapsule(path, ox + span * 0.82, -h * 0.16, nose + len * 0.06, -h * 0.2, Math.max(1.3, h * 0.048))
+        // Lunate crescent tail with long tips
+        path.moveTo(ox + tail * 0.65, 0)
+        path.quadraticCurveTo(ox + tail * 0.2, -h * 0.42, ox * 0.3, -h * 0.48 + wag)
+        path.quadraticCurveTo(ox + tail * 0.38, wag * 0.5, ox * 0.3, h * 0.48 + wag)
+        path.quadraticCurveTo(ox + tail * 0.2, h * 0.42, ox + tail * 0.65, 0)
+        path.closePath()
+        return { path, height: h }
+      }
+
+      if (sil === 'catfish') {
+        // Mossback Otocinclus: flat belly, arched back, high shark dorsal sail, downward mouth barbels
+        path.moveTo(nose, h * 0.16)
+        path.quadraticCurveTo(ox + span * 0.65, -h * 0.36, ox + tail * 0.5, h * 0.04)
+        path.lineTo(ox + tail * 0.5, h * 0.18)
+        path.lineTo(nose, h * 0.18)
+        path.closePath()
+        // High triangular dorsal sail
+        path.moveTo(ox + span * 0.68, -h * 0.12)
+        path.lineTo(ox + span * 0.48, -h * 0.5)
+        path.lineTo(ox + span * 0.36, -h * 0.04)
+        path.closePath()
+        // Sucker barbels at snout
+        addCapsule(path, nose - len * 0.04, h * 0.16, nose + len * 0.03, h * 0.3, Math.max(1, len * 0.025))
+        // Forked tail
+        path.moveTo(ox + tail * 0.55, h * 0.1)
+        path.lineTo(ox * 0.5, -h * 0.26 + wag)
+        path.lineTo(ox + tail * 0.3, h * 0.1)
+        path.lineTo(ox * 0.5, h * 0.38 + wag)
+        path.closePath()
+        return { path, height: h }
+      }
+
+      if (sil === 'fire-goby') {
+        // Blushing Firefish: slender body + tall forward-flicking dorsal antenna flag + tapering rear fins
+        const bodyH = h * 0.45
+        path.ellipse(ox + span * 0.56, 0, span * 0.44, bodyH * 0.48, 0, 0, Math.PI * 2)
+        // Iconic tall flicking first dorsal spine
+        addCapsule(path, ox + span * 0.62, -bodyH * 0.3, ox + span * 0.74, -h * 0.5, Math.max(1.3, len * 0.032))
+        // Long rear dorsal & anal tapering fins
+        path.moveTo(ox + span * 0.52, -bodyH * 0.3)
+        path.lineTo(ox + tail * 0.6, -h * 0.34)
+        path.lineTo(ox + tail * 0.6, 0)
+        path.lineTo(ox + tail * 0.6, h * 0.34)
+        path.lineTo(ox + span * 0.52, bodyH * 0.3)
+        path.closePath()
+        // Diamond paddle tail
+        path.moveTo(ox + tail * 0.62, 0)
+        path.lineTo(ox + tail * 0.2, -h * 0.28 + wag)
+        path.lineTo(ox * 0.4, wag)
+        path.lineTo(ox + tail * 0.2, h * 0.28 + wag)
+        path.closePath()
+        return { path, height: h }
+      }
+
+      if (sil === 'crown-butterfly') {
+        // Golden Butterflyfish: round disc body + 4 distinct spiky crown spines on top + brush tail
+        path.ellipse(ox + span * 0.54, 0, span * 0.42, h * 0.42, 0, 0, Math.PI * 2)
+        for (let i = 0; i < 4; i++) {
+          const sx = ox + span * (0.34 + i * 0.11)
+          addCapsule(path, sx, -h * 0.3, sx - len * 0.04, -h * 0.49, Math.max(1.2, len * 0.028))
+        }
+        path.moveTo(ox + tail * 0.6, 0)
+        path.lineTo(ox * 0.5, -h * 0.28 + wag)
+        path.lineTo(ox * 0.5, h * 0.28 + wag)
+        path.closePath()
+        return { path, height: h }
+      }
+
+      if (sil === 'veil-koi') {
+        // Prism Koi: plump koi body + ultra-long flowing twin veil tail ribbons + wide pectoral wings + barbels
+        path.moveTo(nose, 0)
+        path.quadraticCurveTo(ox + span * 0.62, -h * 0.42, ox + tail * 0.65, -h * 0.14)
+        path.quadraticCurveTo(ox + tail * 0.45, 0, ox + tail * 0.65, h * 0.14)
+        path.quadraticCurveTo(ox + span * 0.62, h * 0.42, nose, 0)
+        path.closePath()
+        // Flowing veil tail ribbons
+        path.moveTo(ox + tail * 0.68, 0)
+        path.quadraticCurveTo(ox + tail * 0.2, -h * 0.54, ox * 0.1, -h * 0.42 + wag * 1.3)
+        path.quadraticCurveTo(ox + tail * 0.32, wag * 0.4, ox * 0.1, h * 0.42 + wag * 1.3)
+        path.quadraticCurveTo(ox + tail * 0.2, h * 0.54, ox + tail * 0.68, 0)
+        path.closePath()
+        // Dorsal sail & sweeping ventral fin
+        path.moveTo(ox + span * 0.68, -h * 0.24)
+        path.quadraticCurveTo(ox + span * 0.42, -h * 0.52, ox + tail * 0.72, -h * 0.14)
+        path.closePath()
+        path.moveTo(ox + span * 0.66, h * 0.22)
+        path.lineTo(ox + span * 0.44, h * 0.48)
+        path.lineTo(ox + span * 0.54, h * 0.2)
+        path.closePath()
+        // Koi whisker barbels
+        addCapsule(path, nose - len * 0.02, h * 0.03, nose + len * 0.04, h * 0.18, Math.max(1, len * 0.022))
+        return { path, height: h }
+      }
+
+      if (sil === 'lyretail') {
+        // Royal Goldtail: swallowtail with long outer filaments + twin ventral streamers + continuous crest
+        path.ellipse(ox + span * 0.55, 0, span * 0.42, h * 0.34, 0, 0, Math.PI * 2)
+        // Continuous dorsal crest
+        path.moveTo(ox + span * 0.75, -h * 0.22)
+        path.quadraticCurveTo(ox + span * 0.45, -h * 0.48, ox + tail * 0.68, -h * 0.18)
+        path.closePath()
+        // Swallowtail streamers
+        addCapsule(path, ox + tail * 0.62, -h * 0.08, ox * 0.15, -h * 0.45 + wag, Math.max(1.3, len * 0.032))
+        addCapsule(path, ox + tail * 0.62, h * 0.08, ox * 0.15, h * 0.45 + wag, Math.max(1.3, len * 0.032))
+        // Ventral streamers
+        addCapsule(path, ox + span * 0.56, h * 0.24, ox + span * 0.34, h * 0.48, Math.max(1.1, len * 0.026))
+        return { path, height: h }
+      }
+
+      if (sil === 'wrasse') {
+        // Neon Cleaner Wrasse: sleek cigar body + rounded spade paddle tail + full-length low dorsal ridge
+        path.ellipse(ox + span * 0.54, 0, span * 0.45, h * 0.38, 0, 0, Math.PI * 2)
+        path.ellipse(ox + tail * 0.32, wag * 0.5, tail * 0.42, h * 0.36, 0, 0, Math.PI * 2)
+        return { path, height: h }
+      }
+
+      if (sil === 'rhomboid-barb' || sil === 'tetra') {
+        // Angular diamond characin/barb with sharp dorsal, anal, and ventral fins
+        path.moveTo(nose, 0)
+        path.lineTo(ox + span * 0.56, -h * 0.38)
+        path.lineTo(ox + tail * 0.55, -h * 0.12)
+        path.lineTo(ox + tail * 0.55, h * 0.12)
+        path.lineTo(ox + span * 0.56, h * 0.38)
+        path.closePath()
+        // Sharp high dorsal fin
+        path.moveTo(ox + span * 0.62, -h * 0.3)
+        path.lineTo(ox + span * 0.44, -h * 0.52)
+        path.lineTo(ox + span * 0.38, -h * 0.2)
+        path.closePath()
+        // Anal & pelvic triangular fins
+        path.moveTo(ox + span * 0.54, h * 0.3)
+        path.lineTo(ox + span * 0.38, h * 0.48)
+        path.lineTo(ox + tail * 0.65, h * 0.14)
+        path.closePath()
+        // Forked tail
+        path.moveTo(ox + tail * 0.58, 0)
+        path.lineTo(ox * 0.5, -h * 0.38 + wag)
+        path.lineTo(ox + tail * 0.3, 0)
+        path.lineTo(ox * 0.5, h * 0.38 + wag)
+        path.closePath()
+        return { path, height: h }
+      }
+
+      // Standard fish ('goldfish', 'minnow', 'damsel')
       path.moveTo(nose, 0)
-      path.quadraticCurveTo(ox + (len - tail) * 0.55, -h / 2, ox + tail * 0.6, -h * 0.22)
+      path.quadraticCurveTo(ox + span * 0.55, -h / 2, ox + tail * 0.6, -h * 0.22)
       path.quadraticCurveTo(ox + tail * 0.15, 0, ox + tail * 0.6, h * 0.22)
-      path.quadraticCurveTo(ox + (len - tail) * 0.55, h / 2, nose, 0)
+      path.quadraticCurveTo(ox + span * 0.55, h / 2, nose, 0)
       path.closePath()
 
-      // Caudal fin.
+      // Caudal fin (rounded double-fan for goldfish, sharp fork for minnow/damsel)
       const fin = new Path2D()
       fin.moveTo(ox + tail * 0.62, 0)
-      fin.lineTo(ox, -h * 0.5 + wag)
-      fin.lineTo(ox + tail * 0.35, wag * 0.5)
-      fin.lineTo(ox, h * 0.5 + wag)
-      fin.closePath()
+      if (sil === 'goldfish') {
+        fin.quadraticCurveTo(ox * 0.4, -h * 0.58 + wag, ox * 0.5, -h * 0.15 + wag)
+        fin.quadraticCurveTo(ox * 0.4, h * 0.58 + wag, ox + tail * 0.62, 0)
+      } else {
+        fin.lineTo(ox, -h * 0.5 + wag)
+        fin.lineTo(ox + tail * 0.35, wag * 0.5)
+        fin.lineTo(ox, h * 0.5 + wag)
+        fin.closePath()
+      }
       path.addPath(fin)
 
-      // Dorsal fin.
       if (body.dorsal > 0.05) {
         const d = new Path2D()
         const peak = h * 0.5 * (0.4 + body.dorsal)
-        d.moveTo(ox + (len - tail) * 0.75, -h * 0.3)
-        d.quadraticCurveTo(ox + (len - tail) * 0.5, -peak, ox + tail * 0.8, -h * 0.26)
+        d.moveTo(ox + span * 0.75, -h * 0.3)
+        d.quadraticCurveTo(ox + span * 0.5, -peak, ox + tail * 0.8, -h * 0.26)
         d.closePath()
         path.addPath(d)
+      }
+
+      if (sil === 'damsel') {
+        // Pointed pelvic fin on damselfish
+        path.moveTo(ox + span * 0.62, h * 0.32)
+        path.lineTo(ox + span * 0.44, h * 0.52)
+        path.lineTo(ox + span * 0.5, h * 0.28)
+        path.closePath()
       }
 
       return { path, height: h }
@@ -226,6 +597,7 @@ export function eyeAt(
 ): { x: number; y: number; r: number } {
   const h = len * body.depth
   const form = body.form ?? 'fish'
+  const sil = body.silhouette
   switch (form) {
     case 'jellyfish':
       return { x: len * 0.58, y: -h * 0.18, r: Math.max(1, len * 0.045) }
@@ -233,13 +605,14 @@ export function eyeAt(
       return { x: len * 0.53, y: -h * 0.31, r: Math.max(1, len * 0.048) }
     case 'eel':
     case 'seasnake': {
-      const waves = form === 'seasnake' ? 2.3 : 1.7
-      const amp = h * (form === 'seasnake' ? 0.28 : 0.22)
-      const headY = Math.sin(0.92 * Math.PI * waves + animPhase * 3.8) * amp
-      return { x: len * 0.88, y: headY - h * 0.04, r: Math.max(1, len * 0.042) }
+      const isRibbon = sil === 'ribbon-eel'
+      const waves = isRibbon ? 2.6 : form === 'seasnake' ? 2.2 : 1.4
+      const amp = h * (isRibbon ? 0.28 : form === 'seasnake' ? 0.25 : 0.18)
+      const headY = Math.sin(0.9 * Math.PI * waves + animPhase * 3.8) * amp
+      return { x: len * 0.86, y: headY - h * 0.04, r: Math.max(1, len * 0.042) }
     }
     case 'ray':
-      return { x: len * 0.78, y: -h * 0.11, r: Math.max(1, len * 0.046) }
+      return { x: len * 0.76, y: -h * 0.11, r: Math.max(1, len * 0.046) }
     case 'turtle':
       return { x: len * 0.88, y: -h * 0.08, r: Math.max(1, len * 0.045) }
     case 'fish':
@@ -247,7 +620,16 @@ export function eyeAt(
       const tail = len * body.tail
       const ox = tail * 0.5
       const span = len - tail
-      return { x: ox + span * 0.82, y: -h * 0.12, r: Math.max(1, len * 0.055) }
+      if (sil === 'beak-butterfly') {
+        return { x: ox + span * 0.68, y: -h * 0.1, r: Math.max(1, len * 0.052) }
+      }
+      if (sil === 'spiky-puffer') {
+        return { x: len * 0.72, y: -h * 0.1, r: Math.max(1.2, len * 0.06) }
+      }
+      if (sil === 'moorish-idol') {
+        return { x: ox + span * 0.72, y: -h * 0.1, r: Math.max(1, len * 0.052) }
+      }
+      return { x: ox + span * 0.8, y: -h * 0.1, r: Math.max(1, len * 0.055) }
     }
   }
 }

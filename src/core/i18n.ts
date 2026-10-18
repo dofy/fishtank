@@ -182,13 +182,14 @@ export interface Copy {
   mergeBtn: (picked: number, total: number) => string
   mergedMsg: (name: string, starsStr: string, tierStr: string) => string
   mergeNote: string
-  decorHeading: (placed: number, unlocked: number, total: number) => string
+  decorHeading: (placed: number, cap: number, unlocked: number, total: number) => string
   decorPlacedTag: string
   decorUnlockAt: (lv: number) => string
   decorUnlockedAt: (lv: number) => string
   decorFlipBtn: string
-  decorPlacedMsg: (name: string) => string
-  decorRemovedMsg: (name: string) => string
+  decorPlacedMsg: (name: string, placed: number, cap: number) => string
+  decorRemovedMsg: (name: string, placed: number, cap: number) => string
+  decorFullMsg: (cap: number) => string
   decorFlippedMsg: (name: string) => string
   decorLockedMsg: (name: string, lv: number) => string
   decorNote: string
@@ -289,7 +290,7 @@ const ZH: Copy = {
   inTankTag: '鱼缸中',
   inUseLabel: '使用中',
   releaseBtn: '放生',
-  confirmReleaseBtn: '确认放生',
+  confirmReleaseBtn: '确认',
   placedMsg: (name, placed, cap) => `已将 ${name} 放入鱼缸展示（${placed}/${cap}）。`,
   removedFromTankMsg: (name, placed, cap) => `已将 ${name} 收回背包（鱼缸 ${placed}/${cap}）。`,
   tankDisplayFullMsg: (cap) =>
@@ -339,18 +340,21 @@ const ZH: Copy = {
   mergedMsg: (name, starsStr, tierStr) => `合成成功：获得 ${name}（${starsStr} ${tierStr}）！`,
   mergeNote:
     '消耗 10 条材料鱼（1★–4★）可合成 1 条高一星级的鱼，并继承材料中的最高品阶（10 条同星级时 100% 升入下一星级；混搭不同星级时按投入比例决定产出星级）。建议优先消耗繁殖次数用尽（0/n）的重复鱼。',
-  decorHeading: (placed, unlocked, total) =>
-    `鱼缸装饰品（已摆放 ${placed} 件 · 已解锁 ${unlocked}/${total}）`,
+  decorHeading: (placed, cap, unlocked, total) =>
+    `鱼缸装饰品（已摆放 ${placed}/${cap} 件 · 已解锁 ${unlocked}/${total}）`,
   decorPlacedTag: '已摆放',
   decorUnlockAt: (lv) => `Lv.${lv} 解锁`,
   decorUnlockedAt: (lv) => `Lv.${lv} 奖励`,
   decorFlipBtn: '左右翻转',
-  decorPlacedMsg: (name) => `已摆放「${name}」，可在上方鱼缸内直接按住左右拖拽调整位置！`,
-  decorRemovedMsg: (name) => `已从鱼缸收起「${name}」。`,
+  decorPlacedMsg: (name, placed, cap) =>
+    `已摆放「${name}」（${placed}/${cap}），可在上方鱼缸内直接按住左右拖拽调整位置！`,
+  decorRemovedMsg: (name, placed, cap) => `已从鱼缸收起「${name}」（已摆放 ${placed}/${cap}）。`,
+  decorFullMsg: (cap) =>
+    `当前鱼缸装饰槽位已满（上限 ${cap} 件）。请先收起一件已摆放的装饰，或提升鱼缸等级扩大装饰容量！`,
   decorFlippedMsg: (name) => `已翻转「${name}」的朝向。`,
   decorLockedMsg: (name, lv) => `「${name}」尚未解锁，需鱼缸等级达到 Lv.${lv}。`,
   decorNote:
-    '随着鱼缸等级提升（Lv.1–Lv.10）会解锁海底造景与顶挂彩灯。珍珠扇贝会间歇开合吐露珍珠，顶挂彩灯在黑夜模式下会自动点亮发光；放入后可在鱼缸顶部或底部直接按住左右拖动摆放！',
+    '随着鱼缸等级提升（Lv.1–Lv.10），可同时摆放的装饰槽位会从 3 件逐步提升至 12 件（共 18 件可解锁）。珍珠扇贝会间歇开合，顶挂彩灯在黑夜模式下会自动点亮；放入后可在鱼缸中直接按住拖动！',
   bookHeading: '生物图鉴',
   bookOwnedBadge: (count) => `持有 x${count}`,
   bookCompletion: (pct) => `图鉴完成度：${pct}%`,
@@ -432,16 +436,16 @@ const ZH: Copy = {
   helpModalTitle: '游戏帮助与数据说明',
   helpIntroTitle: '1. 核心玩法指南',
   helpIntroItems: [
-    '【鱼缸与互动】开局赠送 3 条无限繁殖次数（∞）的初始鱼。点击鱼缸空白水域可一颗颗投放鱼食（附近的鱼会游过去抢食，每条鱼每 9 秒最多吃 1 颗并游开，落底自动消失）；点击正在游动的鱼会让它受惊逃跑。',
+    '【鱼缸与互动】开局赠送 3 条无限繁殖次数（∞）的初始鱼。点击鱼缸空白水域可一颗颗投放鱼食（附近的鱼会游过去抢食，每条鱼每 9 秒最多吃 1 颗并游开，落底自动消失）；点击正在游动的鱼会让它受惊远距离逃跑。若鱼缸中放有“蓝弧电鳗”，游动中偶发（或 30 秒内连续点击它 6 次）会触发全缸放电，使其他鱼麻痹颤抖 3 秒！',
     '【繁殖系统】每次繁殖消耗 1 颗爱心（每 7 分钟自动恢复 1 颗，上限 5 颗）。选择两条成年鱼即可配对产出 1★–5★ 后代，子代星级概率由双亲星级组合决定，双亲品阶越高越容易生出高品阶后代。',
     '【10 合 1 合成】消耗 10 条 1★–4★ 的鱼可合成 1 条高一星级的新鱼，并 100% 继承 10 条材料中的最高品阶（“1 拖 9”策略最优）。建议优先消耗繁殖次数用尽（0/n）的鱼。',
-    '【装饰与昼夜】鱼缸升级（Lv.1–Lv.10）会自动解锁 18 件海底造景与顶挂彩灯，放入后可直接在鱼缸中按住拖拽位置；黑夜模式下顶灯与彩灯会自动点亮。',
+    '【装饰与昼夜】鱼缸升级（Lv.1–Lv.10）会自动解锁 18 件非对称海底造景与顶挂彩灯，同时可摆放的装饰槽位从 3 件提升至 12 件；放入后可直接在鱼缸中按住拖拽位置（最后拖动的装饰自动置顶），黑夜模式下顶灯与彩灯会自动点亮。',
   ],
   helpMatrixTitle: '2. 亲代星级繁殖概率表（产出 1★–5★ 概率）',
   helpLevelTitle: '3. 鱼缸等级、经验与容量解锁表',
   helpLevelColLv: '等级',
   helpLevelColExp: '累计经验 (EXP)',
-  helpLevelColCap: '鱼缸展示上限',
+  helpLevelColCap: '鱼 / 装饰上限',
   helpLevelColDecor: '解锁装饰',
   helpTierTitle: '4. 稀有度星级基础属性表',
   helpTierColTier: '稀有度星级',
@@ -531,18 +535,21 @@ const EN: Copy = {
   mergedMsg: (name, starsStr, tierStr) => `Merged into ${name}, ${starsStr} ${tierStr}.`,
   mergeNote:
     'Consume 10 material fish (1★–4★) to synthesize 1 higher-tier fish inheriting the highest grade among them (10 same-tier fish guarantee +1 tier; mixed tiers roll proportionally). Prioritize exhausted duplicates (0/n).',
-  decorHeading: (placed, unlocked, total) =>
-    `Aquarium Decorations (${placed} placed · ${unlocked}/${total} unlocked)`,
+  decorHeading: (placed, cap, unlocked, total) =>
+    `Aquarium Decorations (${placed}/${cap} placed · ${unlocked}/${total} unlocked)`,
   decorPlacedTag: 'Placed',
   decorUnlockAt: (lv) => `Unlocks Lv.${lv}`,
   decorUnlockedAt: (lv) => `Lv.${lv} Reward`,
   decorFlipBtn: 'Flip',
-  decorPlacedMsg: (name) => `Placed "${name}". Drag it left or right directly inside the tank!`,
-  decorRemovedMsg: (name) => `Stored "${name}".`,
+  decorPlacedMsg: (name, placed, cap) =>
+    `Placed "${name}" (${placed}/${cap}). Drag it left or right directly inside the tank!`,
+  decorRemovedMsg: (name, placed, cap) => `Stored "${name}" (${placed}/${cap} placed).`,
+  decorFullMsg: (cap) =>
+    `Decoration slots are full (${cap}/${cap} max for your current level). Store a placed decoration first or level up your aquarium!`,
   decorFlippedMsg: (name) => `Flipped "${name}".`,
   decorLockedMsg: (name, lv) => `"${name}" is locked until your aquarium reaches Level ${lv}.`,
   decorNote:
-    'Floor ornaments and top-hanging string lights unlock as your aquarium levels up (Lv.1–Lv.10). Giant clams open and close periodically, and hanging lights glow in Night mode. Drag any placed item directly inside the tank!',
+    'Decoration slots expand from 3 up to 12 as your aquarium levels up (Lv.1–Lv.10), with 18 total ornaments & hanging lights to unlock. Drag any placed item directly inside the tank!',
   bookHeading: 'Collection',
   bookOwnedBadge: (count) => `Owned x${count}`,
   bookCompletion: (pct) => `Catalog Completion: ${pct}%`,
@@ -624,16 +631,16 @@ const EN: Copy = {
   helpModalTitle: 'Game Guide & Balance Data',
   helpIntroTitle: '1. Core Gameplay Guide',
   helpIntroItems: [
-    '[Tank & Interactions] Start with 3 infinite-use (∞) starter fish. Click empty water to drop food pellets one by one (nearby fish chase and eat 1 pellet per 9s cooldown then swim away; uneaten pellets vanish on the sand). Click a swimming fish to startle it.',
+    '[Tank & Interactions] Start with 3 infinite-use (∞) starter fish. Click empty water to drop food pellets one by one (nearby fish chase and eat 1 pellet per 9s cooldown then swim away; uneaten pellets vanish on the sand). Click a swimming fish to make it dart across the tank. A Volt Electric Eel in the tank occasionally discharges (or immediately when clicked 6 times within 30s), stunning all other fish for 3 seconds!',
     '[Breeding] Each attempt costs 1 Heart (regenerates 1 every 7 minutes, cap 5). Pair two adults to hatch 1★–5★ offspring based on the parent star matrix. Higher parent grades boost high-grade offspring odds.',
     '[10-to-1 Merge] Combine 10 fish (1★–4★) into 1 higher-tier fish that inherits the best grade among all 10 inputs ("1 high-grade + 9 low-grade" is optimal). Spend 0-use duplicates here.',
-    '[Decor & Night Mode] Leveling the aquarium (Lv.1–Lv.10) unlocks 18 floor ornaments and top-hanging lights. Drag placed items directly inside the tank; overhead & hanging lights illuminate automatically in Night mode.',
+    '[Decor & Night Mode] Leveling the aquarium (Lv.1–Lv.10) unlocks 18 asymmetric floor ornaments and top-hanging lights while expanding placement slots from 3 up to 12. Drag placed items directly inside the tank; overhead & hanging lights illuminate automatically in Night mode.',
   ],
   helpMatrixTitle: '2. Breeding Offspring Probability Matrix (1★–5★ Odds)',
   helpLevelTitle: '3. Aquarium Levels, EXP & Tank Capacity',
   helpLevelColLv: 'Level',
   helpLevelColExp: 'Cumulative EXP',
-  helpLevelColCap: 'Tank Capacity',
+  helpLevelColCap: 'Fish / Decor Cap',
   helpLevelColDecor: 'Unlocked Decorations',
   helpTierTitle: '4. Rarity Tier Stats (Growth, EXP & Uses)',
   helpTierColTier: 'Rarity Tier',

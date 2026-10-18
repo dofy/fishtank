@@ -1,4 +1,4 @@
-# Balance & Game Data Guide / 游戏帮助与数值说明 (`v1.2.3`)
+# Balance & Game Data Guide / 游戏帮助与数值说明 (`v1.3.0`)
 
 This document details the gameplay mechanics, progression curves, and breeding probabilities for **Fishtank**, modeled on [PC FISH: Taskbar Aquarium](https://store.steampowered.com/app/4842670/PC_FISH_Taskbar_Aquarium/).
 
@@ -16,6 +16,7 @@ This document details the gameplay mechanics, progression curves, and breeding p
 | `PARENT_COOLDOWN_MS` | `3 min` (`180,000 ms`) | 初始鱼繁殖后的冷却时间 / Starter parent cooldown after breeding |
 | `SYNTHESIS_INPUT_COUNT` | `10` | 10 条鱼（1★–4★）合成为 1 条高一星级鱼 / 10 fish merge into 1 higher-tier fish |
 | `EAT_COOLDOWN` | `9 sec` | 鱼缸内同一条鱼吃食后的饱腹间隔 / Satiety cooldown per fish after eating a pellet |
+| `EEL_SHOCK_STUN` | `3 sec` | 蓝弧电鳗偶发（或 30s 内被点 6 次）放电麻痹全缸其他鱼的持续时间 / Full-tank stun duration when Volt Electric Eel discharges |
 
 ---
 
@@ -25,18 +26,18 @@ Breeding awards half of the offspring's EXP immediately and the remaining half w
 
 每次成功繁殖立即获得子代总经验的一半，鱼苗成年时自动结算另一半经验。
 
-| Level / 等级 | Cumulative EXP / 累计经验 | EXP Delta / 升级所需 | Tank Capacity / 鱼缸展示上限 | Unlocked Decorations / 解锁装饰品 |
-| :---: | :---: | :---: | :---: | :--- |
-| **Lv.1** | `0` | — | `3` | 翠绿海草 (`kelp`) · 礁石群 (`rocks`) · 珍珠扇贝 (`shell`) · 七彩串灯 (`fairylights`, 顶挂) |
-| **Lv.2** | `10` | `+10` | `4` | 鹿角珊瑚 (`coral`) · 夜光海蕈 (`mushroom`) |
-| **Lv.3** | `60` | `+50` | `5` | 海星礁石 (`starfish`) · 星芒吊灯 (`starlamps`, 顶挂) |
-| **Lv.4** | `260` | `+200` | `6` | 沉木拱枝 (`driftwood`) |
-| **Lv.5** | `760` | `+500` | `7` | 荧光海葵 (`anemone`) · 祭典灯笼 (`lanterns`, 顶挂) |
-| **Lv.6** | `1,760` | `+1,000` | `8` | 海底石拱门 (`arch`) · 紫晶簇洞 (`crystal`) |
-| **Lv.7** | `4,760` | `+3,000` | `9` | 沉船宝箱 (`chest`) · 霓虹水母灯 (`jellylamps`, 顶挂) |
-| **Lv.8** | `12,760` | `+8,000` | `10` | 古老船锚 (`anchor`) |
-| **Lv.9** | `27,760` | `+15,000` | `11` | 海底城堡 (`castle`) |
-| **Lv.10** | `57,760` | `+30,000` | `12` | 深海神像 (`statue`) |
+| Level / 等级 | Cumulative EXP / 累计经验 | EXP Delta / 升级所需 | Fish Cap / 鱼展示上限 | Decor Cap / 装饰摆放上限 | Unlocked Decorations / 解锁装饰品 |
+| :---: | :---: | :---: | :---: | :---: | :--- |
+| **Lv.1** | `0` | — | `3` | `3` | 翠绿海草 (`kelp`) · 礁石群 (`rocks`) · 珍珠扇贝 (`shell`) · 七彩串灯 (`fairylights`, 顶挂) |
+| **Lv.2** | `10` | `+10` | `4` | `4` | 鹿角珊瑚 (`coral`) · 夜光海蕈 (`mushroom`) |
+| **Lv.3** | `60` | `+50` | `5` | `5` | 海星礁石 (`starfish`) · 星芒吊灯 (`starlamps`, 顶挂) |
+| **Lv.4** | `260` | `+200` | `6` | `6` | 沉木拱枝 (`driftwood`) |
+| **Lv.5** | `760` | `+500` | `7` | `7` | 荧光海葵 (`anemone`) · 祭典灯笼 (`lanterns`, 顶挂) |
+| **Lv.6** | `1,760` | `+1,000` | `8` | `8` | 海底石拱门 (`arch`) · 紫晶簇洞 (`crystal`) |
+| **Lv.7** | `4,760` | `+3,000` | `9` | `9` | 沉船宝箱 (`chest`) · 霓虹水母灯 (`jellylamps`, 顶挂) |
+| **Lv.8** | `12,760` | `+8,000` | `10` | `10` | 古老船锚 (`anchor`) |
+| **Lv.9** | `27,760` | `+15,000` | `11` | `11` | 海底城堡 (`castle`) |
+| **Lv.10** | `57,760` | `+30,000` | `12` | `12` | 深海神像 (`statue`) |
 
 ---
 

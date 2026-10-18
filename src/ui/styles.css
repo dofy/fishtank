@@ -215,7 +215,7 @@ button.sort-btn { @apply py-[3px] px-2 text-[11px]; }
 :root[data-theme='lcd'] .cell-overlay.cooldown .timer { color: var(--text); filter: none; }
 
 .cell-actions { @apply flex gap-1 w-full mt-1; }
-.cell-actions > button { @apply flex-1 py-[3px] px-1.5 text-[11px] min-w-0; }
+.cell-actions > button { @apply flex-1 py-[3px] px-1.5 text-[11px] min-w-0 whitespace-nowrap; }
 .cell > button { @apply mt-[3px] py-[3px] px-2 text-[11px] w-full; }
 .cell[aria-pressed='true'] {
   border-color: var(--accent-2);

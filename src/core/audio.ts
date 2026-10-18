@@ -9,6 +9,7 @@ export type SfxKind =
   | 'feed'
   | 'eat'
   | 'scare'
+  | 'zap'
   | 'breed-start'
   | 'merge-start'
   | 'reveal'
@@ -196,6 +197,13 @@ class SoundEngine {
       case 'scare':
         this.tone(ctx, 420, 960, 0.09, now, vol * 0.8, 'sine')
         break
+      case 'zap': {
+        const zaps = [980, 320, 1180, 260, 860]
+        zaps.forEach((f, i) => {
+          this.tone(ctx, f, f * 0.65, 0.045, now + i * 0.04, vol * 0.85, 'sawtooth')
+        })
+        break
+      }
       case 'error':
         this.tone(ctx, 220, 175, 0.11, now, vol * 0.95, 'sawtooth')
         this.tone(ctx, 185, 145, 0.14, now + 0.1, vol * 0.95, 'sawtooth')

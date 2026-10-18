@@ -12,6 +12,7 @@ import {
   SYNTHESIS_INPUT_COUNT,
   USES_BY_TIER,
   capacityForLevel,
+  decorCapacityForLevel,
   gradeExpMultiplier,
   levelForExp,
   matrixKey,
@@ -185,6 +186,10 @@ export function tankFish(state: GameState): Fish[] {
 
 // ---------------------------------------------------------------- decorations
 
+export function decorCapacity(state: GameState): number {
+  return decorCapacityForLevel(state.level)
+}
+
 export function isDecorUnlocked(state: GameState, id: DecorId): boolean {
   return hasDecor(id) && state.level >= decorItem(id).unlockLevel
 }
@@ -193,6 +198,7 @@ export function syncDecor(state: GameState): PlacedDecor[] {
   if (!Array.isArray(state.placedDecor)) {
     state.placedDecor = STARTER_DECOR.map((d) => ({ ...d }))
   }
+  const cap = decorCapacity(state)
   const seen = new Set<string>()
   const cleaned: PlacedDecor[] = []
   for (const item of state.placedDecor) {
@@ -205,8 +211,9 @@ export function syncDecor(state: GameState): PlacedDecor[] {
       flip: item.flip === -1 ? -1 : 1,
     })
   }
-  state.placedDecor = cleaned
-  return cleaned
+  const capped = cleaned.slice(0, cap)
+  state.placedDecor = capped
+  return capped
 }
 
 /** Find a non-overlapping default X spot when placing a new decoration. */
@@ -222,13 +229,16 @@ function findOpenDecorX(existing: PlacedDecor[], mount: 'floor' | 'top' = 'floor
 export function toggleDecor(
   state: GameState,
   id: DecorId,
-): 'placed' | 'removed' | 'locked' {
+): 'placed' | 'removed' | 'locked' | 'decor-full' {
   if (!isDecorUnlocked(state, id)) return 'locked'
   const list = syncDecor(state)
   const idx = list.findIndex((d) => d.id === id)
   if (idx !== -1) {
     state.placedDecor = list.filter((d) => d.id !== id)
     return 'removed'
+  }
+  if (list.length >= decorCapacity(state)) {
+    return 'decor-full'
   }
   const mount = decorItem(id).mount ?? 'floor'
   const x = findOpenDecorX(list, mount)

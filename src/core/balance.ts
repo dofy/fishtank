@@ -25,18 +25,18 @@ export const SYNTHESIS_INPUT_COUNT = 10
 /** SOURCE: parent breeding cooldown (~3 minutes). */
 export const PARENT_COOLDOWN_MS = 3 * 60_000
 
-/** SOURCE: tank display capacity and cumulative EXP per aquarium level. */
-export const LEVELS: { level: number; totalExp: number; capacity: number }[] = [
-  { level: 1, totalExp: 0, capacity: 3 },
-  { level: 2, totalExp: 10, capacity: 4 },
-  { level: 3, totalExp: 60, capacity: 5 },
-  { level: 4, totalExp: 260, capacity: 6 },
-  { level: 5, totalExp: 760, capacity: 7 },
-  { level: 6, totalExp: 1_760, capacity: 8 },
-  { level: 7, totalExp: 4_760, capacity: 9 },
-  { level: 8, totalExp: 12_760, capacity: 10 },
-  { level: 9, totalExp: 27_760, capacity: 11 },
-  { level: 10, totalExp: 57_760, capacity: 12 },
+/** SOURCE: tank display capacity, decoration slot capacity, and cumulative EXP per aquarium level. */
+export const LEVELS: { level: number; totalExp: number; capacity: number; decorCapacity: number }[] = [
+  { level: 1, totalExp: 0, capacity: 3, decorCapacity: 3 },
+  { level: 2, totalExp: 10, capacity: 4, decorCapacity: 4 },
+  { level: 3, totalExp: 60, capacity: 5, decorCapacity: 5 },
+  { level: 4, totalExp: 260, capacity: 6, decorCapacity: 6 },
+  { level: 5, totalExp: 760, capacity: 7, decorCapacity: 7 },
+  { level: 6, totalExp: 1_760, capacity: 8, decorCapacity: 8 },
+  { level: 7, totalExp: 4_760, capacity: 9, decorCapacity: 9 },
+  { level: 8, totalExp: 12_760, capacity: 10, decorCapacity: 10 },
+  { level: 9, totalExp: 27_760, capacity: 11, decorCapacity: 11 },
+  { level: 10, totalExp: 57_760, capacity: 12, decorCapacity: 12 },
 ]
 
 /** SOURCE: the trade hub unlocks at aquarium level 4. */
@@ -126,6 +126,11 @@ export function levelForExp(exp: number): number {
 export function capacityForLevel(level: number): number {
   const row = LEVELS.find((r) => r.level === level)
   return row ? row.capacity : LEVELS[0]!.capacity
+}
+
+export function decorCapacityForLevel(level: number): number {
+  const row = LEVELS.find((r) => r.level === level)
+  return row ? row.decorCapacity : LEVELS[0]!.decorCapacity
 }
 
 /** Cumulative EXP needed for the next level, or null at max level. */
