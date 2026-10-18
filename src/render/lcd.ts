@@ -2,7 +2,7 @@ import type { BodyShape, DecorItem, Grade, Tier } from '../core/types'
 import type { DecorPortraitRequest, PortraitRequest, Renderer } from './renderer'
 import type { Agent, DecorNode, SceneView, SplashEffect } from './scene'
 import { decorLayers, eyeAt, fishPath, hashString, patternBands, patternSpots } from './shape'
-import { type SceneColors, type ThemeManifest, sceneColorsFor, spriteFor } from './theme'
+import { type SceneColors, type ThemeManifest, lampPositions, sceneColorsFor, spriteFor } from './theme'
 
 /** Identity-transform scratch context used only for point-in-path tests. */
 const probe = document.createElement('canvas').getContext('2d')!
@@ -65,15 +65,10 @@ export class LcdRenderer implements Renderer {
     }
   }
 
-  private lampPositions(w: number): number[] {
-    if (w < 380) return [w * 0.28, w * 0.72]
-    return [w * 0.22, w * 0.5, w * 0.78]
-  }
-
   /** Dot-matrix dithered light cones under the decorative lamps in night mode. */
   private lampCones(ctx: CanvasRenderingContext2D, w: number, h: number, s: SceneColors): void {
     const c = this.cell
-    const lamps = this.lampPositions(w).map((x) => Math.round(x / c) * c)
+    const lamps = lampPositions(w).map((x) => Math.round(x / c) * c)
     ctx.fillStyle = s.accent
     for (let y = c * 3; y < h - c * 4; y += c) {
       const progress = (y - c * 3) / Math.max(1, h - c * 7)
@@ -100,7 +95,7 @@ export class LcdRenderer implements Renderer {
     night: boolean,
   ): void {
     const c = this.cell
-    const lamps = this.lampPositions(w).map((x) => Math.round(x / c) * c)
+    const lamps = lampPositions(w).map((x) => Math.round(x / c) * c)
     for (const lx of lamps) {
       ctx.fillStyle = s.ink
       for (let dx = -c * 3; dx <= c * 3; dx += c) {

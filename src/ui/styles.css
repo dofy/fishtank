@@ -299,35 +299,29 @@ button.sort-btn { @apply py-[3px] px-2 text-[11px]; }
 .meta-sep { @apply text-[var(--muted)] opacity-65; }
 .tier-tag, .grade-tag { @apply font-semibold; }
 
-.tier-0, .cell .meta .tier-0 { color: #94a3b8; }
-.tier-1, .cell .meta .tier-1, .cell .meta .grade-1, button.check-row.tier-1 .check-label { color: #e2e8f0; font-weight: 600; }
-.tier-2, .cell .meta .tier-2, .cell .meta .grade-2, button.check-row.tier-2 .check-label { color: #4ade80; font-weight: 600; }
-.tier-3, .cell .meta .tier-3, .cell .meta .grade-3, button.check-row.tier-3 .check-label { color: #38bdf8; font-weight: 600; }
-.tier-4, .cell .meta .tier-4, .cell .meta .grade-4, button.check-row.tier-4 .check-label { color: #c084fc; font-weight: 600; }
-.tier-5, .cell .meta .tier-5, .cell .meta .grade-5 { color: #fbbf24; font-weight: 600; }
+.tier-0 { color: #94a3b8; }
+.tier-1, .grade-1, button.check-row.tier-1 .check-label { color: #e2e8f0; font-weight: 600; }
+.tier-2, .grade-2, button.check-row.tier-2 .check-label { color: #4ade80; font-weight: 600; }
+.tier-3, .grade-3, button.check-row.tier-3 .check-label { color: #38bdf8; font-weight: 600; }
+.tier-4, .grade-4, button.check-row.tier-4 .check-label { color: #c084fc; font-weight: 600; }
+.tier-5, .grade-5 { color: #fbbf24; font-weight: 600; }
 
 :root[data-theme='realistic'][data-mode='light'] .stars { color: #d97706; }
-:root[data-theme='realistic'][data-mode='light'] .tier-0,
-:root[data-theme='realistic'][data-mode='light'] .cell .meta .tier-0 { color: #64748b; }
+:root[data-theme='realistic'][data-mode='light'] .tier-0 { color: #64748b; }
 :root[data-theme='realistic'][data-mode='light'] .tier-1,
-:root[data-theme='realistic'][data-mode='light'] .cell .meta .tier-1,
-:root[data-theme='realistic'][data-mode='light'] .cell .meta .grade-1,
+:root[data-theme='realistic'][data-mode='light'] .grade-1,
 :root[data-theme='realistic'][data-mode='light'] button.check-row.tier-1 .check-label { color: #334155; }
 :root[data-theme='realistic'][data-mode='light'] .tier-2,
-:root[data-theme='realistic'][data-mode='light'] .cell .meta .tier-2,
-:root[data-theme='realistic'][data-mode='light'] .cell .meta .grade-2,
+:root[data-theme='realistic'][data-mode='light'] .grade-2,
 :root[data-theme='realistic'][data-mode='light'] button.check-row.tier-2 .check-label { color: #15803d; }
 :root[data-theme='realistic'][data-mode='light'] .tier-3,
-:root[data-theme='realistic'][data-mode='light'] .cell .meta .tier-3,
-:root[data-theme='realistic'][data-mode='light'] .cell .meta .grade-3,
+:root[data-theme='realistic'][data-mode='light'] .grade-3,
 :root[data-theme='realistic'][data-mode='light'] button.check-row.tier-3 .check-label { color: #0284c7; }
 :root[data-theme='realistic'][data-mode='light'] .tier-4,
-:root[data-theme='realistic'][data-mode='light'] .cell .meta .tier-4,
-:root[data-theme='realistic'][data-mode='light'] .cell .meta .grade-4,
+:root[data-theme='realistic'][data-mode='light'] .grade-4,
 :root[data-theme='realistic'][data-mode='light'] button.check-row.tier-4 .check-label { color: #7e22ce; }
 :root[data-theme='realistic'][data-mode='light'] .tier-5,
-:root[data-theme='realistic'][data-mode='light'] .cell .meta .tier-5,
-:root[data-theme='realistic'][data-mode='light'] .cell .meta .grade-5 { color: #b45309; }
+:root[data-theme='realistic'][data-mode='light'] .grade-5 { color: #b45309; }
 
 :root[data-theme='lcd'] .stars,
 :root[data-theme='lcd'] [class*='tier-'],
@@ -372,7 +366,7 @@ button.variant-chip .meta { @apply text-[10px] pointer-events-none; }
 button.variant-chip.locked { @apply opacity-42 cursor-not-allowed; }
 
 .specimen-grid { @apply grid grid-cols-3 gap-1.5 max-h-[196px] overflow-y-auto pr-0.5; }
-.specimen-grid > p.note { @apply col-span-full m-0 py-1; }
+.specimen-grid > .note { @apply col-span-full m-0 py-1.5; }
 .specimen-grid .cell { @apply py-[5px] px-1; }
 .specimen-grid .cell-art { @apply w-[72px] h-10 mt-1.5; }
 .specimen-grid .cell-art canvas { @apply !w-[72px] !h-10; }
@@ -382,6 +376,13 @@ button.variant-chip.locked { @apply opacity-42 cursor-not-allowed; }
 table.odds { @apply border-collapse text-xs w-full max-[720px]:text-[11px]; }
 table.odds th, table.odds td { @apply border border-[var(--border)] py-1 px-1.5 text-right max-[720px]:py-[3px] max-[720px]:px-1; }
 table.odds th:first-child, table.odds td:first-child { @apply text-left; }
+
+.action-bar {
+  @apply py-2 px-2.5 mb-2.5 grid gap-2;
+  background: var(--cell-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
 
 .filter-box {
   @apply py-2 px-2.5 mb-2.5 grid gap-1.5;
@@ -467,12 +468,17 @@ button.check-row[aria-checked='true'] .check-dot { @apply bg-[var(--accent-2)] s
   background: linear-gradient(90deg, var(--accent), var(--accent-2));
 }
 
-.audio-box {
+.settings-grid {
+  @apply grid grid-cols-2 gap-2.5 items-start max-[720px]:grid-cols-1;
+}
+.settings-card {
   @apply py-2.5 px-3 grid gap-2;
   background: var(--cell-bg);
   border: 1px solid var(--border);
   border-radius: var(--radius);
 }
+.settings-card > h3 { @apply mt-1 mb-0 first:mt-0; }
+.settings-card > .note { @apply mt-0.5; }
 .audio-row { @apply flex flex-wrap items-center gap-2.5; }
 .audio-row > button { @apply min-w-[138px] justify-start; }
 .vol-slider { @apply flex-1 min-w-[120px] accent-[var(--accent)] cursor-pointer; }

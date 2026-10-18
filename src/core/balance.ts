@@ -39,20 +39,6 @@ export const LEVELS: { level: number; totalExp: number; capacity: number; decorC
   { level: 10, totalExp: 57_760, capacity: 12, decorCapacity: 12 },
 ]
 
-/** SOURCE: the trade hub unlocks at aquarium level 4. */
-export const TRADE_HUB_LEVEL = 4
-
-export const MAX_LEVEL = 10
-
-export const TIER_NAMES = [
-  'Starter',
-  'Common',
-  'Uncommon',
-  'Rare',
-  'Legendary',
-  'Mythic',
-] as const
-
 /**
  * SOURCE: offspring tier distribution by combined parent tiers.
  * Key is `${lowTier}+${highTier}`. Values are percentages for
@@ -86,9 +72,9 @@ export const MATRIX_FALLBACK: [number, number, number, number, number] = [0, 0, 
  */
 export const USES_BY_TIER: Record<Tier, number> = { 0: 999, 1: 5, 2: 4, 3: 3, 4: 2, 5: 2 }
 
-/** SOURCE: fry maturation / cooldown time in ms (~7 minutes for regular offspring, 2m for starter). */
+/** SOURCE: fry maturation / cooldown time in ms (~5–20 minutes for offspring, 3m for starter). */
 export const GROWTH_MS_BY_TIER: Record<Tier, number> = {
-  0: 2 * 60_000,
+  0: PARENT_COOLDOWN_MS,
   1: 5 * 60_000,
   2: 7 * 60_000,
   3: 10 * 60_000,

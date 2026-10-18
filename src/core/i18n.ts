@@ -131,8 +131,6 @@ export interface Copy {
     settings: string
   }
   tankHeading: (placed: number, cap: number, total: number) => string
-  inTankTag: string
-  inUseLabel: string
   releaseBtn: string
   confirmReleaseBtn: string
   placedMsg: (name: string, placed: number, cap: number) => string
@@ -152,7 +150,6 @@ export interface Copy {
   breedNotEnoughAdults: string
   breedNoteTitle: string
   breedNote: string
-  oddsHeading: string
   pairingCol: string
   breedBtn: (picked: number) => string
   clearBtn: string
@@ -229,7 +226,6 @@ export interface Copy {
   audioOn: string
   audioOff: string
   settingsLangHeading: string
-  settingsHelpHeading: string
   openHelpBtn: string
   settingsSaveHeading: string
   resetBtn: string
@@ -240,7 +236,6 @@ export interface Copy {
   gradeLabel: (grade: number) => string
   badgeReadyTitle: string
   badgePartialTitle: string
-  badgeNoneTitle: string
   describeAdult: string
   describeFry: (clock: string) => string
   describeFish: (
@@ -294,8 +289,6 @@ const ZH: Copy = {
   },
   tankHeading: (placed, cap, total) =>
     `我的鱼群（鱼缸展示 ${placed}/${cap} · 背包共 ${total} 条）`,
-  inTankTag: '鱼缸中',
-  inUseLabel: '使用中',
   releaseBtn: '放生',
   confirmReleaseBtn: '确认',
   placedMsg: (name, placed, cap) => `已将 ${name} 放入鱼缸展示（${placed}/${cap}）。`,
@@ -318,7 +311,6 @@ const ZH: Copy = {
   breedNoteTitle: '繁育规则与遗传说明',
   breedNote:
     '【爱心消耗】每次繁育消耗 **1 颗爱心**（每 **7 分钟** 恢复 1 颗，上限 5 颗）。【星级与品阶】双亲星级组合决定子代 **1★–5★** 产出概率，双亲品阶越高越易孵化出高品阶后代（最高 **2.0x EXP**）。【次数与经验】初始鱼拥有 **∞ 无限次数**（冷却 3 分钟），子代鱼拥有 **1–5 次** 繁育次数；孵化与成年时各获得一半经验。',
-  oddsHeading: '子代星级概率',
   pairingCol: '亲代组合',
   breedBtn: (picked) => `开始繁育 · 消耗 1 爱心 (${picked}/2)`,
   clearBtn: '清空选择',
@@ -401,7 +393,6 @@ const ZH: Copy = {
   audioOn: '开启',
   audioOff: '静音',
   settingsLangHeading: '界面语言 / Language',
-  settingsHelpHeading: '帮助与游戏数据说明',
   openHelpBtn: '查看游戏指南与数值表',
   settingsSaveHeading: '存档管理',
   resetBtn: '重置存档进度',
@@ -412,7 +403,6 @@ const ZH: Copy = {
   gradeLabel: (g) => `品阶 ${g}`,
   badgeReadyTitle: '已放入鱼缸展示',
   badgePartialTitle: '鱼缸中 / 冷却中',
-  badgeNoneTitle: '未放入鱼缸',
   describeAdult: '已成年',
   describeFry: (clock) => `成长/冷却中（剩余 ${clock}）`,
   describeFish: (name, starsStr, tierStr, grade, usesStr, stateStr) =>
@@ -437,8 +427,6 @@ const ZH: Copy = {
   },
   synthError: (code, count, picked) => {
     switch (code) {
-      case 'mixed-tier':
-        return '所有 10 条材料鱼必须具有相同的星级（请先取消已选的其他星级鱼）。'
       case 'max-tier':
         return '神话（5★）已是最高星级，无法继续向上合成。'
       case 'starter-material':
@@ -496,8 +484,6 @@ const EN: Copy = {
   },
   tankHeading: (placed, cap, total) =>
     `Your fish (${placed}/${cap} in tank · ${total} owned)`,
-  inTankTag: 'In Tank',
-  inUseLabel: 'In Tank',
   releaseBtn: 'Release',
   confirmReleaseBtn: 'Confirm',
   placedMsg: (name, placed, cap) => `Placed ${name} in the tank (${placed}/${cap}).`,
@@ -521,7 +507,6 @@ const EN: Copy = {
   breedNoteTitle: 'Breeding & Genetics Guide',
   breedNote:
     '【Heart Cost】Each breeding attempt costs **1 Heart** (regenerates 1 every **7 min**, cap 5). 【Rarity & Grade】Parent star tiers determine **1★–5★** offspring odds, while higher parent grades boost high-grade offspring odds (up to **2.0x EXP**). 【Uses & EXP】Starter fish have **∞ infinite uses** (3m cooldown) and bred fish have **1–5 uses**; half EXP is awarded on hatching and half on maturation.',
-  oddsHeading: 'Offspring odds',
   pairingCol: 'Pairing',
   breedBtn: (picked) => `Breed · 1 heart (${picked}/2)`,
   clearBtn: 'Clear',
@@ -605,7 +590,6 @@ const EN: Copy = {
   audioOn: 'ON',
   audioOff: 'MUTE',
   settingsLangHeading: 'Language / 界面语言',
-  settingsHelpHeading: 'Help & Game Data Guide',
   openHelpBtn: 'Open Help & Balance Tables',
   settingsSaveHeading: 'Save',
   resetBtn: 'Reset progress',
@@ -616,7 +600,6 @@ const EN: Copy = {
   gradeLabel: (g) => `grade ${g}`,
   badgeReadyTitle: 'Placed in aquarium tank',
   badgePartialTitle: 'In tank / cooling down',
-  badgeNoneTitle: 'Not in tank',
   describeAdult: 'adult',
   describeFry: (clock) => `cooldown/fry (${clock} left)`,
   describeFish: (name, starsStr, tierStr, grade, usesStr, stateStr) =>
@@ -641,8 +624,6 @@ const EN: Copy = {
   },
   synthError: (code, count, picked) => {
     switch (code) {
-      case 'mixed-tier':
-        return 'All 10 materials must share the same rarity tier.'
       case 'max-tier':
         return 'Mythic is the ceiling; it cannot be merged upward.'
       case 'starter-material':

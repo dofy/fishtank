@@ -2,7 +2,7 @@ import type { DecorItem, Grade, Tier } from '../core/types'
 import type { DecorPortraitRequest, PortraitRequest, Renderer } from './renderer'
 import type { Agent, DecorNode, FoodPellet, SceneView, SplashEffect } from './scene'
 import { decorLayers, eyeAt, fishPath, hashString, patternBands, patternSpots } from './shape'
-import { type SceneColors, type ThemeManifest, sceneColorsFor, spriteFor } from './theme'
+import { type SceneColors, type ThemeManifest, lampPositions, sceneColorsFor, spriteFor } from './theme'
 
 /**
  * 7-color spectrum palette for the overhead night aquarium lamps.
@@ -156,11 +156,6 @@ export class RealisticRenderer implements Renderer {
     ctx.strokeRect(1, 1, w - 2, h - 2)
   }
 
-  private lampPositions(w: number): number[] {
-    if (w < 380) return [w * 0.28, w * 0.72]
-    return [w * 0.22, w * 0.5, w * 0.78]
-  }
-
   /** Multi-layer distant reef silhouettes & ambient schooling minnows for depth. */
   private distantReef(
     ctx: CanvasRenderingContext2D,
@@ -269,7 +264,7 @@ export class RealisticRenderer implements Renderer {
     t: number,
     lampColors?: readonly number[],
   ): void {
-    const lamps = this.lampPositions(w)
+    const lamps = lampPositions(w)
 
     ctx.save()
     ctx.globalCompositeOperation = 'screen'
@@ -313,7 +308,7 @@ export class RealisticRenderer implements Renderer {
     night: boolean,
     lampColors?: readonly number[],
   ): void {
-    const lamps = this.lampPositions(w)
+    const lamps = lampPositions(w)
     ctx.save()
 
     // Top mounting rail
@@ -393,7 +388,7 @@ export class RealisticRenderer implements Renderer {
     // Soft light pools on the sand floor under each decorative lamp at night
     if (night) {
       ctx.save()
-      for (const [idx, lx] of this.lampPositions(w).entries()) {
+      for (const [idx, lx] of lampPositions(w).entries()) {
         const spec = lampSpecAt(lampColors, idx)
         const pool = ctx.createRadialGradient(lx, h - 10, 4, lx, h - 10, 68)
         pool.addColorStop(0, spec.sandPool)

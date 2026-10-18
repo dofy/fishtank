@@ -144,10 +144,6 @@ export function isAdult(fish: Fish, now: number): boolean {
   return fish.maturesAt === null || fish.maturesAt <= now
 }
 
-export function adults(state: GameState, now: number): Fish[] {
-  return state.fish.filter((f) => isAdult(f, now))
-}
-
 /** Max display slots in the visual aquarium tank for the current level. */
 export function capacity(state: GameState): number {
   return capacityForLevel(state.level)
@@ -403,7 +399,7 @@ export function breed(
   return { child, tier, novel, expGained: immediateExp }
 }
 
-export type SynthError = 'wrong-count' | 'mixed-tier' | 'max-tier' | 'starter-material'
+export type SynthError = 'wrong-count' | 'max-tier' | 'starter-material'
 
 /**
  * Consume ten fish (tiers 1..4) to mint one fish a tier higher.
@@ -488,40 +484,44 @@ export function filterMergeCandidates(state: GameState): Fish[] {
   })
 }
 
+function compareFishBySort(a: Fish, b: Fish, sort: FishSort): number {
+  switch (sort) {
+    case 'tier':
+      if (b.tier !== a.tier) return b.tier - a.tier
+      if (b.grade !== a.grade) return b.grade - a.grade
+      if (b.uses !== a.uses) return b.uses - a.uses
+      return a.bornAt - b.bornAt
+    case 'grade':
+      if (b.grade !== a.grade) return b.grade - a.grade
+      if (b.tier !== a.tier) return b.tier - a.tier
+      if (b.uses !== a.uses) return b.uses - a.uses
+      return a.bornAt - b.bornAt
+    case 'uses':
+      if (b.uses !== a.uses) return b.uses - a.uses
+      if (b.tier !== a.tier) return b.tier - a.tier
+      if (b.grade !== a.grade) return b.grade - a.grade
+      return a.bornAt - b.bornAt
+    case 'acquired':
+    default:
+      return a.bornAt - b.bornAt
+  }
+}
+
 export function sortTankFish(
   list: Fish[],
   sort: FishSort,
   tankIds: Set<string>,
 ): Fish[] {
   return [...list].sort((a, b) => {
-    switch (sort) {
-      case 'inTank': {
-        const aIn = tankIds.has(a.uid) ? 1 : 0
-        const bIn = tankIds.has(b.uid) ? 1 : 0
-        if (aIn !== bIn) return bIn - aIn
-        if (b.tier !== a.tier) return b.tier - a.tier
-        if (b.grade !== a.grade) return b.grade - a.grade
-        return a.bornAt - b.bornAt
-      }
-      case 'tier':
-        if (b.tier !== a.tier) return b.tier - a.tier
-        if (b.grade !== a.grade) return b.grade - a.grade
-        if (b.uses !== a.uses) return b.uses - a.uses
-        return a.bornAt - b.bornAt
-      case 'grade':
-        if (b.grade !== a.grade) return b.grade - a.grade
-        if (b.tier !== a.tier) return b.tier - a.tier
-        if (b.uses !== a.uses) return b.uses - a.uses
-        return a.bornAt - b.bornAt
-      case 'uses':
-        if (b.uses !== a.uses) return b.uses - a.uses
-        if (b.tier !== a.tier) return b.tier - a.tier
-        if (b.grade !== a.grade) return b.grade - a.grade
-        return a.bornAt - b.bornAt
-      case 'acquired':
-      default:
-        return a.bornAt - b.bornAt
+    if (sort === 'inTank') {
+      const aIn = tankIds.has(a.uid) ? 1 : 0
+      const bIn = tankIds.has(b.uid) ? 1 : 0
+      if (aIn !== bIn) return bIn - aIn
+      if (b.tier !== a.tier) return b.tier - a.tier
+      if (b.grade !== a.grade) return b.grade - a.grade
+      return a.bornAt - b.bornAt
     }
+    return compareFishBySort(a, b, sort)
   })
 }
 
@@ -530,27 +530,7 @@ export function sortBreedCandidates(list: Fish[], sort: FishSort, now = Date.now
     const aAdult = isAdult(a, now) ? 1 : 0
     const bAdult = isAdult(b, now) ? 1 : 0
     if (aAdult !== bAdult) return bAdult - aAdult
-
-    switch (sort) {
-      case 'tier':
-        if (b.tier !== a.tier) return b.tier - a.tier
-        if (b.grade !== a.grade) return b.grade - a.grade
-        if (b.uses !== a.uses) return b.uses - a.uses
-        return a.bornAt - b.bornAt
-      case 'grade':
-        if (b.grade !== a.grade) return b.grade - a.grade
-        if (b.tier !== a.tier) return b.tier - a.tier
-        if (b.uses !== a.uses) return b.uses - a.uses
-        return a.bornAt - b.bornAt
-      case 'uses':
-        if (b.uses !== a.uses) return b.uses - a.uses
-        if (b.tier !== a.tier) return b.tier - a.tier
-        if (b.grade !== a.grade) return b.grade - a.grade
-        return a.bornAt - b.bornAt
-      case 'acquired':
-      default:
-        return a.bornAt - b.bornAt
-    }
+    return compareFishBySort(a, b, sort)
   })
 }
 

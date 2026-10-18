@@ -66,6 +66,12 @@ export function sceneColorsFor(manifest: ThemeManifest, night: boolean): SceneCo
   return manifest.scene
 }
 
+/** Horizontal centers for the overhead decorative aquarium lamps. */
+export function lampPositions(w: number): number[] {
+  if (w < 380) return [w * 0.28, w * 0.72]
+  return [w * 0.22, w * 0.5, w * 0.78]
+}
+
 export function applyTheme(manifest: ThemeManifest, night = true): void {
   const root = document.documentElement
   const palette = !night && manifest.lightPalette ? manifest.lightPalette : manifest.palette

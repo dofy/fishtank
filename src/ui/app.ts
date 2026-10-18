@@ -60,56 +60,40 @@ import type {
 import type { Renderer } from '../render/renderer'
 import type { Agent, DecorNode } from '../render/scene'
 import { resolveDarkMode } from '../render/theme'
+import {
+  bar,
+  checkRow,
+  count,
+  formatClock,
+  heading,
+  label,
+  makeButton,
+  makeIconButton,
+  note,
+  renderSortBar,
+  stars,
+  stat,
+  td,
+  th,
+} from './dom'
+import {
+  AUDIO_ICONS,
+  CLOCK_ICON,
+  CLOSE_ICON,
+  GITHUB_ICON,
+  HEART_SVG,
+  HELP_ICON,
+  IMMERSIVE_ICONS,
+  MODE_ICONS,
+  STAT_ICONS,
+  TAB_ICONS,
+  TAB_IDS,
+  type Tab,
+} from './icons'
 
-type Tab = 'tank' | 'breed' | 'merge' | 'decor' | 'book' | 'settings'
+export { formatClock, stars } from './dom'
 
-const TAB_IDS: readonly Tab[] = ['tank', 'breed', 'merge', 'decor', 'book', 'settings']
-
-const TAB_ICONS: Record<Tab, string> = {
-  tank: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 8s2.5-4.5 7-4.5c2.2 0 4 1.5 5 2.5l1.5-1.5v7L13.5 10c-1 1-2.8 2.5-5 2.5-4.5 0-7-4.5-7-4.5Z"/><circle cx="5.5" cy="7.5" r="0.8" fill="currentColor"/></svg>',
-  breed: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 13.8S2 9.8 2 5.6A3.1 3.1 0 0 1 8 4.3a3.1 3.1 0 0 1 6 1.3c0 4.2-6 8.2-6 8.2Z"/></svg>',
-  merge: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4m0 4v4M2 8h4m4 0h4M4.2 4.2l2.3 2.3m3 3 2.3 2.3m0-7.6-2.3 2.3m-3 3-2.3 2.3"/></svg>',
-  decor: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 14V5c0-2 1.8-3 1.8-3M5 14v-4c0-1.5-2-2.5-2-4.5M11 14V9c0-1.5 2-2 2-4M3 14h10"/></svg>',
-  book: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 3h4.2c1 0 1.3.5 1.3 1.3v9.2c0-.7-.5-1-1.3-1H2.5V3Zm11 0H9.3C8.3 3 8 3.5 8 4.3v9.2c0-.7.5-1 1.3-1h4.2V3Z"/></svg>',
-  settings: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="2.2"/><path d="M8 1.8v1.6m0 9.2v1.6M1.8 8h1.6m9.2 0h1.6M3.6 3.6l1.1 1.1m6.6 6.6 1.1 1.1m0-8.8-1.1 1.1M4.7 11.3l-1.1 1.1"/></svg>',
-}
-
-const STAT_ICONS = {
-  level: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m8 2 1.8 3.7 4.1.6-3 2.9.7 4.1L8 11.4l-3.6 1.9.7-4.1-3-2.9 4.1-.6L8 2Z"/></svg>',
-  tank: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="12" height="10" rx="1.5"/><path d="M2 6.5c2 1 4-1 6 0s4-1 6 0"/></svg>',
-  bag: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5.5h10l-.8 8H3.8L3 5.5Z"/><path d="M5.5 5.5V4a2.5 2.5 0 0 1 5 0v1.5"/></svg>',
-  breed: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 8s2.5-4.5 7-4.5c2.2 0 4 1.5 5 2.5l1.5-1.5v7L13.5 10c-1 1-2.8 2.5-5 2.5-4.5 0-7-4.5-7-4.5Z"/><circle cx="5.5" cy="7.5" r="0.8" fill="currentColor"/></svg>',
-  book: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 3h4.2c1 0 1.3.5 1.3 1.3v9.2c0-.7-.5-1-1.3-1H2.5V3Zm11 0H9.3C8.3 3 8 3.5 8 4.3v9.2c0-.7.5-1 1.3-1h4.2V3Z"/></svg>',
-}
-
-const HEART_SVG = {
-  solid: '<svg viewBox="0 0 16 16" fill="currentColor" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"><path d="M8 13.6S2 9.7 2 5.6A3.1 3.1 0 0 1 8 4.3a3.1 3.1 0 0 1 6 1.3c0 4.1-6 8-6 8Z"/></svg>',
-  outline: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"><path d="M8 13.6S2 9.7 2 5.6A3.1 3.1 0 0 1 8 4.3a3.1 3.1 0 0 1 6 1.3c0 4.1-6 8-6 8Z"/></svg>',
-}
-
-const MODE_ICONS: Record<ColorMode, string> = {
-  auto: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="5.5"/><path d="M8 2.5v11A5.5 5.5 0 0 0 8 2.5Z" fill="currentColor"/></svg>',
-  light: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="2.8"/><path d="M8 1.5v1.8m0 9.4v1.8M1.5 8h1.8m9.4 0h1.8M3.4 3.4l1.3 1.3m6.6 6.6 1.3 1.3m0-9.2-1.3 1.3M4.7 11.3 3.4 12.6"/></svg>',
-  dark: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13.2 9.8A5.5 5.5 0 0 1 6.2 2.8a5.5 5.5 0 1 0 7 7Z"/></svg>',
-}
-
-const AUDIO_ICONS = {
-  on: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h2.5L9 3v10L5.5 10H3V6Z"/><path d="M11.5 5.5a3.5 3.5 0 0 1 0 5M13.2 3.8a6 6 0 0 1 0 8.4"/></svg>',
-  off: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h2.5L9 3v10L5.5 10H3V6Z"/><path d="m11 6 4 4m0-4-4 4"/></svg>',
-}
-
-const IMMERSIVE_ICONS = {
-  enter: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6V2.5H6M10 2.5h3.5V6M13.5 10v3.5H10M6 13.5H2.5V10"/></svg>',
-  exit: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3.5 5.5 8l4.5 4.5M6 8h7.5"/></svg>',
-}
-
-const HELP_ICON =
-  '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><path d="M6.3 6.2a1.8 1.8 0 1 1 2.5 1.7c-.6.3-.8.6-.8 1.3"/><circle cx="8" cy="11.5" r="0.6" fill="currentColor"/></svg>'
-
-const GITHUB_ICON =
-  '<svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 .2a8 8 0 0 0-2.53 15.59c.4.07.55-.17.55-.38l-.01-1.49c-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.42 7.42 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48l-.01 2.2c0 .21.15.46.55.38A8.01 8.01 0 0 0 8 .2Z"/></svg>'
-
-export const APP_VERSION = '1.4.1'
+export const APP_VERSION = '1.4.2'
 export const GITHUB_URL = 'https://github.com/dofy/fishtank'
 
 export interface AppHooks {
@@ -466,34 +450,26 @@ export class App {
 
     const headRow = document.createElement('div')
     headRow.className = 'panel-head'
-    headRow.append(heading(c.tankHeading(tankIds.size, cap, this.state.fish.length)))
-
-    const sortBar = document.createElement('div')
-    sortBar.className = 'sort-bar'
-    const sortLbl = document.createElement('span')
-    sortLbl.className = 'sort-label'
-    sortLbl.textContent = c.sortLabel
-    sortBar.append(sortLbl)
-
-    const sorts: { id: FishSort; label: string }[] = [
-      { id: 'inTank', label: c.sortInTank },
-      { id: 'tier', label: c.sortTier },
-      { id: 'grade', label: c.sortGrade },
-      { id: 'uses', label: c.sortUses },
-      { id: 'acquired', label: c.sortAcquired },
-    ]
-    for (const s of sorts) {
-      const b = makeButton(s.label, () => {
-        sound.play('click')
-        this.state.tankSort = s.id
-        this.hooks.onSave()
-        this.render(now)
-      })
-      b.className = 'sort-btn'
-      b.setAttribute('aria-pressed', String(currentSort === s.id))
-      sortBar.append(b)
-    }
-    headRow.append(sortBar)
+    headRow.append(
+      heading(c.tankHeading(tankIds.size, cap, this.state.fish.length)),
+      renderSortBar(
+        c.sortLabel,
+        currentSort,
+        [
+          { id: 'inTank', label: c.sortInTank },
+          { id: 'tier', label: c.sortTier },
+          { id: 'grade', label: c.sortGrade },
+          { id: 'uses', label: c.sortUses },
+          { id: 'acquired', label: c.sortAcquired },
+        ],
+        (id) => {
+          sound.play('click')
+          this.state.tankSort = id
+          this.hooks.onSave()
+          this.render(now)
+        },
+      ),
+    )
 
     const grid = document.createElement('div')
     grid.className = 'grid'
@@ -576,87 +552,35 @@ export class App {
 
     const headRow = document.createElement('div')
     headRow.className = 'panel-head'
-    headRow.append(heading(c.breedHeading(this.breedPick.length)))
-
-    const sortBar = document.createElement('div')
-    sortBar.className = 'sort-bar'
-    const sortLbl = document.createElement('span')
-    sortLbl.className = 'sort-label'
-    sortLbl.textContent = c.sortLabel
-    sortBar.append(sortLbl)
-
-    const sorts: { id: FishSort; label: string }[] = [
-      { id: 'tier', label: c.sortTier },
-      { id: 'grade', label: c.sortGrade },
-      { id: 'uses', label: c.sortUses },
-      { id: 'acquired', label: c.sortAcquired },
-    ]
-    for (const s of sorts) {
-      const b = makeButton(s.label, () => {
-        sound.play('click')
-        this.state.breedSort = s.id
-        this.hooks.onSave()
-        this.render(now)
-      })
-      b.className = 'sort-btn'
-      b.setAttribute('aria-pressed', String(currentSort === s.id))
-      sortBar.append(b)
-    }
-    headRow.append(sortBar)
-
-    const out: Node[] = [headRow]
-
-    const grid = document.createElement('div')
-    grid.className = 'grid'
-    for (const fish of candidates) {
-      const adult = isAdult(fish, now)
-      const idx = this.breedPick.indexOf(fish.uid)
-      const picked = idx !== -1
-      grid.append(
-        this.fishCell(fish, now, {
-          selected: picked,
-          pickOrder: picked ? idx + 1 : undefined,
-          locked: !adult,
-          showCooldown: true,
-          onClick: () => {
-            if (!adult) {
-              const name = speciesName(fish.speciesId, this.locale)
-              const remain = formatClock(Math.max(0, (fish.maturesAt ?? now) - now))
-              this.say(c.breedError('not-adult', `「${name}」（⏱ ${remain}）`), 'bad')
-              this.render(now)
-              return
-            }
-            if (!picked && this.state.hearts <= 0) {
-              const wait = formatClock(Math.max(0, this.state.nextHeartAt - now))
-              this.say(c.breedError('no-hearts', wait), 'bad')
-            } else {
-              sound.play('select')
-              this.say('')
-            }
-            this.breedPick = picked
-              ? this.breedPick.filter((u) => u !== fish.uid)
-              : [...this.breedPick, fish.uid].slice(-2)
-            this.render(now)
-          },
-        }),
-      )
-    }
-    out.push(grid)
-
-    if (eligible.length < 2) {
-      out.push(note(c.breedNotEnoughAdults))
-    }
+    headRow.append(
+      heading(c.breedHeading(this.breedPick.length)),
+      renderSortBar(
+        c.sortLabel,
+        currentSort,
+        [
+          { id: 'tier', label: c.sortTier },
+          { id: 'grade', label: c.sortGrade },
+          { id: 'uses', label: c.sortUses },
+          { id: 'acquired', label: c.sortAcquired },
+        ],
+        (id) => {
+          sound.play('click')
+          this.state.breedSort = id
+          this.hooks.onSave()
+          this.render(now)
+        },
+      ),
+    )
 
     const [aUid, bUid] = this.breedPick
     const a = aUid ? eligible.find((f) => f.uid === aUid) : undefined
     const b = bUid ? eligible.find((f) => f.uid === bUid) : undefined
 
-    if (a && b) {
-      out.push(heading(c.oddsHeading, 'h3'), this.oddsTable(a.tier, b.tier))
-    }
+    const actionBar = document.createElement('div')
+    actionBar.className = 'action-bar'
 
     const row = document.createElement('div')
-    row.className = 'row'
+    row.className = 'row m-0'
     const canBreed = Boolean(a && b && this.state.hearts > 0)
     const go = makeButton(c.breedBtn(this.breedPick.length), () => {
       const clickNow = Date.now()
@@ -731,7 +655,55 @@ export class App {
       row.append(clear)
     }
 
-    out.push(row, note(c.breedNote, c.breedNoteTitle, TAB_ICONS.breed))
+    actionBar.append(row)
+    if (a && b) {
+      actionBar.append(this.oddsTable(a.tier, b.tier))
+    }
+
+    const out: Node[] = [headRow, actionBar]
+
+    const grid = document.createElement('div')
+    grid.className = 'grid'
+    for (const fish of candidates) {
+      const adult = isAdult(fish, now)
+      const idx = this.breedPick.indexOf(fish.uid)
+      const picked = idx !== -1
+      grid.append(
+        this.fishCell(fish, now, {
+          selected: picked,
+          pickOrder: picked ? idx + 1 : undefined,
+          locked: !adult,
+          showCooldown: true,
+          onClick: () => {
+            if (!adult) {
+              const name = speciesName(fish.speciesId, this.locale)
+              const remain = formatClock(Math.max(0, (fish.maturesAt ?? now) - now))
+              this.say(c.breedError('not-adult', `「${name}」（⏱ ${remain}）`), 'bad')
+              this.render(now)
+              return
+            }
+            if (!picked && this.state.hearts <= 0) {
+              const wait = formatClock(Math.max(0, this.state.nextHeartAt - now))
+              this.say(c.breedError('no-hearts', wait), 'bad')
+            } else {
+              sound.play('select')
+              this.say('')
+            }
+            this.breedPick = picked
+              ? this.breedPick.filter((u) => u !== fish.uid)
+              : [...this.breedPick, fish.uid].slice(-2)
+            this.render(now)
+          },
+        }),
+      )
+    }
+    out.push(grid)
+
+    if (eligible.length < 2) {
+      out.push(note(c.breedNotEnoughAdults))
+    }
+
+    out.push(note(c.breedNote, c.breedNoteTitle, TAB_ICONS.breed))
     return out
   }
 
@@ -744,104 +716,12 @@ export class App {
     const candidateIds = new Set(mergeCandidates.map((f) => f.uid))
     this.mergePick = this.mergePick.filter((uid) => candidateIds.has(uid)).slice(0, SYNTHESIS_INPUT_COUNT)
 
-    const out: Node[] = [heading(c.mergeHeading(SYNTHESIS_INPUT_COUNT, this.mergePick.length))]
-
-    const filterBox = document.createElement('div')
-    filterBox.className = 'filter-box'
-
-    const condTitle = document.createElement('div')
-    condTitle.className = 'filter-title'
-    condTitle.textContent = c.mergeCondTitle
-
-    const condList = document.createElement('div')
-    condList.className = 'filter-list'
-    condList.append(
-      checkRow(c.mergeFilterZeroUses, filter.zeroUsesOnly, () => {
-        sound.play('click')
-        filter.zeroUsesOnly = !filter.zeroUsesOnly
-        this.hooks.onSave()
-        this.render(now)
-      }),
-      checkRow(c.mergeFilterExcludeTank, filter.excludeInTank, () => {
-        sound.play('click')
-        filter.excludeInTank = !filter.excludeInTank
-        this.hooks.onSave()
-        this.render(now)
-      }),
-    )
-
-    const tierTitle = document.createElement('div')
-    tierTitle.className = 'filter-title'
-    tierTitle.textContent = c.mergeTierTitle
-
-    const tierList = document.createElement('div')
-    tierList.className = 'filter-tiers'
-    const allMergeTiers: Tier[] = [1, 2, 3, 4]
-    for (const t of allMergeTiers) {
-      const checked = filter.tiers.includes(t)
-      const countInTier = this.state.fish.filter(
-        (f) =>
-          f.tier === t &&
-          (!filter.zeroUsesOnly || f.uses === 0) &&
-          (!filter.excludeInTank || !syncTank(this.state).includes(f.uid)),
-      ).length
-      const row = checkRow(
-        `${stars(t)} ${tierName(t, this.locale)} (${countInTier})`,
-        checked,
-        () => {
-          sound.play('click')
-          if (checked) {
-            filter.tiers = filter.tiers.filter((x) => x !== t)
-          } else {
-            filter.tiers = [...filter.tiers, t].sort((a, b) => a - b)
-          }
-          this.hooks.onSave()
-          this.render(now)
-        },
-        `tier-${t}`,
-      )
-      tierList.append(row)
-    }
-
-    filterBox.append(condTitle, condList, tierTitle, tierList)
-    out.push(filterBox)
-
-    const grid = document.createElement('div')
-    grid.className = 'grid'
-    for (const fish of mergeCandidates) {
-      const idx = this.mergePick.indexOf(fish.uid)
-      const picked = idx !== -1
-      const locked = fish.tier >= 5
-      grid.append(
-        this.fishCell(fish, now, {
-          selected: picked,
-          pickOrder: picked ? idx + 1 : undefined,
-          locked,
-          onClick: () => {
-            if (fish.tier >= 5) {
-              this.say(c.synthError('max-tier', SYNTHESIS_INPUT_COUNT), 'bad')
-            } else if (!picked && this.mergePick.length >= SYNTHESIS_INPUT_COUNT) {
-              this.say(c.mergeAlreadyFullMsg(SYNTHESIS_INPUT_COUNT), 'bad')
-            } else {
-              sound.play('select')
-              this.mergePick = picked
-                ? this.mergePick.filter((u) => u !== fish.uid)
-                : [...this.mergePick, fish.uid].slice(0, SYNTHESIS_INPUT_COUNT)
-              this.say('')
-            }
-            this.render(now)
-          },
-        }),
-      )
-    }
-    out.push(grid)
-
-    if (mergeCandidates.length === 0) {
-      out.push(note(c.mergeEmptyByFilter))
-    }
+    const headRow = document.createElement('div')
+    headRow.className = 'panel-head'
+    headRow.append(heading(c.mergeHeading(SYNTHESIS_INPUT_COUNT, this.mergePick.length)))
 
     const row = document.createElement('div')
-    row.className = 'row'
+    row.className = 'row m-0'
     const ready = this.mergePick.length === SYNTHESIS_INPUT_COUNT
     const go = makeButton(c.mergeBtn(this.mergePick.length, SYNTHESIS_INPUT_COUNT), () => {
       if (this.mergePick.length !== SYNTHESIS_INPUT_COUNT) {
@@ -909,7 +789,105 @@ export class App {
     clear.setAttribute('aria-disabled', String(this.mergePick.length === 0))
 
     row.append(go, autoBtn, clear)
-    out.push(row, note(c.mergeNote, c.mergeNoteTitle, TAB_ICONS.merge))
+    headRow.append(row)
+
+    const out: Node[] = [headRow]
+
+    const filterBox = document.createElement('div')
+    filterBox.className = 'filter-box'
+
+    const condTitle = document.createElement('div')
+    condTitle.className = 'filter-title'
+    condTitle.textContent = c.mergeCondTitle
+
+    const condList = document.createElement('div')
+    condList.className = 'filter-list'
+    condList.append(
+      checkRow(c.mergeFilterZeroUses, filter.zeroUsesOnly, () => {
+        sound.play('click')
+        filter.zeroUsesOnly = !filter.zeroUsesOnly
+        this.hooks.onSave()
+        this.render(now)
+      }),
+      checkRow(c.mergeFilterExcludeTank, filter.excludeInTank, () => {
+        sound.play('click')
+        filter.excludeInTank = !filter.excludeInTank
+        this.hooks.onSave()
+        this.render(now)
+      }),
+    )
+
+    const tierTitle = document.createElement('div')
+    tierTitle.className = 'filter-title'
+    tierTitle.textContent = c.mergeTierTitle
+
+    const tierList = document.createElement('div')
+    tierList.className = 'filter-tiers'
+    const allMergeTiers: Tier[] = [1, 2, 3, 4]
+    for (const t of allMergeTiers) {
+      const checked = filter.tiers.includes(t)
+      const countInTier = this.state.fish.filter(
+        (f) =>
+          f.tier === t &&
+          (!filter.zeroUsesOnly || f.uses === 0) &&
+          (!filter.excludeInTank || !syncTank(this.state).includes(f.uid)),
+      ).length
+      const tierRow = checkRow(
+        `${stars(t)} ${tierName(t, this.locale)} (${countInTier})`,
+        checked,
+        () => {
+          sound.play('click')
+          if (checked) {
+            filter.tiers = filter.tiers.filter((x) => x !== t)
+          } else {
+            filter.tiers = [...filter.tiers, t].sort((a, b) => a - b)
+          }
+          this.hooks.onSave()
+          this.render(now)
+        },
+        `tier-${t}`,
+      )
+      tierList.append(tierRow)
+    }
+
+    filterBox.append(condTitle, condList, tierTitle, tierList)
+    out.push(filterBox)
+
+    const grid = document.createElement('div')
+    grid.className = 'grid'
+    for (const fish of mergeCandidates) {
+      const idx = this.mergePick.indexOf(fish.uid)
+      const picked = idx !== -1
+      const locked = fish.tier >= 5
+      grid.append(
+        this.fishCell(fish, now, {
+          selected: picked,
+          pickOrder: picked ? idx + 1 : undefined,
+          locked,
+          onClick: () => {
+            if (fish.tier >= 5) {
+              this.say(c.synthError('max-tier', SYNTHESIS_INPUT_COUNT), 'bad')
+            } else if (!picked && this.mergePick.length >= SYNTHESIS_INPUT_COUNT) {
+              this.say(c.mergeAlreadyFullMsg(SYNTHESIS_INPUT_COUNT), 'bad')
+            } else {
+              sound.play('select')
+              this.mergePick = picked
+                ? this.mergePick.filter((u) => u !== fish.uid)
+                : [...this.mergePick, fish.uid].slice(0, SYNTHESIS_INPUT_COUNT)
+              this.say('')
+            }
+            this.render(now)
+          },
+        }),
+      )
+    }
+    out.push(grid)
+
+    if (mergeCandidates.length === 0) {
+      out.push(note(c.mergeEmptyByFilter))
+    }
+
+    out.push(note(c.mergeNote, c.mergeNoteTitle, TAB_ICONS.merge))
     return out
   }
 
@@ -1098,8 +1076,7 @@ export class App {
     const closeBtn = document.createElement('button')
     closeBtn.type = 'button'
     closeBtn.className = 'book-close-btn'
-    closeBtn.innerHTML =
-      '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg>'
+    closeBtn.innerHTML = CLOSE_ICON
     closeBtn.addEventListener('click', () => {
       sound.play('click')
       this.bookDetailSpeciesId = null
@@ -1217,7 +1194,7 @@ export class App {
       varRow.append(chip)
     }
 
-    // Owned specimens grid (matching screenshot 2 & 3 left bottom grid)
+    // Owned specimens grid
     const specTitle = heading(c.bookSpecimensTitle(specimens.length), 'h3')
     const specGrid = document.createElement('div')
     specGrid.className = 'specimen-grid'
@@ -1268,9 +1245,13 @@ export class App {
 
   private settingsPanel(): Node[] {
     const c = this.t
-    const out: Node[] = [heading(c.settingsThemeHeading)]
+
+    // Card 1: Theme & Color Mode
+    const visualCard = document.createElement('div')
+    visualCard.className = 'settings-card'
+
     const themeRow = document.createElement('div')
-    themeRow.className = 'row'
+    themeRow.className = 'row m-0'
     for (const theme of this.hooks.themes) {
       const b = makeButton(themeName(theme.id, theme.name, this.locale), () => {
         sound.play('click')
@@ -1281,7 +1262,7 @@ export class App {
     }
 
     const modeRow = document.createElement('div')
-    modeRow.className = 'row'
+    modeRow.className = 'row m-0'
     const currentMode: ColorMode = this.state.colorMode ?? 'auto'
     const modes: { id: ColorMode; label: string }[] = [
       { id: 'auto', label: c.colorModeAuto },
@@ -1298,10 +1279,22 @@ export class App {
       modeRow.append(b)
     }
 
-    // Audio & BGM controls
+    visualCard.append(
+      heading(c.settingsThemeHeading, 'h3'),
+      themeRow,
+      note(c.settingsThemeNote),
+      heading(c.settingsColorModeHeading, 'h3'),
+      modeRow,
+      note(c.settingsColorModeNote),
+    )
+
+    // Card 2: Audio & BGM controls + Language & Save
+    const rightCol = document.createElement('div')
+    rightCol.className = 'grid gap-2.5 content-start'
+
     const audioCfg = syncAudioConfig(this.state.audio)
-    const audioBox = document.createElement('div')
-    audioBox.className = 'audio-box'
+    const audioCard = document.createElement('div')
+    audioCard.className = 'settings-card'
 
     const sfxRow = document.createElement('div')
     sfxRow.className = 'audio-row'
@@ -1375,7 +1368,7 @@ export class App {
     bgmRow.append(bgmToggle, bgmSlider, bgmPct)
 
     const trackRow = document.createElement('div')
-    trackRow.className = 'row'
+    trackRow.className = 'row m-0'
     const tracks: { id: BgmTrackId; label: string }[] = [
       { id: 'lofi', label: `♪ ${c.bgmTrackLofi}` },
       { id: 'tide', label: `♪ ${c.bgmTrackTide}` },
@@ -1390,10 +1383,20 @@ export class App {
       trackRow.append(b)
     }
 
-    audioBox.append(sfxRow, bgmRow, heading(c.audioTrackHeading, 'h3'), trackRow)
+    audioCard.append(
+      heading(c.settingsAudioHeading, 'h3'),
+      sfxRow,
+      bgmRow,
+      heading(c.audioTrackHeading, 'h3'),
+      trackRow,
+    )
 
-    const langRow = document.createElement('div')
-    langRow.className = 'row'
+    // Card 3: Language, Help & Save Management
+    const systemCard = document.createElement('div')
+    systemCard.className = 'settings-card'
+
+    const langHelpRow = document.createElement('div')
+    langHelpRow.className = 'row m-0'
     const zhBtn = makeButton('简体中文', () => {
       sound.play('click')
       this.hooks.onLocaleChange('zh')
@@ -1404,35 +1407,17 @@ export class App {
       this.hooks.onLocaleChange('en')
     })
     enBtn.setAttribute('aria-pressed', String(this.locale === 'en'))
-    langRow.append(zhBtn, enBtn)
 
-    const helpRow = document.createElement('div')
-    helpRow.className = 'row'
     const openHelp = makeIconButton(HELP_ICON, c.openHelpBtn, () => {
       sound.play('click')
       this.helpOpen = true
       this.renderShowcase()
     })
     openHelp.className = 'icon-btn btn-secondary'
-    helpRow.append(openHelp)
-
-    out.push(
-      themeRow,
-      note(c.settingsThemeNote),
-      heading(c.settingsColorModeHeading, 'h3'),
-      modeRow,
-      note(c.settingsColorModeNote),
-      heading(c.settingsAudioHeading, 'h3'),
-      audioBox,
-      heading(c.settingsLangHeading, 'h3'),
-      langRow,
-      heading(c.settingsHelpHeading, 'h3'),
-      helpRow,
-      heading(c.settingsSaveHeading, 'h3'),
-    )
+    langHelpRow.append(zhBtn, enBtn, openHelp)
 
     const danger = document.createElement('div')
-    danger.className = 'row'
+    danger.className = 'row m-0'
     if (!this.confirmingReset) {
       const reset = makeButton(c.resetBtn, () => {
         sound.play('click')
@@ -1456,8 +1441,22 @@ export class App {
       })
       danger.append(confirmBtn, cancelBtn)
     }
-    out.push(danger, note(c.settingsSaveNote))
-    return out
+
+    systemCard.append(
+      heading(c.settingsLangHeading, 'h3'),
+      langHelpRow,
+      heading(c.settingsSaveHeading, 'h3'),
+      danger,
+      note(c.settingsSaveNote),
+    )
+
+    rightCol.append(audioCard, systemCard)
+
+    const grid = document.createElement('div')
+    grid.className = 'settings-grid'
+    grid.append(visualCard, rightCol)
+
+    return [grid]
   }
 
   private renderFooter(): void {
@@ -1515,8 +1514,7 @@ export class App {
     const closeBtn = document.createElement('button')
     closeBtn.type = 'button'
     closeBtn.className = 'book-close-btn'
-    closeBtn.innerHTML =
-      '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg>'
+    closeBtn.innerHTML = CLOSE_ICON
     closeBtn.onclick = () => {
       sound.play('click')
       this.helpOpen = false
@@ -1966,12 +1964,15 @@ export class App {
 
   // ------------------------------------------------------------- helpers
 
-  private portrait(sp: Species, tier: Tier, grade: Grade, dim = false): HTMLCanvasElement {
+  private cachedCanvas(
+    keySuffix: string,
+    w: number,
+    h: number,
+    draw: (ctx: CanvasRenderingContext2D) => void,
+  ): HTMLCanvasElement {
     const dpr = Math.min(2, window.devicePixelRatio || 1)
-    const w = 96
-    const h = 52
     const mode = document.documentElement.dataset.mode ?? 'dark'
-    const key = `fish:${this.renderer.manifest.id}:${mode}:${sp.id}:${tier}:${grade}:${dim ? 1 : 0}:${dpr}`
+    const key = `${this.renderer.manifest.id}:${mode}:${dpr}:${w}x${h}:${keySuffix}`
 
     let cached = this.portraitCache.get(key)
     if (!cached) {
@@ -1981,7 +1982,7 @@ export class App {
       const ctx = cached.getContext('2d')
       if (ctx) {
         ctx.scale(dpr, dpr)
-        this.renderer.portrait(ctx, w, h, { species: sp, tier, grade, dim })
+        draw(ctx)
       }
       this.portraitCache.set(key, cached)
     }
@@ -1994,53 +1995,24 @@ export class App {
     const outCtx = canvas.getContext('2d')
     if (outCtx) outCtx.drawImage(cached, 0, 0)
     return canvas
+  }
+
+  private portrait(sp: Species, tier: Tier, grade: Grade, dim = false): HTMLCanvasElement {
+    return this.cachedCanvas(`fish:${sp.id}:${tier}:${grade}:${dim ? 1 : 0}`, 96, 52, (ctx) => {
+      this.renderer.portrait(ctx, 96, 52, { species: sp, tier, grade, dim })
+    })
   }
 
   private decorPortrait(item: DecorItem, dim = false): HTMLCanvasElement {
-    const dpr = Math.min(2, window.devicePixelRatio || 1)
-    const w = 96
-    const h = 56
-    const mode = document.documentElement.dataset.mode ?? 'dark'
-    const key = `decor:${this.renderer.manifest.id}:${mode}:${item.id}:${dim ? 1 : 0}:${dpr}`
-
-    let cached = this.portraitCache.get(key)
-    if (!cached) {
-      cached = document.createElement('canvas')
-      cached.width = w * dpr
-      cached.height = h * dpr
-      const ctx = cached.getContext('2d')
-      if (ctx) {
-        ctx.scale(dpr, dpr)
-        this.renderer.decorPortrait(ctx, w, h, { item, dim })
-      }
-      this.portraitCache.set(key, cached)
-    }
-
-    const canvas = document.createElement('canvas')
-    canvas.width = w * dpr
-    canvas.height = h * dpr
-    canvas.style.width = `${w}px`
-    canvas.style.height = `${h}px`
-    const outCtx = canvas.getContext('2d')
-    if (outCtx) outCtx.drawImage(cached, 0, 0)
-    return canvas
+    return this.cachedCanvas(`decor:${item.id}:${dim ? 1 : 0}`, 96, 56, (ctx) => {
+      this.renderer.decorPortrait(ctx, 96, 56, { item, dim })
+    })
   }
 
   private largePortrait(sp: Species, tier: Tier, grade: Grade): HTMLCanvasElement {
-    const dpr = Math.min(2, window.devicePixelRatio || 1)
-    const w = 148
-    const h = 84
-    const canvas = document.createElement('canvas')
-    canvas.width = w * dpr
-    canvas.height = h * dpr
-    canvas.style.width = `${w}px`
-    canvas.style.height = `${h}px`
-    const ctx = canvas.getContext('2d')
-    if (ctx) {
-      ctx.scale(dpr, dpr)
-      this.renderer.portrait(ctx, w, h, { species: sp, tier, grade, dim: false })
-    }
-    return canvas
+    return this.cachedCanvas(`large:${sp.id}:${tier}:${grade}`, 148, 84, (ctx) => {
+      this.renderer.portrait(ctx, 148, 84, { species: sp, tier, grade, dim: false })
+    })
   }
 
   private fishCell(
@@ -2049,7 +2021,6 @@ export class App {
     opts: {
       selected?: boolean
       pickOrder?: number
-      tagText?: string
       showCooldown?: boolean
       locked?: boolean
       onClick?: () => void
@@ -2087,8 +2058,7 @@ export class App {
       cdOverlay.className = 'cell-overlay cooldown'
       const clockIcon = document.createElement('span')
       clockIcon.className = 'cd-clock'
-      clockIcon.innerHTML =
-        '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><path d="M8 4.5V8l2.5 1.5"/></svg>'
+      clockIcon.innerHTML = CLOCK_ICON
       const timerEl = document.createElement('span')
       timerEl.className = 'timer'
       timerEl.dataset.maturesAt = String(fish.maturesAt)
@@ -2105,8 +2075,6 @@ export class App {
     )
     if (opts.pickOrder !== undefined) {
       cell.append(label(`#${opts.pickOrder}`, 'pick-order'))
-    } else if (opts.tagText) {
-      cell.append(label(opts.tagText, 'pick-order'))
     }
     if (opts.action && opts.actionLabel) {
       const actWrap = document.createElement('div')
@@ -2160,17 +2128,12 @@ export class App {
     return wrap
   }
 
-  private badge(kind: 'ready' | 'partial' | 'none'): HTMLElement {
+  private badge(kind: 'ready' | 'partial'): HTMLElement {
     const c = this.t
     const el = document.createElement('div')
     el.className = `badge${kind === 'ready' ? '' : ' idle'}`
-    el.textContent = kind === 'none' ? '·' : '↓'
-    el.title =
-      kind === 'ready'
-        ? c.badgeReadyTitle
-        : kind === 'partial'
-          ? c.badgePartialTitle
-          : c.badgeNoneTitle
+    el.textContent = '↓'
+    el.title = kind === 'ready' ? c.badgeReadyTitle : c.badgePartialTitle
     return el
   }
 
@@ -2212,178 +2175,4 @@ export class App {
       : c.describeFry(formatClock((fish.maturesAt ?? now) - now))
     return c.describeFish(name, stars(fish.tier), tName, fish.grade, usesStr, stateStr)
   }
-}
-
-function makeButton(text: string, onClick: (event: MouseEvent) => void): HTMLButtonElement {
-  const b = document.createElement('button')
-  b.type = 'button'
-  b.textContent = text
-  b.addEventListener('click', onClick)
-  return b
-}
-
-function makeIconButton(
-  svgHtml: string,
-  text: string,
-  onClick: (event: MouseEvent) => void,
-): HTMLButtonElement {
-  const b = document.createElement('button')
-  b.type = 'button'
-  const ico = document.createElement('span')
-  ico.className = 'ico'
-  ico.innerHTML = svgHtml
-  const txt = document.createElement('span')
-  txt.className = 'btn-text'
-  txt.textContent = text
-  b.append(ico, txt)
-  b.addEventListener('click', onClick)
-  return b
-}
-
-function checkRow(
-  text: string,
-  checked: boolean,
-  onToggle: () => void,
-  extraClass = '',
-): HTMLButtonElement {
-  const row = document.createElement('button')
-  row.type = 'button'
-  row.className = `check-row${extraClass ? ` ${extraClass}` : ''}`
-  row.setAttribute('aria-checked', String(checked))
-  row.setAttribute('role', 'checkbox')
-
-  const labelSpan = document.createElement('span')
-  labelSpan.className = 'check-label'
-  labelSpan.textContent = text
-
-  const box = document.createElement('span')
-  box.className = 'check-box'
-  const dot = document.createElement('span')
-  dot.className = 'check-dot'
-  box.append(dot)
-
-  row.append(labelSpan, box)
-  row.addEventListener('click', onToggle)
-  return row
-}
-
-function stat(svgHtml: string, labelText: string, value: string): HTMLElement {
-  const wrap = document.createElement('div')
-  wrap.className = 'stat'
-  wrap.title = `${labelText}: ${value}`
-  const ico = document.createElement('span')
-  ico.className = 'ico'
-  ico.innerHTML = svgHtml
-  const l = document.createElement('span')
-  l.className = 'label'
-  l.textContent = labelText
-  const v = document.createElement('b')
-  v.textContent = value
-  wrap.append(ico, l, v)
-  return wrap
-}
-
-function bar(fraction: number): HTMLElement {
-  const outer = document.createElement('div')
-  outer.className = 'bar'
-  const inner = document.createElement('span')
-  inner.style.width = `${Math.round(fraction * 100)}%`
-  outer.append(inner)
-  return outer
-}
-
-function heading(text: string, tag: 'h2' | 'h3' = 'h2'): HTMLElement {
-  const el = document.createElement(tag)
-  el.textContent = text
-  return el
-}
-
-const NOTE_INFO_ICON =
-  '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6.2"/><path d="M8 7.2v4M8 4.8h.01"/></svg>'
-
-function appendFormattedNoteText(container: HTMLElement, text: string): void {
-  const tokenRe = /【([^】]+)】|\*\*([^*]+)\*\*/g
-  let lastIdx = 0
-  let match: RegExpExecArray | null
-  while ((match = tokenRe.exec(text)) !== null) {
-    if (match.index > lastIdx) {
-      container.append(document.createTextNode(text.slice(lastIdx, match.index)))
-    }
-    if (match[1] !== undefined) {
-      const tag = document.createElement('span')
-      tag.className = 'note-tag'
-      tag.textContent = match[1]
-      container.append(tag)
-    } else if (match[2] !== undefined) {
-      const strong = document.createElement('strong')
-      strong.className = 'note-em'
-      strong.textContent = match[2]
-      container.append(strong)
-    }
-    lastIdx = tokenRe.lastIndex
-  }
-  if (lastIdx < text.length) {
-    container.append(document.createTextNode(text.slice(lastIdx)))
-  }
-}
-
-function note(text: string, title?: string, iconSvg?: string): HTMLElement {
-  const box = document.createElement('div')
-  box.className = title ? 'note note-featured' : 'note'
-
-  const ico = document.createElement('span')
-  ico.className = 'note-ico'
-  ico.innerHTML = iconSvg ?? NOTE_INFO_ICON
-
-  const content = document.createElement('div')
-  content.className = 'note-content'
-
-  if (title) {
-    const head = document.createElement('div')
-    head.className = 'note-title'
-    head.textContent = title
-    content.append(head)
-  }
-
-  const body = document.createElement('div')
-  body.className = 'note-text'
-  appendFormattedNoteText(body, text)
-  content.append(body)
-
-  box.append(ico, content)
-  return box
-}
-
-function label(text: string, className: string): HTMLElement {
-  const el = document.createElement('div')
-  el.className = className
-  el.textContent = text
-  return el
-}
-
-function count(text: string): HTMLElement {
-  return label(text, 'count')
-}
-
-function th(text: string): HTMLElement {
-  const el = document.createElement('th')
-  el.textContent = text
-  return el
-}
-
-function td(text: string): HTMLElement {
-  const el = document.createElement('td')
-  el.textContent = text
-  return el
-}
-
-export function stars(tier: Tier): string {
-  return tier === 0 ? '—' : '★'.repeat(tier)
-}
-
-export function formatClock(ms: number): string {
-  const total = Math.max(0, Math.ceil(ms / 1000))
-  const m = Math.floor(total / 60)
-  const s = total % 60
-  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
 }
