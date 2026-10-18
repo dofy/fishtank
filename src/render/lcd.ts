@@ -35,6 +35,15 @@ export class LcdRenderer implements Renderer {
     this.floor(ctx, w, h, s)
 
     for (const d of view.decors) this.decorNode(ctx, d, h, view.time, s, night)
+    if (view.foods) {
+      const c = this.cell
+      ctx.fillStyle = s.ink
+      for (const f of view.foods) {
+        const fx = Math.round(f.x / c) * c
+        const fy = Math.round(f.y / c) * c
+        ctx.fillRect(fx, fy, c - 1, c - 1)
+      }
+    }
     for (const a of view.agents) this.agent(ctx, a, view.time, s)
     if (view.splashes) {
       for (const sp of view.splashes) this.splash(ctx, sp, s)

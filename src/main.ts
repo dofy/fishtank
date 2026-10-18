@@ -162,20 +162,37 @@ async function main(): Promise<void> {
 
   app.canvas.addEventListener('pointerdown', (event) => {
     const pt = canvasCoords(event)
+
+    // 1. Click a fish to startle it and make it dart away
+    const fishUid = scene.hitFish(pt.x, pt.y)
+    if (fishUid) {
+      if (scene.scareFish(fishUid, pt.x, pt.y, cssWidth, cssHeight)) {
+        sound.play('scare')
+      }
+      return
+    }
+
+    // 2. Click/drag a decoration
     const hit = scene.hitDecor(pt.x, pt.y, cssHeight)
-    if (!hit) return
-    draggingDecorId = hit
-    scene.activeDecorId = hit
-    if (cssWidth > 0) {
-      const existing = state.placedDecor?.find((d) => d.id === hit)
-      if (existing) moveDecor(state, hit, existing.x)
+    if (hit) {
+      draggingDecorId = hit
+      scene.activeDecorId = hit
+      if (cssWidth > 0) {
+        const existing = state.placedDecor?.find((d) => d.id === hit)
+        if (existing) moveDecor(state, hit, existing.x)
+      }
+      app.canvas.style.cursor = 'grabbing'
+      try {
+        app.canvas.setPointerCapture(event.pointerId)
+      } catch {
+        /* ignore */
+      }
+      return
     }
-    app.canvas.style.cursor = 'grabbing'
-    try {
-      app.canvas.setPointerCapture(event.pointerId)
-    } catch {
-      /* ignore */
-    }
+
+    // 3. Click empty tank water to drop a single food pellet
+    scene.spawnFood(pt.x, pt.y, cssWidth, cssHeight)
+    sound.play('feed')
   })
 
   app.canvas.addEventListener('pointermove', (event) => {
@@ -186,9 +203,15 @@ async function main(): Promise<void> {
       app.canvas.style.cursor = 'grabbing'
       return
     }
+    const fishHit = scene.hitFish(pt.x, pt.y)
+    if (fishHit) {
+      scene.activeDecorId = null
+      app.canvas.style.cursor = 'pointer'
+      return
+    }
     const hover = scene.hitDecor(pt.x, pt.y, cssHeight)
     scene.activeDecorId = hover
-    app.canvas.style.cursor = hover ? 'grab' : 'default'
+    app.canvas.style.cursor = hover ? 'grab' : 'pointer'
   })
 
   const endDrag = (event: PointerEvent) => {
@@ -227,7 +250,7 @@ async function main(): Promise<void> {
     night = resolveDarkMode(state.colorMode ?? 'auto')
 
     scene.sync(state, species, cssWidth, cssHeight, wallNow)
-    scene.update(dt, cssWidth, cssHeight, elapsed)
+    scene.update(dt, cssWidth, cssHeight, elapsed, () => sound.play('eat'))
 
     ctx.save()
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0)

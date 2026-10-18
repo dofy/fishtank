@@ -25,6 +25,10 @@ export interface Agent {
   vy?: number
   /** True once the dropping fish has crossed the waterline and spawned a splash. */
   splashed?: boolean
+  /** Remaining seconds of startle/flee burst when clicked. */
+  scaredTimer?: number
+  /** Vertical escape velocity while startled. */
+  scaredVy?: number
 }
 
 export interface SplashEffect {
@@ -32,6 +36,14 @@ export interface SplashEffect {
   y: number
   age: number
   duration: number
+}
+
+export interface FoodPellet {
+  id: number
+  x: number
+  y: number
+  vy: number
+  seed: number
 }
 
 export interface DecorNode {
@@ -50,17 +62,21 @@ export interface SceneView {
   agents: Agent[]
   decors: DecorNode[]
   splashes?: SplashEffect[]
+  foods?: FoodPellet[]
   /** Seconds since start, for idle motion. */
   time: number
   /** True in dark/night mode, turning on the aquarium decorative lamps. */
   night?: boolean
 }
 
+let nextPelletId = 1
+
 /** Swimming state lives outside the save: it is scenery, not progress. */
 export class Scene {
   private agents = new Map<string, Agent>()
   private decors: DecorNode[] = []
   private splashes: SplashEffect[] = []
+  private foods: FoodPellet[] = []
   private initialized = false
   activeDecorId: DecorId | null = null
 
@@ -136,23 +152,88 @@ export class Scene {
     return null
   }
 
-  update(dt: number, width: number, height: number, time: number): void {
+  /** Hit-test swimming fish in the tank (top-most first). */
+  hitFish(px: number, py: number): string | null {
+    const list = [...this.agents.values()]
+    for (let i = list.length - 1; i >= 0; i--) {
+      const a = list[i]!
+      if (a.dropping) continue
+      const len = a.species.body.length * 4.2 * a.scale
+      const h = Math.max(24, len * a.species.body.depth)
+      if (Math.abs(px - a.x) <= len * 0.55 && Math.abs(py - a.y) <= h * 0.65) {
+        return a.fish.uid
+      }
+    }
+    return null
+  }
+
+  /** Startle a fish so it darts away from the click point. */
+  scareFish(uid: string, clickX: number, clickY: number, width: number, height: number): boolean {
+    const a = this.agents.get(uid)
+    if (!a || a.dropping) return false
+    const halfLen = a.species.body.length * 4.2 * a.scale * 0.5
+    const margin = Math.max(40, halfLen + 14)
+
+    // Pick escape direction away from the pointer, or away from the nearest wall
+    let escapeDir: 1 | -1 = a.x >= clickX ? 1 : -1
+    if (a.x < margin + 50) escapeDir = 1
+    else if (a.x > width - margin - 50) escapeDir = -1
+
+    a.dir = escapeDir
+    a.scaredTimer = 0.85
+    const dy = a.y - clickY
+    a.scaredVy = (dy >= 0 ? 1 : -1) * (65 + Math.random() * 45)
+    a.baseDepth = Math.min(0.82, Math.max(0.22, (a.y + a.scaredVy * 0.4) / Math.max(1, height)))
+    this.splashes.push({ x: a.x, y: a.y, age: 0, duration: 0.45 })
+    return true
+  }
+
+  /** Drop one food pellet at (px, py) that sinks toward the bottom and disappears on the floor. */
+  spawnFood(px: number, py: number, width: number, height: number): void {
+    const clampedX = Math.min(width - 18, Math.max(18, px))
+    const clampedY = Math.min(height - 26, Math.max(14, py))
+    this.foods.push({
+      id: nextPelletId++,
+      x: clampedX,
+      y: clampedY,
+      vy: 24 + Math.random() * 8,
+      seed: Math.random() * Math.PI * 2,
+    })
+  }
+
+  update(
+    dt: number,
+    width: number,
+    height: number,
+    time: number,
+    onEat?: () => void,
+  ): void {
     // Update water entry splashes
     for (const s of this.splashes) s.age += dt
     this.splashes = this.splashes.filter((s) => s.age < s.duration)
+
+    // Update sinking food pellets; remove once they touch the sand floor
+    const floorY = height - 18
+    for (const f of this.foods) {
+      f.y += f.vy * dt
+      f.x += Math.sin(time * 2.6 + f.seed) * 7 * dt
+      f.x = Math.min(width - 14, Math.max(14, f.x))
+    }
+    this.foods = this.foods.filter((f) => f.y < floorY)
 
     const minY = 28
     const maxY = Math.max(minY + 20, height - 44)
 
     for (const a of this.agents.values()) {
       const targetY = Math.min(maxY, Math.max(minY, height * (a.baseDepth ?? 0.45)))
+      const halfLen = a.species.body.length * 4.2 * a.scale * 0.5
+      const margin = Math.max(36, halfLen + 10)
 
-      // Drop-in from above the tank when newly placed
+      // 1. Drop-in from above the tank when newly placed
       if (a.dropping) {
         const waterlineY = 16
         let vy = a.vy ?? 220
         if (a.y < waterlineY) {
-          // Freefall in air
           vy += 420 * dt
           a.y += vy * dt
           a.tilt = 0.45
@@ -161,7 +242,6 @@ export class Scene {
             a.splashed = true
             this.splashes.push({ x: a.x, y: waterlineY, age: 0, duration: 0.75 })
           }
-          // Underwater deceleration + spring toward target depth
           vy *= Math.exp(-3.1 * dt)
           a.y = Math.min(maxY, a.y + vy * dt + (targetY - a.y) * Math.min(1, dt * 2.4))
           a.x += a.dir * a.speed * 0.65 * dt
@@ -176,13 +256,73 @@ export class Scene {
         continue
       }
 
+      // 2. Startled escape burst when clicked
+      if (a.scaredTimer && a.scaredTimer > 0) {
+        a.scaredTimer = Math.max(0, a.scaredTimer - dt)
+        const burst = 1 + a.scaredTimer * 2.8
+        a.x += a.dir * a.speed * burst * dt
+        a.y += (a.scaredVy ?? 0) * dt
+        a.scaredVy = (a.scaredVy ?? 0) * Math.exp(-3.5 * dt)
+        a.phase += dt * 10
+        a.tilt = ((a.scaredVy ?? 0) / 120) * 0.25
+
+        if (a.x < margin) {
+          a.x = margin
+          a.dir = 1
+        } else if (a.x > width - margin) {
+          a.x = width - margin
+          a.dir = -1
+        }
+        a.y = Math.min(maxY, Math.max(minY, a.y))
+        continue
+      }
+
+      // 3. Spot and chase nearest sinking food pellet within detection range
+      let nearestFood: FoodPellet | null = null
+      let bestDist = 280
+      for (const f of this.foods) {
+        const d = Math.hypot(f.x - a.x, f.y - a.y)
+        if (d < bestDist) {
+          bestDist = d
+          nearestFood = f
+        }
+      }
+
+      if (nearestFood) {
+        const dx = nearestFood.x - a.x
+        const dy = nearestFood.y - a.y
+        const dist = Math.hypot(dx, dy) || 1
+        if (Math.abs(dx) > 3) {
+          a.dir = dx >= 0 ? 1 : -1
+        }
+        const chaseSpeed = Math.max(58, a.speed * 2.5)
+        a.x += (dx / dist) * chaseSpeed * dt
+        a.y += (dy / dist) * chaseSpeed * dt
+        a.phase += dt * 6
+        a.tilt = Math.max(-0.38, Math.min(0.38, Math.atan2(dy, Math.abs(dx) + 8) * 0.7))
+
+        // Mouth position in world space
+        const mouthX = a.x + a.dir * (halfLen * 0.7)
+        const mouthDist = Math.hypot(nearestFood.x - mouthX, nearestFood.y - a.y)
+        if (mouthDist < 18 || dist < 15) {
+          this.foods = this.foods.filter((f) => f.id !== nearestFood.id)
+          a.baseDepth = Math.min(0.82, Math.max(0.22, a.y / Math.max(1, height)))
+          this.splashes.push({ x: nearestFood.x, y: nearestFood.y, age: 0.2, duration: 0.45 })
+          onEat?.()
+        }
+
+        a.x = Math.min(width - margin, Math.max(margin, a.x))
+        a.y = Math.min(maxY, Math.max(minY, a.y))
+        continue
+      }
+
+      // 4. Normal species-specific locomotion
       const form = a.species.body.form ?? 'fish'
       const body = a.species.body
       const p = time + a.phase
 
       switch (form) {
         case 'jellyfish': {
-          // Vertical pulsing propulsion: contract to rise, relax to parachute down
           const pulse = Math.sin(p * 2.2)
           const vy = pulse > 0 ? -pulse * 32 : -pulse * 15
           const vx = a.dir * a.speed * (0.28 + Math.max(0, pulse) * 0.25)
@@ -193,7 +333,6 @@ export class Scene {
         }
 
         case 'seahorse': {
-          // Upright slow hovering with figure-8 vertical bobbing
           const vx = a.dir * a.speed * 0.48
           const vy = Math.sin(p * 2.0) * 16 + Math.cos(p * 1.0) * 8
           a.x += vx * dt
@@ -204,7 +343,6 @@ export class Scene {
 
         case 'eel':
         case 'seasnake': {
-          // S-wave slithering trajectory across the water column
           const freq = form === 'seasnake' ? 3.2 : 2.6
           const amp = form === 'seasnake' ? 28 : 22
           const waveCos = Math.cos(p * freq)
@@ -215,7 +353,6 @@ export class Scene {
         }
 
         case 'ray': {
-          // Wide, sweeping soaring arcs (glide dive and climb)
           const glide = Math.sin(p * 1.15)
           a.x += a.dir * a.speed * (1.05 + Math.abs(glide) * 0.25) * dt
           a.y += glide * 24 * dt + (targetY - a.y) * 0.4 * dt
@@ -224,7 +361,6 @@ export class Scene {
         }
 
         case 'turtle': {
-          // Flipper-stroke burst & long coasting glide
           const stroke = Math.max(0, Math.sin(p * 2.4))
           const speedMult = 0.55 + stroke * 0.95
           const vy = (stroke - 0.35) * -14
@@ -237,21 +373,18 @@ export class Scene {
         case 'fish':
         default: {
           if (body.depth < 0.44) {
-            // Slender/torpedo fish: quick dart-and-coast bursts
             const burst = Math.pow(Math.max(0, Math.sin(p * 2.8)), 2)
             const vy = Math.sin(p * 1.9) * 12
             a.x += a.dir * a.speed * (0.75 + burst * 1.15) * dt
             a.y += vy * dt + (targetY - a.y) * 0.6 * dt
             a.tilt = (vy / 40) * 0.14
           } else if (body.depth > 0.82) {
-            // Round/deep reef fish (butterflyfish, puffer): calm hover & curious bobbing
             const cruise = 0.6 + 0.35 * Math.sin(p * 1.3)
             const vy = Math.sin(p * 1.6) * 10
             a.x += a.dir * a.speed * cruise * dt
             a.y += vy * dt + (targetY - a.y) * 0.5 * dt
             a.tilt = Math.sin(p * 1.6) * 0.06
           } else {
-            // Standard reef fish: smooth cruising
             const vy = Math.sin(p * 1.4) * 11
             a.x += a.dir * a.speed * dt
             a.y += vy * dt + (targetY - a.y) * 0.5 * dt
@@ -261,8 +394,6 @@ export class Scene {
         }
       }
 
-      const halfLen = a.species.body.length * 4.2 * a.scale * 0.5
-      const margin = Math.max(36, halfLen + 10)
       if (a.x < margin) {
         a.x = margin
         a.dir = 1
@@ -281,6 +412,7 @@ export class Scene {
       agents: [...this.agents.values()],
       decors: this.decors,
       splashes: this.splashes,
+      foods: this.foods,
       time,
       night,
     }

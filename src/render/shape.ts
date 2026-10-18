@@ -310,32 +310,39 @@ export function decorLayers(id: DecorId, w: number, h: number, time = 0): DecorL
 
   switch (id) {
     case 'kelp': {
+      // Asymmetric cluster of 4 kelp blades leaning with the current
       const blades = [
-        { ox: -w * 0.24, tall: h * 0.82, bw: w * 0.13, phase: 0 },
-        { ox: 0, tall: h * 0.98, bw: w * 0.15, phase: 1.1 },
-        { ox: w * 0.24, tall: h * 0.74, bw: w * 0.12, phase: 2.2 },
+        { ox: -w * 0.28, tall: h * 0.62, bw: w * 0.11, lean: -w * 0.08, phase: 0 },
+        { ox: -w * 0.08, tall: h * 0.98, bw: w * 0.15, lean: w * 0.14, phase: 0.9 },
+        { ox: w * 0.12, tall: h * 0.82, bw: w * 0.13, lean: w * 0.18, phase: 1.8 },
+        { ox: w * 0.28, tall: h * 0.48, bw: w * 0.1, lean: w * 0.1, phase: 2.7 },
       ]
       for (const [idx, b] of blades.entries()) {
-        const target = idx === 1 ? primary : secondary
-        const s = Math.sin(time * 1.5 + b.phase) * (w * 0.1)
+        const target = idx === 1 || idx === 2 ? primary : secondary
+        const s = b.lean + Math.sin(time * 1.5 + b.phase) * (w * 0.09)
         target.moveTo(b.ox - b.bw / 2, 0)
-        target.quadraticCurveTo(b.ox - s * 0.6, -b.tall * 0.5, b.ox + s, -b.tall)
-        target.quadraticCurveTo(b.ox + b.bw - s * 0.4, -b.tall * 0.5, b.ox + b.bw / 2, 0)
+        target.quadraticCurveTo(b.ox + s * 0.35, -b.tall * 0.52, b.ox + s, -b.tall)
+        target.quadraticCurveTo(b.ox + b.bw + s * 0.45, -b.tall * 0.48, b.ox + b.bw / 2, 0)
         target.closePath()
       }
+      // Small pebble at base on the left
+      detail.ellipse(-w * 0.22, -h * 0.07, w * 0.12, h * 0.07, -0.15, 0, Math.PI * 2)
       break
     }
 
     case 'rocks': {
-      secondary.ellipse(-w * 0.2, -h * 0.34, w * 0.28, h * 0.34, -0.1, 0, Math.PI * 2)
-      secondary.ellipse(w * 0.24, -h * 0.28, w * 0.24, h * 0.28, 0.12, 0, Math.PI * 2)
-      primary.ellipse(0, -h * 0.46, w * 0.32, h * 0.46, 0, 0, Math.PI * 2)
-      detail.ellipse(-w * 0.06, -h * 0.62, w * 0.14, h * 0.12, -0.2, 0, Math.PI * 2)
+      // Asymmetric stacked reef boulders: tall craggy rock on left, flat stepping stones on right
+      secondary.ellipse(w * 0.2, -h * 0.24, w * 0.26, h * 0.24, 0.18, 0, Math.PI * 2)
+      secondary.ellipse(-w * 0.28, -h * 0.22, w * 0.18, h * 0.22, -0.22, 0, Math.PI * 2)
+      primary.ellipse(-w * 0.08, -h * 0.48, w * 0.28, h * 0.48, -0.14, 0, Math.PI * 2)
+      detail.ellipse(-w * 0.14, -h * 0.68, w * 0.12, h * 0.1, -0.28, 0, Math.PI * 2)
+      detail.moveTo(w * 0.28, -h * 0.32)
+      detail.ellipse(w * 0.2, -h * 0.32, w * 0.09, h * 0.06, 0.15, 0, Math.PI * 2)
       break
     }
 
     case 'shell': {
-      // Clam opens for ~3.5s every 9s cycle, then snaps shut
+      // Side-hinged giant clam (hinge on the left, opens toward the right)
       const cycle = time % 9
       const open =
         time === 0
@@ -347,60 +354,63 @@ export function decorLayers(id: DecorId, w: number, h: number, time = 0): DecorL
               : cycle < 4.4
                 ? Math.cos(((cycle - 3.6) / 0.8) * (Math.PI / 2))
                 : 0.08
-      // Lower valve
-      secondary.ellipse(0, -h * 0.22, w * 0.44, h * 0.22, 0, 0, Math.PI * 2)
-      // Upper hinged valve opening and closing
-      const topPeak = -h * (0.38 + open * 0.68)
-      const innerPeak = -h * (0.26 + open * 0.14)
-      primary.moveTo(-w * 0.44, -h * 0.24)
-      primary.quadraticCurveTo(0, topPeak, w * 0.44, -h * 0.24)
-      primary.quadraticCurveTo(0, innerPeak, -w * 0.44, -h * 0.24)
+      // Lower valve tilted slightly
+      secondary.ellipse(w * 0.03, -h * 0.2, w * 0.43, h * 0.2, 0.08, 0, Math.PI * 2)
+      // Upper valve hinged at left (-w * 0.38, -h * 0.22), swinging open to the right
+      const tipX = w * (0.42 - open * 0.12)
+      const tipY = -h * (0.28 + open * 0.56)
+      const crestX = -w * 0.08
+      const crestY = -h * (0.42 + open * 0.58)
+      primary.moveTo(-w * 0.38, -h * 0.22)
+      primary.quadraticCurveTo(crestX, crestY, tipX, tipY)
+      primary.quadraticCurveTo(w * 0.05, -h * (0.24 + open * 0.18), -w * 0.38, -h * 0.22)
       primary.closePath()
-      // Pearl inside (visible when clam opens)
+      // Off-center pearl nestled inside
       if (open > 0.2) {
         const pr = Math.min(w, h) * 0.16 * Math.min(1, (open - 0.15) * 1.3)
-        detail.arc(0, -h * 0.3, pr, 0, Math.PI * 2)
+        detail.arc(w * 0.08, -h * 0.28, pr, 0, Math.PI * 2)
       }
       break
     }
 
     case 'mushroom': {
-      // Base mossy stone
-      secondary.ellipse(0, -h * 0.16, w * 0.38, h * 0.16, 0, 0, Math.PI * 2)
+      // Asymmetric cluster: one large leaning cap on left-center, medium tilted right, tiny sprout far right
+      secondary.ellipse(-w * 0.04, -h * 0.14, w * 0.38, h * 0.14, 0.08, 0, Math.PI * 2)
       const shrooms = [
-        { x: -w * 0.22, y: -h * 0.56, r: w * 0.18 },
-        { x: 0, y: -h * 0.82, r: w * 0.24 },
-        { x: w * 0.24, y: -h * 0.48, r: w * 0.16 },
+        { bx: -w * 0.14, x: -w * 0.22, y: -h * 0.84, r: w * 0.25, tilt: -0.18 },
+        { bx: w * 0.04, x: w * 0.14, y: -h * 0.58, r: w * 0.19, tilt: 0.22 },
+        { bx: w * 0.2, x: w * 0.3, y: -h * 0.34, r: w * 0.12, tilt: 0.3 },
       ]
       for (const s of shrooms) {
-        // Stems
-        addCapsule(secondary, s.x * 0.5, -h * 0.14, s.x, s.y, s.r * 0.26)
-        // Glowing umbrella caps
-        primary.moveTo(s.x - s.r, s.y)
-        primary.quadraticCurveTo(s.x, s.y - s.r * 1.15, s.x + s.r, s.y)
+        addCapsule(secondary, s.bx, -h * 0.12, s.x, s.y, s.r * 0.25)
+        const dx = Math.cos(s.tilt) * s.r
+        const dy = Math.sin(s.tilt) * s.r
+        const nx = Math.sin(s.tilt) * s.r * 1.15
+        const ny = -Math.cos(s.tilt) * s.r * 1.15
+        primary.moveTo(s.x - dx, s.y - dy)
+        primary.quadraticCurveTo(s.x + nx, s.y + ny, s.x + dx, s.y + dy)
         primary.closePath()
-        // Bioluminescent spots on cap
-        detail.moveTo(s.x + s.r * 0.22, s.y - s.r * 0.35)
-        detail.arc(s.x, s.y - s.r * 0.35, s.r * 0.22, 0, Math.PI * 2)
+        detail.moveTo(s.x + nx * 0.35 + s.r * 0.2, s.y + ny * 0.35)
+        detail.arc(s.x + nx * 0.35, s.y + ny * 0.35, s.r * 0.2, 0, Math.PI * 2)
       }
       break
     }
 
     case 'crystal': {
-      // Dark geode rock base
-      secondary.ellipse(0, -h * 0.16, w * 0.4, h * 0.16, 0, 0, Math.PI * 2)
+      // Asymmetric geode: dominant spire sweeping right, smaller jagged shards on left
+      secondary.ellipse(-w * 0.05, -h * 0.15, w * 0.39, h * 0.15, -0.08, 0, Math.PI * 2)
       const shards = [
-        { bx: -w * 0.24, tx: -w * 0.36, ty: -h * 0.68, bw: w * 0.13 },
-        { bx: -w * 0.08, tx: -w * 0.14, ty: -h * 0.88, bw: w * 0.15 },
-        { bx: w * 0.05, tx: w * 0.08, ty: -h * 0.98, bw: w * 0.17 },
-        { bx: w * 0.22, tx: w * 0.34, ty: -h * 0.72, bw: w * 0.13 },
+        { bx: -w * 0.26, tx: -w * 0.4, ty: -h * 0.52, bw: w * 0.11 },
+        { bx: -w * 0.12, tx: -w * 0.24, ty: -h * 0.78, bw: w * 0.14 },
+        { bx: w * 0.04, tx: w * 0.18, ty: -h * 0.98, bw: w * 0.18 },
+        { bx: w * 0.2, tx: w * 0.38, ty: -h * 0.64, bw: w * 0.12 },
       ]
       for (const [idx, sh] of shards.entries()) {
-        const target = idx % 2 === 0 ? primary : detail
+        const target = idx === 2 || idx === 0 ? primary : detail
         target.moveTo(sh.bx - sh.bw, -h * 0.1)
-        target.lineTo(sh.tx - sh.bw * 0.45, sh.ty + h * 0.12)
+        target.lineTo(sh.tx - sh.bw * 0.45, sh.ty + h * 0.14)
         target.lineTo(sh.tx, sh.ty)
-        target.lineTo(sh.tx + sh.bw * 0.45, sh.ty + h * 0.12)
+        target.lineTo(sh.tx + sh.bw * 0.45, sh.ty + h * 0.1)
         target.lineTo(sh.bx + sh.bw, -h * 0.1)
         target.closePath()
       }
@@ -408,30 +418,35 @@ export function decorLayers(id: DecorId, w: number, h: number, time = 0): DecorL
     }
 
     case 'fairylights': {
-      // Draping cord + 7 glowing fairy bulbs hanging from the top (y: -h .. 0)
-      addCapsule(secondary, -w * 0.48, -h * 0.92, 0, -h * 0.45, 1.6)
-      addCapsule(secondary, 0, -h * 0.45, w * 0.48, -h * 0.92, 1.6)
-      const count = 7
-      for (let i = 0; i < count; i++) {
-        const u = i / (count - 1) - 0.5
-        const bx = u * w * 0.88
-        const sag = (1 - 4 * u * u) * (h * 0.44)
-        const by = -h * 0.88 + sag
-        primary.rect(bx - 2.5, by - 3, 5, 4)
+      // Asymmetric double-loop swag cord (low loop on left, high loop on right)
+      addCapsule(secondary, -w * 0.48, -h * 0.94, -w * 0.12, -h * 0.38, 1.5)
+      addCapsule(secondary, -w * 0.12, -h * 0.38, w * 0.14, -h * 0.78, 1.5)
+      addCapsule(secondary, w * 0.14, -h * 0.78, w * 0.48, -h * 0.52, 1.5)
+      const bulbs = [
+        { x: -w * 0.38, y: -h * 0.74 },
+        { x: -w * 0.24, y: -h * 0.52 },
+        { x: -w * 0.1, y: -h * 0.42 },
+        { x: w * 0.04, y: -h * 0.62 },
+        { x: w * 0.18, y: -h * 0.74 },
+        { x: w * 0.32, y: -h * 0.64 },
+        { x: w * 0.44, y: -h * 0.54 },
+      ]
+      for (const [i, b] of bulbs.entries()) {
+        primary.rect(b.x - 2.5, b.y - 3, 5, 4)
         const pulse = 1 + Math.sin(time * 3.2 + i * 1.1) * 0.14
-        const r = Math.min(w, h) * 0.15 * pulse
-        detail.moveTo(bx + r, by + r * 0.8)
-        detail.arc(bx, by + r * 0.8, r, 0, Math.PI * 2)
+        const r = Math.min(w, h) * 0.14 * pulse
+        detail.moveTo(b.x + r, b.y + r * 0.8)
+        detail.arc(b.x, b.y + r * 0.8, r, 0, Math.PI * 2)
       }
       break
     }
 
     case 'starlamps': {
-      // 3 hanging star pendants at staggered heights
+      // Asymmetric cascade of 3 star pendants (short left, deep center-left, medium far-right)
       const stars = [
-        { ox: -w * 0.32, drop: h * 0.62, r: h * 0.22, phase: 0 },
-        { ox: 0, drop: h * 0.82, r: h * 0.26, phase: 1.2 },
-        { ox: w * 0.32, drop: h * 0.56, r: h * 0.21, phase: 2.4 },
+        { ox: -w * 0.34, drop: h * 0.46, r: h * 0.19, phase: 0 },
+        { ox: -w * 0.06, drop: h * 0.84, r: h * 0.26, phase: 1.2 },
+        { ox: w * 0.28, drop: h * 0.64, r: h * 0.22, phase: 2.4 },
       ]
       for (const st of stars) {
         const sx = st.ox + Math.sin(time * 1.4 + st.phase) * 3
@@ -439,7 +454,7 @@ export function decorLayers(id: DecorId, w: number, h: number, time = 0): DecorL
         addCapsule(secondary, st.ox, -h, sx, sy - st.r * 0.6, 1.2)
         const inner = st.r * 0.44
         for (let i = 0; i < 10; i++) {
-          const ang = -Math.PI / 2 + (i * Math.PI) / 5
+          const ang = -Math.PI / 2 + st.phase * 0.22 + (i * Math.PI) / 5
           const rad = i % 2 === 0 ? st.r : inner
           const px = sx + Math.cos(ang) * rad
           const py = sy + Math.sin(ang) * rad
@@ -452,16 +467,16 @@ export function decorLayers(id: DecorId, w: number, h: number, time = 0): DecorL
     }
 
     case 'lanterns': {
-      // 3 warm festival paper lanterns hanging from a cord
-      addCapsule(secondary, -w * 0.46, -h * 0.92, w * 0.46, -h * 0.92, 1.5)
+      // Slanted festival rope with 3 differently sized & staggered lanterns
+      addCapsule(secondary, -w * 0.46, -h * 0.95, w * 0.46, -h * 0.78, 1.5)
       const items = [
-        { ox: -w * 0.3, cy: -h * 0.52, rx: w * 0.11, ry: h * 0.26 },
-        { ox: 0, cy: -h * 0.44, rx: w * 0.13, ry: h * 0.3 },
-        { ox: w * 0.3, cy: -h * 0.52, rx: w * 0.11, ry: h * 0.26 },
+        { ox: -w * 0.32, cy: -h * 0.6, rx: w * 0.1, ry: h * 0.22, cordY: -h * 0.92 },
+        { ox: -w * 0.02, cy: -h * 0.44, rx: w * 0.13, ry: h * 0.3, cordY: -h * 0.86 },
+        { ox: w * 0.28, cy: -h * 0.38, rx: w * 0.11, ry: h * 0.25, cordY: -h * 0.81 },
       ]
       for (const [i, l] of items.entries()) {
         const sx = l.ox + Math.sin(time * 1.3 + i) * 2.5
-        addCapsule(secondary, l.ox, -h * 0.92, sx, l.cy - l.ry, 1.3)
+        addCapsule(secondary, l.ox, l.cordY, sx, l.cy - l.ry, 1.3)
         primary.moveTo(sx + l.rx, l.cy)
         primary.ellipse(sx, l.cy, l.rx, l.ry, 0, 0, Math.PI * 2)
         secondary.rect(sx - l.rx * 0.55, l.cy - l.ry - 2, l.rx * 1.1, 3)
@@ -473,11 +488,11 @@ export function decorLayers(id: DecorId, w: number, h: number, time = 0): DecorL
     }
 
     case 'jellylamps': {
-      // 3 neon jellyfish bell lamps hanging from top
+      // Asymmetric chandelier of 3 jellyfish bells at different depths
       const bells = [
-        { ox: -w * 0.3, cy: -h * 0.58, r: w * 0.12, phase: 0 },
-        { ox: 0, cy: -h * 0.46, r: w * 0.14, phase: 1.5 },
-        { ox: w * 0.3, cy: -h * 0.58, r: w * 0.12, phase: 3.0 },
+        { ox: -w * 0.32, cy: -h * 0.68, r: w * 0.11, phase: 0 },
+        { ox: -w * 0.04, cy: -h * 0.42, r: w * 0.15, phase: 1.5 },
+        { ox: w * 0.28, cy: -h * 0.56, r: w * 0.12, phase: 3.0 },
       ]
       for (const b of bells) {
         const sx = b.ox + Math.sin(time * 1.2 + b.phase) * 2.5
@@ -487,23 +502,23 @@ export function decorLayers(id: DecorId, w: number, h: number, time = 0): DecorL
         primary.closePath()
         detail.moveTo(sx + b.r * 0.55, b.cy - b.r * 0.25)
         detail.arc(sx, b.cy - b.r * 0.25, b.r * 0.5, 0, Math.PI * 2)
-        addCapsule(detail, sx - b.r * 0.4, b.cy, sx - b.r * 0.5, b.cy + h * 0.28, 1.3)
-        addCapsule(detail, sx, b.cy, sx, b.cy + h * 0.34, 1.3)
-        addCapsule(detail, sx + b.r * 0.4, b.cy, sx + b.r * 0.5, b.cy + h * 0.28, 1.3)
+        addCapsule(detail, sx - b.r * 0.4, b.cy, sx - b.r * 0.52, b.cy + h * 0.26, 1.3)
+        addCapsule(detail, sx, b.cy, sx + w * 0.02, b.cy + h * 0.34, 1.3)
+        addCapsule(detail, sx + b.r * 0.4, b.cy, sx + b.r * 0.52, b.cy + h * 0.24, 1.3)
       }
       break
     }
 
     case 'coral': {
-      // Base rock
-      secondary.ellipse(0, -h * 0.14, w * 0.32, h * 0.14, 0, 0, Math.PI * 2)
-      // Branches
+      // Asymmetric wind-swept staghorn coral reaching toward the right
+      secondary.ellipse(-w * 0.06, -h * 0.14, w * 0.32, h * 0.14, -0.1, 0, Math.PI * 2)
       const branches = [
-        { x0: 0, y0: -h * 0.12, x1: 0, y1: -h * 0.92, r: w * 0.09 },
-        { x0: 0, y0: -h * 0.35, x1: -w * 0.34, y1: -h * 0.78, r: w * 0.08 },
-        { x0: 0, y0: -h * 0.42, x1: w * 0.34, y1: -h * 0.82, r: w * 0.08 },
-        { x0: -w * 0.18, y0: -h * 0.56, x1: -w * 0.38, y1: -h * 0.48, r: w * 0.06 },
-        { x0: w * 0.18, y0: -h * 0.62, x1: w * 0.38, y1: -h * 0.54, r: w * 0.06 },
+        { x0: -w * 0.06, y0: -h * 0.12, x1: w * 0.12, y1: -h * 0.92, r: w * 0.085 },
+        { x0: -w * 0.02, y0: -h * 0.34, x1: -w * 0.34, y1: -h * 0.72, r: w * 0.075 },
+        { x0: w * 0.04, y0: -h * 0.48, x1: w * 0.38, y1: -h * 0.78, r: w * 0.075 },
+        { x0: -w * 0.18, y0: -h * 0.52, x1: -w * 0.38, y1: -h * 0.42, r: w * 0.055 },
+        { x0: w * 0.22, y0: -h * 0.64, x1: w * 0.42, y1: -h * 0.48, r: w * 0.055 },
+        { x0: w * 0.06, y0: -h * 0.68, x1: -w * 0.12, y1: -h * 0.88, r: w * 0.06 },
       ]
       for (const b of branches) {
         addCapsule(primary, b.x0, b.y0, b.x1, b.y1, b.r)
@@ -514,15 +529,16 @@ export function decorLayers(id: DecorId, w: number, h: number, time = 0): DecorL
     }
 
     case 'starfish': {
-      // Stone mound
-      secondary.ellipse(0, -h * 0.36, w * 0.44, h * 0.36, 0, 0, Math.PI * 2)
-      // 5-pointed starfish on the stone
-      const cx = 0
+      // Sloped boulder on the left with a small pebble on the right, starfish perched at a jaunty angle
+      secondary.ellipse(-w * 0.06, -h * 0.38, w * 0.38, h * 0.38, -0.22, 0, Math.PI * 2)
+      secondary.ellipse(w * 0.28, -h * 0.18, w * 0.16, h * 0.18, 0.2, 0, Math.PI * 2)
+      const cx = -w * 0.08
       const cy = -h * 0.46
       const outer = Math.min(w, h) * 0.42
       const inner = outer * 0.42
+      const rot = 0.28
       for (let i = 0; i < 10; i++) {
-        const angle = -Math.PI / 2 + (i * Math.PI) / 5
+        const angle = -Math.PI / 2 + rot + (i * Math.PI) / 5
         const r = i % 2 === 0 ? outer : inner
         const px = cx + Math.cos(angle) * r
         const py = cy + Math.sin(angle) * r
@@ -555,14 +571,15 @@ export function decorLayers(id: DecorId, w: number, h: number, time = 0): DecorL
     }
 
     case 'anemone': {
-      // Basal foot
-      secondary.ellipse(0, -h * 0.2, w * 0.34, h * 0.2, 0, 0, Math.PI * 2)
-      // Tentacles
+      // Tilted rock crevice + anemone tentacles sweeping asymmetrically to the right
+      secondary.ellipse(-w * 0.06, -h * 0.22, w * 0.34, h * 0.22, -0.18, 0, Math.PI * 2)
+      const heights = [0.62, 0.78, 0.92, 0.86, 0.96, 0.74, 0.58]
       for (let i = -3; i <= 3; i++) {
-        const tx = i * (w * 0.09)
-        const tipX = tx * 1.35 + sway * 0.7
-        const tipY = -h * (0.88 - Math.abs(i) * 0.06)
-        addCapsule(primary, tx * 0.6, -h * 0.28, tipX, tipY, w * 0.048)
+        const tx = -w * 0.06 + i * (w * 0.085)
+        const reach = h * (heights[i + 3] ?? 0.8)
+        const tipX = tx + w * 0.12 + i * (w * 0.04) + sway * 0.75
+        const tipY = -reach
+        addCapsule(primary, tx * 0.7, -h * 0.26, tipX, tipY, w * 0.046)
         detail.moveTo(tipX + w * 0.045, tipY)
         detail.arc(tipX, tipY, w * 0.045, 0, Math.PI * 2)
       }
@@ -570,89 +587,99 @@ export function decorLayers(id: DecorId, w: number, h: number, time = 0): DecorL
     }
 
     case 'arch': {
-      // Outer arch
+      // Weathered asymmetric stone arch (taller massive pillar on left, stepped mossy blocks on right)
       primary.moveTo(-w * 0.46, 0)
-      primary.lineTo(-w * 0.42, -h * 0.62)
-      primary.quadraticCurveTo(0, -h * 1.08, w * 0.42, -h * 0.62)
+      primary.lineTo(-w * 0.4, -h * 0.74)
+      primary.quadraticCurveTo(-w * 0.05, -h * 1.08, w * 0.38, -h * 0.54)
       primary.lineTo(w * 0.46, 0)
-      primary.lineTo(w * 0.22, 0)
-      primary.lineTo(w * 0.2, -h * 0.48)
-      primary.quadraticCurveTo(0, -h * 0.72, -w * 0.2, -h * 0.48)
-      primary.lineTo(-w * 0.22, 0)
+      primary.lineTo(w * 0.2, 0)
+      primary.lineTo(w * 0.16, -h * 0.42)
+      primary.quadraticCurveTo(-w * 0.04, -h * 0.74, -w * 0.18, -h * 0.52)
+      primary.lineTo(-w * 0.2, 0)
       primary.closePath()
-      // Keystone & base stones
-      secondary.rect(-w * 0.48, -h * 0.14, w * 0.28, h * 0.14)
-      secondary.rect(w * 0.2, -h * 0.14, w * 0.28, h * 0.14)
-      detail.rect(-w * 0.09, -h * 0.9, w * 0.18, h * 0.18)
+      // Asymmetric fallen stone & moss cap
+      secondary.rect(-w * 0.48, -h * 0.18, w * 0.3, h * 0.18)
+      secondary.ellipse(w * 0.32, -h * 0.1, w * 0.18, h * 0.1, 0.1, 0, Math.PI * 2)
+      detail.ellipse(-w * 0.12, -h * 0.86, w * 0.18, h * 0.09, -0.25, 0, Math.PI * 2)
       break
     }
 
     case 'chest': {
-      // Chest box
-      primary.rect(-w * 0.4, -h * 0.56, w * 0.8, h * 0.56)
-      // Domed lid
-      secondary.moveTo(-w * 0.42, -h * 0.56)
-      secondary.quadraticCurveTo(0, -h * 1.02, w * 0.42, -h * 0.56)
+      // Sunken treasure chest tilted in the sand with lid propped open & gold spilling right
+      primary.moveTo(-w * 0.38, 0)
+      primary.lineTo(-w * 0.42, -h * 0.52)
+      primary.lineTo(w * 0.34, -h * 0.44)
+      primary.lineTo(w * 0.38, 0)
+      primary.closePath()
+      // Open tilted lid hinged on the left
+      secondary.moveTo(-w * 0.42, -h * 0.52)
+      secondary.quadraticCurveTo(-w * 0.08, -h * 1.04, w * 0.28, -h * 0.72)
+      secondary.lineTo(-w * 0.42, -h * 0.52)
       secondary.closePath()
-      // Gold trim & lock
-      detail.rect(-w * 0.42, -h * 0.6, w * 0.84, h * 0.09)
-      detail.rect(-w * 0.09, -h * 0.66, w * 0.18, h * 0.22)
+      // Gold coins & glowing treasure inside + spilled coin on sand
+      detail.ellipse(-w * 0.02, -h * 0.5, w * 0.28, h * 0.12, 0.1, 0, Math.PI * 2)
+      detail.moveTo(w * 0.46, -h * 0.08)
+      detail.arc(w * 0.4, -h * 0.08, w * 0.06, 0, Math.PI * 2)
       break
     }
 
     case 'anchor': {
-      // Shank
-      addCapsule(primary, 0, -h * 0.14, 0, -h * 0.8, w * 0.065)
-      // Cross stock
-      addCapsule(secondary, -w * 0.26, -h * 0.66, w * 0.26, -h * 0.66, w * 0.05)
-      // Flukes curve
-      primary.moveTo(-w * 0.42, -h * 0.36)
-      primary.quadraticCurveTo(0, 0, w * 0.42, -h * 0.36)
-      primary.quadraticCurveTo(0, -h * 0.16, -w * 0.42, -h * 0.36)
+      // Leaning ancient anchor half-buried in sand at an angle
+      addCapsule(primary, -w * 0.1, -h * 0.12, w * 0.16, -h * 0.8, w * 0.065)
+      // Tilted cross stock
+      addCapsule(secondary, -w * 0.12, -h * 0.72, w * 0.38, -h * 0.58, w * 0.05)
+      // Asymmetric flukes (left fluke buried deeper, right fluke raised)
+      primary.moveTo(-w * 0.42, -h * 0.28)
+      primary.quadraticCurveTo(-w * 0.08, 0, w * 0.34, -h * 0.44)
+      primary.quadraticCurveTo(-w * 0.06, -h * 0.16, -w * 0.42, -h * 0.28)
       primary.closePath()
-      // Top ring
-      detail.arc(0, -h * 0.88, w * 0.1, 0, Math.PI * 2)
+      // Top ring & hanging chain link
+      detail.arc(w * 0.19, -h * 0.88, w * 0.095, 0, Math.PI * 2)
       break
     }
 
     case 'castle': {
-      // Central keep
-      primary.rect(-w * 0.24, -h * 0.68, w * 0.48, h * 0.68)
-      // Side towers
-      secondary.rect(-w * 0.44, -h * 0.56, w * 0.22, h * 0.56)
-      secondary.rect(w * 0.22, -h * 0.56, w * 0.22, h * 0.56)
-      // Turret roofs
-      detail.moveTo(-w * 0.48, -h * 0.56)
-      detail.lineTo(-w * 0.33, -h * 0.82)
-      detail.lineTo(-w * 0.18, -h * 0.56)
+      // Asymmetric sunken castle: tall spire on left, central arched gate, shorter ruined tower on right
+      primary.rect(-w * 0.16, -h * 0.62, w * 0.38, h * 0.62)
+      // Tall left wizard tower
+      secondary.rect(-w * 0.42, -h * 0.74, w * 0.26, h * 0.74)
+      // Short right bastion
+      secondary.rect(w * 0.22, -h * 0.42, w * 0.22, h * 0.42)
+      // Pointed spire on left tower & central keep roof
+      detail.moveTo(-w * 0.46, -h * 0.74)
+      detail.lineTo(-w * 0.29, -h * 1.0)
+      detail.lineTo(-w * 0.12, -h * 0.74)
       detail.closePath()
 
-      detail.moveTo(w * 0.18, -h * 0.56)
-      detail.lineTo(w * 0.33, -h * 0.82)
-      detail.lineTo(w * 0.48, -h * 0.56)
+      detail.moveTo(-w * 0.18, -h * 0.62)
+      detail.lineTo(w * 0.03, -h * 0.86)
+      detail.lineTo(w * 0.24, -h * 0.62)
       detail.closePath()
 
-      detail.moveTo(-w * 0.26, -h * 0.68)
-      detail.lineTo(0, -h * 0.98)
-      detail.lineTo(w * 0.26, -h * 0.68)
-      detail.closePath()
+      // Glowing window in tall tower
+      detail.rect(-w * 0.33, -h * 0.56, w * 0.08, h * 0.14)
       break
     }
 
     case 'statue': {
-      // Moai / Guardian monolith
-      primary.moveTo(-w * 0.34, 0)
-      primary.lineTo(-w * 0.28, -h * 0.88)
-      primary.quadraticCurveTo(0, -h * 1.0, w * 0.26, -h * 0.88)
-      primary.lineTo(w * 0.34, 0)
+      // Three-quarter profile Moai monolith tilted slightly and facing right
+      primary.moveTo(-w * 0.32, 0)
+      primary.lineTo(-w * 0.22, -h * 0.92)
+      primary.quadraticCurveTo(w * 0.08, -h * 1.0, w * 0.24, -h * 0.82)
+      primary.lineTo(w * 0.34, -h * 0.48)
+      primary.lineTo(w * 0.24, -h * 0.44)
+      primary.lineTo(w * 0.3, 0)
       primary.closePath()
-      // Brow & nose ridge
-      secondary.rect(-w * 0.26, -h * 0.74, w * 0.52, h * 0.1)
-      secondary.rect(-w * 0.08, -h * 0.72, w * 0.18, h * 0.34)
-      // Glowing eyes
-      detail.arc(-w * 0.13, -h * 0.62, w * 0.055, 0, Math.PI * 2)
-      detail.moveTo(w * 0.185, -h * 0.62)
-      detail.arc(w * 0.13, -h * 0.62, w * 0.055, 0, Math.PI * 2)
+      // Jutting brow & side nose ridge
+      secondary.rect(-w * 0.14, -h * 0.76, w * 0.42, h * 0.09)
+      secondary.moveTo(w * 0.08, -h * 0.74)
+      secondary.lineTo(w * 0.34, -h * 0.48)
+      secondary.lineTo(w * 0.12, -h * 0.44)
+      secondary.closePath()
+      // Glowing eye & mossy shoulder patch
+      detail.arc(w * 0.04, -h * 0.63, w * 0.06, 0, Math.PI * 2)
+      detail.moveTo(-w * 0.06, -h * 0.88)
+      detail.ellipse(-w * 0.14, -h * 0.88, w * 0.12, h * 0.06, -0.3, 0, Math.PI * 2)
       break
     }
   }

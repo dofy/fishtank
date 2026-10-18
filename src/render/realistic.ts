@@ -1,6 +1,6 @@
 import type { DecorItem, Grade, Tier } from '../core/types'
 import type { DecorPortraitRequest, PortraitRequest, Renderer } from './renderer'
-import type { Agent, DecorNode, SceneView, SplashEffect } from './scene'
+import type { Agent, DecorNode, FoodPellet, SceneView, SplashEffect } from './scene'
 import { decorLayers, eyeAt, fishPath, hashString, patternBands, patternSpots } from './shape'
 import { type SceneColors, type ThemeManifest, sceneColorsFor, spriteFor } from './theme'
 
@@ -26,6 +26,9 @@ export class RealisticRenderer implements Renderer {
     this.sandFloor(ctx, w, h, s, night)
 
     for (const d of view.decors) this.decorNode(ctx, d, h, view.time, s, night)
+    if (view.foods) {
+      for (const f of view.foods) this.foodPellet(ctx, f)
+    }
     for (const a of view.agents) this.agent(ctx, a, view.time)
     if (view.splashes) {
       for (const sp of view.splashes) this.splash(ctx, sp)
@@ -308,6 +311,21 @@ export class RealisticRenderer implements Renderer {
       ctx.arc(x, y, r + Math.sin(t / period) * 0.4, 0, Math.PI * 2)
       ctx.fill()
     }
+    ctx.restore()
+  }
+
+  private foodPellet(ctx: CanvasRenderingContext2D, f: FoodPellet): void {
+    ctx.save()
+    ctx.shadowColor = 'rgba(251, 191, 36, 0.55)'
+    ctx.shadowBlur = 5
+    ctx.fillStyle = '#f59e0b'
+    ctx.beginPath()
+    ctx.arc(f.x, f.y, 3.8, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.fillStyle = '#fef08a'
+    ctx.beginPath()
+    ctx.arc(f.x - 1, f.y - 1, 1.5, 0, Math.PI * 2)
+    ctx.fill()
     ctx.restore()
   }
 

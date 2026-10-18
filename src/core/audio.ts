@@ -6,6 +6,9 @@ export type SfxKind =
   | 'error'
   | 'place'
   | 'release'
+  | 'feed'
+  | 'eat'
+  | 'scare'
   | 'breed-start'
   | 'merge-start'
   | 'reveal'
@@ -183,6 +186,15 @@ class SoundEngine {
         break
       case 'release':
         this.tone(ctx, 540, 320, 0.14, now, vol * 0.75, 'sine')
+        break
+      case 'feed':
+        this.tone(ctx, 880, 620, 0.055, now, vol * 0.6, 'sine')
+        break
+      case 'eat':
+        this.tone(ctx, 520, 840, 0.06, now, vol * 0.65, 'triangle')
+        break
+      case 'scare':
+        this.tone(ctx, 420, 960, 0.09, now, vol * 0.8, 'sine')
         break
       case 'error':
         this.tone(ctx, 220, 175, 0.11, now, vol * 0.95, 'sawtooth')
