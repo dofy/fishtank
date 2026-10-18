@@ -15,7 +15,7 @@ const THEMES = [
   { id: 'lcd', name: 'Monochrome LCD' },
 ]
 
-const TANK_HEIGHT = 240
+const TANK_HEIGHT = 280
 
 function makeRenderer(manifest: ThemeManifest): Renderer {
   return manifest.renderer === 'lcd'

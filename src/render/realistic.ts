@@ -89,9 +89,9 @@ export class RealisticRenderer implements Renderer {
   }
 
   private agent(ctx: CanvasRenderingContext2D, a: Agent, t: number): void {
-    const len = a.species.body.length * 2.2 * a.scale
+    const len = a.species.body.length * 4.2 * a.scale
     ctx.save()
-    ctx.translate(a.x, a.y + Math.sin(t * 2 + a.phase) * 2)
+    ctx.translate(a.x, a.y + Math.sin(t * 2 + a.phase) * 3)
     ctx.scale(a.dir, 1)
     ctx.translate(-len / 2, 0)
     this.body(ctx, a.species.body, len, a.fish.grade, a.fish.tier, a.fish.speciesId)
@@ -99,7 +99,7 @@ export class RealisticRenderer implements Renderer {
   }
 
   portrait(ctx: CanvasRenderingContext2D, w: number, h: number, req: PortraitRequest): void {
-    const len = Math.min(w * 0.78, h * 1.5)
+    const len = Math.min(w * 0.86, h * 1.65)
     ctx.save()
     if (req.dim) ctx.globalAlpha = 0.35
     ctx.translate((w - len) / 2, h / 2)

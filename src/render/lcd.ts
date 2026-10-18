@@ -87,7 +87,7 @@ export class LcdRenderer implements Renderer {
   }
 
   private agent(ctx: CanvasRenderingContext2D, a: Agent, t: number): void {
-    const len = a.species.body.length * 2.2 * a.scale
+    const len = a.species.body.length * 4.2 * a.scale
     const c = this.cell
     const x = Math.round((a.x - len / 2) / c) * c
     const y = Math.round((a.y + Math.sin(t * 2 + a.phase) * c) / c) * c
@@ -102,7 +102,7 @@ export class LcdRenderer implements Renderer {
   }
 
   portrait(ctx: CanvasRenderingContext2D, w: number, h: number, req: PortraitRequest): void {
-    const len = Math.min(w * 0.78, h * 1.5)
+    const len = Math.min(w * 0.86, h * 1.65)
     ctx.save()
     if (req.dim) ctx.globalAlpha = 0.4
     ctx.translate(Math.round((w - len) / 2), Math.round(h / 2))

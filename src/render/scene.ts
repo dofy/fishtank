@@ -36,7 +36,7 @@ export class Scene {
       const existing = this.agents.get(fish.uid)
       if (existing) {
         existing.fish = fish
-        existing.scale = adult ? 1 : 0.55
+        existing.scale = adult ? 1 : 0.65
         continue
       }
       const seed = hashString(fish.uid)
@@ -44,11 +44,11 @@ export class Scene {
         fish,
         species: lookup(fish.speciesId),
         x: ((seed % 1000) / 1000) * width,
-        y: height * (0.18 + (((seed >> 10) % 1000) / 1000) * 0.6),
+        y: height * (0.2 + (((seed >> 10) % 1000) / 1000) * 0.56),
         dir: (seed & 1) === 0 ? 1 : -1,
-        speed: 8 + ((seed >> 3) % 14),
+        speed: 14 + ((seed >> 3) % 18),
         phase: ((seed >> 5) % 628) / 100,
-        scale: adult ? 1 : 0.55,
+        scale: adult ? 1 : 0.65,
       })
     }
     for (const uid of [...this.agents.keys()]) if (!live.has(uid)) this.agents.delete(uid)
@@ -57,8 +57,9 @@ export class Scene {
   update(dt: number, width: number, height: number, time: number): void {
     for (const a of this.agents.values()) {
       a.x += a.dir * a.speed * dt
-      a.y += Math.sin(time * 0.8 + a.phase) * 4 * dt
-      const margin = 24
+      a.y += Math.sin(time * 0.8 + a.phase) * 5 * dt
+      const halfLen = a.species.body.length * 4.2 * a.scale * 0.5
+      const margin = Math.max(36, halfLen + 10)
       if (a.x < margin) {
         a.x = margin
         a.dir = 1
@@ -66,7 +67,7 @@ export class Scene {
         a.x = width - margin
         a.dir = -1
       }
-      a.y = Math.min(height - 28, Math.max(18, a.y))
+      a.y = Math.min(height - 38, Math.max(28, a.y))
     }
   }
 
