@@ -35,12 +35,21 @@ import type {
   GameState,
   Grade,
   Locale,
+  MergeFilter,
   PlacedDecor,
   SpeciesId,
   Tier,
 } from './types'
 
 export const SAVE_VERSION = 1
+
+export function defaultMergeFilter(): MergeFilter {
+  return {
+    zeroUsesOnly: true,
+    excludeInTank: false,
+    tiers: [1, 2, 3, 4],
+  }
+}
 
 let uidCounter = 0
 function newUid(): string {
@@ -77,6 +86,7 @@ export function newGame(now = Date.now(), locale: Locale = detectLocale()): Game
     fish,
     tankUids: fish.map((f) => f.uid),
     placedDecor: STARTER_DECOR.map((d) => ({ ...d })),
+    mergeFilter: defaultMergeFilter(),
     hearts: HEART_MAX,
     nextHeartAt: now + HEART_REGEN_MS,
     exp: 0,
@@ -384,6 +394,66 @@ export function release(state: GameState, uid: string): boolean {
   state.fish = state.fish.filter((f) => f.uid !== uid)
   syncTank(state)
   return state.fish.length < before
+}
+
+export function syncMergeFilter(state: GameState): MergeFilter {
+  const raw = state.mergeFilter
+  if (!raw || typeof raw !== 'object') {
+    const fallback = defaultMergeFilter()
+    state.mergeFilter = fallback
+    return fallback
+  }
+  const validTiers: Tier[] = Array.isArray(raw.tiers)
+    ? raw.tiers.filter((t): t is Tier => t === 1 || t === 2 || t === 3 || t === 4)
+    : [1, 2, 3, 4]
+  const normalized: MergeFilter = {
+    zeroUsesOnly: Boolean(raw.zeroUsesOnly),
+    excludeInTank: Boolean(raw.excludeInTank),
+    tiers: [...new Set(validTiers)],
+  }
+  state.mergeFilter = normalized
+  return normalized
+}
+
+export function filterMergeCandidates(state: GameState): Fish[] {
+  const filter = syncMergeFilter(state)
+  const tankSet = new Set(syncTank(state))
+  const tierSet = new Set(filter.tiers)
+  return state.fish.filter((f) => {
+    if (f.tier === 0 || f.tier >= 5) return false
+    if (!tierSet.has(f.tier)) return false
+    if (filter.zeroUsesOnly && f.uses > 0) return false
+    if (filter.excludeInTank && tankSet.has(f.uid)) return false
+    return true
+  })
+}
+
+/**
+ * Pick up to 10 same-tier fish from the filtered candidates.
+ * Prefers a tier that already has >= 10 matching fish (lowest tier first, 0-uses and lowest grade first).
+ */
+export function autoPickForMerge(state: GameState): string[] {
+  const filter = syncMergeFilter(state)
+  const candidates = filterMergeCandidates(state)
+  const tiers = [...filter.tiers].sort((a, b) => a - b)
+
+  const sortPriority = (a: Fish, b: Fish) => {
+    if (a.uses !== b.uses) return a.uses - b.uses
+    if (a.grade !== b.grade) return a.grade - b.grade
+    return a.bornAt - b.bornAt
+  }
+
+  let bestGroup: Fish[] = []
+  for (const t of tiers) {
+    const group = candidates.filter((f) => f.tier === t).sort(sortPriority)
+    if (group.length >= SYNTHESIS_INPUT_COUNT) {
+      return group.slice(0, SYNTHESIS_INPUT_COUNT).map((f) => f.uid)
+    }
+    if (group.length > bestGroup.length) {
+      bestGroup = group
+    }
+  }
+  return bestGroup.slice(0, SYNTHESIS_INPUT_COUNT).map((f) => f.uid)
 }
 
 export function collectionProgress(state: GameState): { owned: number; total: number } {

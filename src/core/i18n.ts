@@ -136,6 +136,13 @@ export interface Copy {
     novel: boolean,
   ) => string
   mergeHeading: (count: number, picked: number) => string
+  mergeCondTitle: string
+  mergeFilterZeroUses: string
+  mergeFilterExcludeTank: string
+  mergeTierTitle: string
+  mergeAutoPickBtn: string
+  mergeEmptyByFilter: string
+  mergeAutoPickedMsg: (picked: number, total: number) => string
   mergeBtn: (picked: number, total: number) => string
   mergedMsg: (name: string, starsStr: string, tierStr: string) => string
   mergeNote: string
@@ -219,6 +226,16 @@ const ZH: Copy = {
   hatchedMsg: (name, starsStr, tierStr, grade, expGained, novel) =>
     `孵化出 ${name}（${starsStr} ${tierStr} · 品阶 ${grade}），获得 +${expGained} EXP！${novel ? ' 解锁新图鉴！' : ''}`,
   mergeHeading: (count, picked) => `选择 ${count} 条同星级的鱼进行合成（已选 ${picked}/${count}）`,
+  mergeCondTitle: '筛选与自动选择条件',
+  mergeFilterZeroUses: '只显示/选择剩余繁殖次数为 0 的鱼',
+  mergeFilterExcludeTank: '排除已放置于鱼缸中的鱼',
+  mergeTierTitle: '鱼种稀有度条件',
+  mergeAutoPickBtn: '按条件自动选择 10 条',
+  mergeEmptyByFilter: '当前筛选条件下没有符合要求的鱼（可取消勾选“只显示剩余繁殖次数为 0”或勾选更多稀有度）。',
+  mergeAutoPickedMsg: (picked, total) =>
+    picked > 0
+      ? `已按筛选条件自动选中 ${picked}/${total} 条同星级鱼。`
+      : '当前筛选条件下没有可自动选择的鱼。',
   mergeBtn: (picked, total) => `开始合成 (${picked}/${total})`,
   mergedMsg: (name, starsStr, tierStr) => `合成成功：获得 ${name}（${starsStr} ${tierStr}）！`,
   mergeNote:
@@ -323,6 +340,17 @@ const EN: Copy = {
   hatchedMsg: (name, starsStr, tierStr, grade, expGained, novel) =>
     `${name} hatched at ${starsStr} ${tierStr}, grade ${grade} (+${expGained} EXP).${novel ? ' New species for the book!' : ''}`,
   mergeHeading: (count, picked) => `Merge ${count} fish of one tier (${picked}/${count} selected)`,
+  mergeCondTitle: 'Filter & Auto-Select Conditions',
+  mergeFilterZeroUses: 'Only fish with 0 remaining breeding uses',
+  mergeFilterExcludeTank: 'Exclude fish currently placed in the tank',
+  mergeTierTitle: 'Rarity Tier Filter',
+  mergeAutoPickBtn: 'Auto-select 10',
+  mergeEmptyByFilter:
+    'No fish match the current filters (try unchecking "0 remaining uses" or enabling more rarity tiers).',
+  mergeAutoPickedMsg: (picked, total) =>
+    picked > 0
+      ? `Auto-selected ${picked}/${total} same-tier fish matching filters.`
+      : 'No matching fish available to auto-select.',
   mergeBtn: (picked, total) => `Merge (${picked}/${total})`,
   mergedMsg: (name, starsStr, tierStr) => `Merged into ${name}, ${starsStr} ${tierStr}.`,
   mergeNote:

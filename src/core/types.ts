@@ -82,6 +82,15 @@ export interface Fish {
 
 export type Locale = 'zh' | 'en'
 
+export interface MergeFilter {
+  /** Only include fish with 0 remaining breeding attempts. */
+  zeroUsesOnly: boolean
+  /** Exclude fish currently placed in the aquarium display tank. */
+  excludeInTank: boolean
+  /** Allowed rarity tiers (1..4). */
+  tiers: Tier[]
+}
+
 export interface GameState {
   version: number
   fish: Fish[]
@@ -89,6 +98,8 @@ export interface GameState {
   tankUids?: string[]
   /** Decorations currently placed on the bottom of the aquarium tank. */
   placedDecor?: PlacedDecor[]
+  /** Filter and auto-select settings on the Merge tab. */
+  mergeFilter?: MergeFilter
   hearts: number
   /** Epoch ms the next heart finishes regenerating. */
   nextHeartAt: number

@@ -7,15 +7,18 @@ import {
   nextLevelExp,
 } from '../core/balance'
 import {
+  autoPickForMerge,
   breed,
   capacity,
   collectionProgress,
   decorProgress,
+  filterMergeCandidates,
   flipDecor,
   isAdult,
   isDecorUnlocked,
   release,
   syncDecor,
+  syncMergeFilter,
   syncTank,
   synthesize,
   tierOdds,
@@ -386,9 +389,10 @@ export class App {
 
   private mergePanel(now: number): Node[] {
     const c = this.t
-    const mergeCandidates = this.state.fish.filter((f) => f.tier > 0)
-    const liveIds = new Set(mergeCandidates.filter((f) => f.tier < 5).map((f) => f.uid))
-    this.mergePick = this.mergePick.filter((uid) => liveIds.has(uid)).slice(0, SYNTHESIS_INPUT_COUNT)
+    const filter = syncMergeFilter(this.state)
+    const mergeCandidates = filterMergeCandidates(this.state)
+    const candidateIds = new Set(mergeCandidates.map((f) => f.uid))
+    this.mergePick = this.mergePick.filter((uid) => candidateIds.has(uid)).slice(0, SYNTHESIS_INPUT_COUNT)
 
     const pickTier = this.mergePick.length
       ? this.state.fish.find((f) => f.uid === this.mergePick[0])?.tier
@@ -400,6 +404,64 @@ export class App {
     }
 
     const out: Node[] = [heading(c.mergeHeading(SYNTHESIS_INPUT_COUNT, this.mergePick.length))]
+
+    // Filter box matching PC FISH's filter/auto-select UI
+    const filterBox = document.createElement('div')
+    filterBox.className = 'filter-box'
+
+    const condTitle = document.createElement('div')
+    condTitle.className = 'filter-title'
+    condTitle.textContent = c.mergeCondTitle
+
+    const condList = document.createElement('div')
+    condList.className = 'filter-list'
+    condList.append(
+      checkRow(c.mergeFilterZeroUses, filter.zeroUsesOnly, () => {
+        filter.zeroUsesOnly = !filter.zeroUsesOnly
+        this.hooks.onSave()
+        this.render(now)
+      }),
+      checkRow(c.mergeFilterExcludeTank, filter.excludeInTank, () => {
+        filter.excludeInTank = !filter.excludeInTank
+        this.hooks.onSave()
+        this.render(now)
+      }),
+    )
+
+    const tierTitle = document.createElement('div')
+    tierTitle.className = 'filter-title'
+    tierTitle.textContent = c.mergeTierTitle
+
+    const tierList = document.createElement('div')
+    tierList.className = 'filter-tiers'
+    const allMergeTiers: Tier[] = [1, 2, 3, 4]
+    for (const t of allMergeTiers) {
+      const checked = filter.tiers.includes(t)
+      const countInTier = this.state.fish.filter(
+        (f) =>
+          f.tier === t &&
+          (!filter.zeroUsesOnly || f.uses === 0) &&
+          (!filter.excludeInTank || !syncTank(this.state).includes(f.uid)),
+      ).length
+      const row = checkRow(
+        `${stars(t)} ${tierName(t, this.locale)} (${countInTier})`,
+        checked,
+        () => {
+          if (checked) {
+            filter.tiers = filter.tiers.filter((x) => x !== t)
+          } else {
+            filter.tiers = [...filter.tiers, t].sort((a, b) => a - b)
+          }
+          this.hooks.onSave()
+          this.render(now)
+        },
+        `tier-${t}`,
+      )
+      tierList.append(row)
+    }
+
+    filterBox.append(condTitle, condList, tierTitle, tierList)
+    out.push(filterBox)
 
     const grid = document.createElement('div')
     grid.className = 'grid'
@@ -431,6 +493,10 @@ export class App {
     }
     out.push(grid)
 
+    if (mergeCandidates.length === 0) {
+      out.push(note(c.mergeEmptyByFilter))
+    }
+
     const row = document.createElement('div')
     row.className = 'row'
     const ready = this.mergePick.length === SYNTHESIS_INPUT_COUNT
@@ -455,6 +521,17 @@ export class App {
     })
     go.setAttribute('aria-disabled', String(!ready))
 
+    const autoBtn = makeButton(c.mergeAutoPickBtn, () => {
+      const picked = autoPickForMerge(this.state)
+      this.mergePick = picked
+      this.say(
+        c.mergeAutoPickedMsg(picked.length, SYNTHESIS_INPUT_COUNT),
+        picked.length === SYNTHESIS_INPUT_COUNT ? 'good' : '',
+      )
+      this.render(now)
+    })
+    autoBtn.setAttribute('aria-disabled', String(mergeCandidates.length === 0))
+
     const clear = makeButton(c.clearBtn, () => {
       this.mergePick = []
       this.say('')
@@ -462,7 +539,7 @@ export class App {
     })
     clear.setAttribute('aria-disabled', String(this.mergePick.length === 0))
 
-    row.append(go, clear)
+    row.append(go, autoBtn, clear)
     out.push(row, note(c.mergeNote))
     return out
   }
@@ -788,6 +865,33 @@ function makeButton(text: string, onClick: (event: MouseEvent) => void): HTMLBut
   b.textContent = text
   b.addEventListener('click', onClick)
   return b
+}
+
+function checkRow(
+  text: string,
+  checked: boolean,
+  onToggle: () => void,
+  extraClass = '',
+): HTMLButtonElement {
+  const row = document.createElement('button')
+  row.type = 'button'
+  row.className = `check-row${extraClass ? ` ${extraClass}` : ''}`
+  row.setAttribute('aria-checked', String(checked))
+  row.setAttribute('role', 'checkbox')
+
+  const labelSpan = document.createElement('span')
+  labelSpan.className = 'check-label'
+  labelSpan.textContent = text
+
+  const box = document.createElement('span')
+  box.className = 'check-box'
+  const dot = document.createElement('span')
+  dot.className = 'check-dot'
+  box.append(dot)
+
+  row.append(labelSpan, box)
+  row.addEventListener('click', onToggle)
+  return row
 }
 
 function stat(labelText: string, value: string): HTMLElement {

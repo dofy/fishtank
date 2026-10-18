@@ -1,5 +1,5 @@
 import { USES_BY_TIER } from './balance'
-import { SAVE_VERSION, makeFish, newGame, syncDecor, syncTank, tick } from './game'
+import { SAVE_VERSION, makeFish, newGame, syncDecor, syncMergeFilter, syncTank, tick } from './game'
 import { detectLocale } from './i18n'
 import { STARTER_DECOR, STARTER_SPECIES, hasSpecies } from './species'
 import type { GameState } from './types'
@@ -48,6 +48,7 @@ export function load(now = Date.now()): GameState {
     }
     syncTank(parsed)
     syncDecor(parsed)
+    syncMergeFilter(parsed)
 
     // Offline progress: one catch-up tick covers however long the tab was shut.
     tick(parsed, now)
