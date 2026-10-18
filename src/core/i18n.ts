@@ -135,6 +135,11 @@ export interface Copy {
     expGained: number,
     novel: boolean,
   ) => string
+  showcaseTitle: string
+  showcaseNewBadge: string
+  showcaseUsesLabel: (usesStr: string) => string
+  showcaseDecorLabel: (decorName: string) => string
+  showcaseCloseBtn: string
   mergeHeading: (count: number, picked: number) => string
   mergeCondTitle: string
   mergeFilterZeroUses: string
@@ -225,6 +230,11 @@ const ZH: Copy = {
   clearBtn: '清空选择',
   hatchedMsg: (name, starsStr, tierStr, grade, expGained, novel) =>
     `孵化出 ${name}（${starsStr} ${tierStr} · 品阶 ${grade}），获得 +${expGained} EXP！${novel ? ' 解锁新图鉴！' : ''}`,
+  showcaseTitle: '繁殖成功',
+  showcaseNewBadge: 'NEW',
+  showcaseUsesLabel: (usesStr) => `可繁殖次数 ${usesStr}`,
+  showcaseDecorLabel: (dName) => `造景：${dName}`,
+  showcaseCloseBtn: '收下小鱼',
   mergeHeading: (count, picked) => `选择 ${count} 条同星级的鱼进行合成（已选 ${picked}/${count}）`,
   mergeCondTitle: '筛选与自动选择条件',
   mergeFilterZeroUses: '只显示/选择剩余繁殖次数为 0 的鱼',
@@ -339,6 +349,11 @@ const EN: Copy = {
   clearBtn: 'Clear',
   hatchedMsg: (name, starsStr, tierStr, grade, expGained, novel) =>
     `${name} hatched at ${starsStr} ${tierStr}, grade ${grade} (+${expGained} EXP).${novel ? ' New species for the book!' : ''}`,
+  showcaseTitle: 'Hatching Complete!',
+  showcaseNewBadge: 'NEW',
+  showcaseUsesLabel: (usesStr) => `Breeding uses ${usesStr}`,
+  showcaseDecorLabel: (dName) => `Decor: ${dName}`,
+  showcaseCloseBtn: 'Keep Fish',
   mergeHeading: (count, picked) => `Merge ${count} fish of one tier (${picked}/${count} selected)`,
   mergeCondTitle: 'Filter & Auto-Select Conditions',
   mergeFilterZeroUses: 'Only fish with 0 remaining breeding uses',

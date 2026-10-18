@@ -34,8 +34,18 @@ import {
   tierName,
 } from '../core/i18n'
 import { DECORATIONS, SPECIES, species } from '../core/species'
-import type { DecorItem, Fish, GameState, Grade, Locale, Species, Tier } from '../core/types'
+import type {
+  BreedOutcome,
+  DecorItem,
+  Fish,
+  GameState,
+  Grade,
+  Locale,
+  Species,
+  Tier,
+} from '../core/types'
 import type { Renderer } from '../render/renderer'
+import type { Agent, DecorNode } from '../render/scene'
 
 type Tab = 'tank' | 'breed' | 'merge' | 'decor' | 'book' | 'settings'
 
@@ -66,6 +76,17 @@ export interface AppHooks {
   themes: { id: string; name: string }[]
 }
 
+interface ShowcaseState {
+  outcome: BreedOutcome
+  decor: DecorItem
+  decorX: number
+  decorFlip: 1 | -1
+  agent: Agent
+}
+
+const MINI_TANK_W = 296
+const MINI_TANK_H = 164
+
 export class App {
   private tab: Tab = 'tank'
   private breedPick: string[] = []
@@ -74,11 +95,16 @@ export class App {
   private message = ''
   private messageKind: 'good' | 'bad' | '' = ''
   private portraitCache = new Map<string, HTMLCanvasElement>()
+  private showcase: ShowcaseState | null = null
+  private showcaseCanvas: HTMLCanvasElement | null = null
+  private showcaseRaf = 0
+  private showcaseLastMs = 0
 
   readonly canvas = document.createElement('canvas')
   private readonly hud = document.createElement('header')
   private readonly nav = document.createElement('nav')
   private readonly body = document.createElement('section')
+  private readonly modal = document.createElement('div')
 
   constructor(
     private state: GameState,
@@ -88,6 +114,7 @@ export class App {
     this.hud.className = 'hud'
     this.nav.className = 'tabs'
     this.body.className = 'panel'
+    this.modal.className = 'modal-host'
     this.canvas.id = 'tank'
   }
 
@@ -100,7 +127,7 @@ export class App {
   }
 
   mount(root: HTMLElement): void {
-    root.replaceChildren(this.hud, this.canvas, this.nav, this.body)
+    root.replaceChildren(this.hud, this.canvas, this.nav, this.body, this.modal)
     this.render()
   }
 
@@ -109,6 +136,7 @@ export class App {
     this.breedPick = []
     this.mergePick = []
     this.confirmingReset = false
+    this.closeShowcase()
   }
 
   setRenderer(renderer: Renderer): void {
@@ -152,6 +180,7 @@ export class App {
     this.renderHud(now)
     this.renderNav()
     this.renderBody(now)
+    this.renderShowcase()
   }
 
   private renderHud(now: number): void {
@@ -381,6 +410,7 @@ export class App {
         )
         this.breedPick = []
         this.hooks.onSave()
+        this.openShowcase(result)
       }
       this.render(clickNow)
     })
@@ -715,6 +745,188 @@ export class App {
     }
     out.push(danger, note(c.settingsSaveNote))
     return out
+  }
+
+  // ------------------------------------------------------------- showcase
+
+  private openShowcase(outcome: BreedOutcome): void {
+    const decor = DECORATIONS[Math.floor(Math.random() * DECORATIONS.length)] ?? DECORATIONS[0]!
+    const decorX = 0.28 + Math.random() * 0.44
+    const decorFlip: 1 | -1 = Math.random() < 0.5 ? 1 : -1
+    const sp = species(outcome.child.speciesId)
+    this.showcase = {
+      outcome,
+      decor,
+      decorX,
+      decorFlip,
+      agent: {
+        fish: outcome.child,
+        species: sp,
+        x: MINI_TANK_W * 0.5,
+        y: MINI_TANK_H * 0.42,
+        dir: 1,
+        speed: 32,
+        phase: 0,
+        scale: 0.9,
+      },
+    }
+    this.startShowcaseLoop()
+  }
+
+  private closeShowcase(): void {
+    this.showcase = null
+    this.showcaseCanvas = null
+    if (this.showcaseRaf) {
+      cancelAnimationFrame(this.showcaseRaf)
+      this.showcaseRaf = 0
+    }
+    this.modal.replaceChildren()
+  }
+
+  private renderShowcase(): void {
+    if (!this.showcase) {
+      this.modal.replaceChildren()
+      return
+    }
+    const { outcome, decor } = this.showcase
+    const { child, novel, expGained } = outcome
+    const c = this.t
+
+    const backdrop = document.createElement('div')
+    backdrop.className = 'showcase-backdrop'
+    backdrop.addEventListener('click', (e) => {
+      if (e.target === backdrop) this.closeShowcase()
+    })
+
+    const card = document.createElement('div')
+    card.className = `showcase-card tier-border-${child.tier}`
+
+    const header = document.createElement('div')
+    header.className = 'showcase-header'
+    const title = document.createElement('span')
+    title.className = 'showcase-title'
+    title.textContent = c.showcaseTitle
+    header.append(title)
+
+    if (novel) {
+      const newBadge = document.createElement('span')
+      newBadge.className = 'new-badge'
+      newBadge.textContent = c.showcaseNewBadge
+      header.append(newBadge)
+    }
+
+    const tankWrap = document.createElement('div')
+    tankWrap.className = 'mini-tank-wrap'
+    const miniCanvas = document.createElement('canvas')
+    miniCanvas.className = 'mini-tank'
+    const dpr = Math.min(2, window.devicePixelRatio || 1)
+    miniCanvas.width = Math.round(MINI_TANK_W * dpr)
+    miniCanvas.height = Math.round(MINI_TANK_H * dpr)
+    miniCanvas.style.width = `${MINI_TANK_W}px`
+    miniCanvas.style.height = `${MINI_TANK_H}px`
+    this.showcaseCanvas = miniCanvas
+    tankWrap.append(miniCanvas)
+
+    if (novel) {
+      const cornerNew = document.createElement('span')
+      cornerNew.className = 'mini-tank-new'
+      cornerNew.textContent = c.showcaseNewBadge
+      tankWrap.append(cornerNew)
+    }
+
+    const nameRow = document.createElement('div')
+    nameRow.className = 'showcase-name-row'
+    const fishName = document.createElement('div')
+    fishName.className = 'showcase-name'
+    fishName.textContent = speciesName(child.speciesId, this.locale)
+    nameRow.append(fishName)
+
+    const metaLine = this.tierMetaLine(child.tier, child.grade)
+    metaLine.classList.add('showcase-meta')
+
+    const chips = document.createElement('div')
+    chips.className = 'showcase-chips'
+    const maxU = child.maxUses ?? USES_BY_TIER[child.tier]
+    const usesStr = child.tier === 0 ? '∞' : `${child.uses}/${maxU}`
+
+    const usesChip = document.createElement('span')
+    usesChip.className = 'showcase-chip'
+    usesChip.textContent = c.showcaseUsesLabel(usesStr)
+
+    const expChip = document.createElement('span')
+    expChip.className = 'showcase-chip exp'
+    expChip.textContent = `+${expGained} EXP`
+
+    const decorChip = document.createElement('span')
+    decorChip.className = 'showcase-chip'
+    decorChip.textContent = c.showcaseDecorLabel(decorName(decor.id, this.locale))
+
+    chips.append(usesChip, expChip, decorChip)
+
+    const closeBtn = makeButton(c.showcaseCloseBtn, () => this.closeShowcase())
+    closeBtn.className = 'showcase-btn'
+
+    card.append(header, tankWrap, nameRow, metaLine, chips, closeBtn)
+    backdrop.append(card)
+    this.modal.replaceChildren(backdrop)
+
+    this.drawShowcaseFrame(performance.now())
+  }
+
+  private startShowcaseLoop(): void {
+    if (this.showcaseRaf) cancelAnimationFrame(this.showcaseRaf)
+    this.showcaseLastMs = performance.now()
+    const step = (nowMs: number) => {
+      if (!this.showcase) {
+        this.showcaseRaf = 0
+        return
+      }
+      this.drawShowcaseFrame(nowMs)
+      this.showcaseRaf = requestAnimationFrame(step)
+    }
+    this.showcaseRaf = requestAnimationFrame(step)
+  }
+
+  private drawShowcaseFrame(nowMs: number): void {
+    if (!this.showcase || !this.showcaseCanvas) return
+    const dt = Math.min(0.1, Math.max(0, (nowMs - this.showcaseLastMs) / 1000))
+    this.showcaseLastMs = nowMs
+    const elapsed = nowMs / 1000
+
+    const { agent, decor, decorX, decorFlip } = this.showcase
+    agent.x += agent.dir * agent.speed * dt
+    agent.y = MINI_TANK_H * 0.42 + Math.sin(elapsed * 1.8) * 6
+
+    const halfLen = agent.species.body.length * 4.2 * agent.scale * 0.5
+    const margin = Math.max(32, halfLen + 10)
+    if (agent.x < margin) {
+      agent.x = margin
+      agent.dir = 1
+    } else if (agent.x > MINI_TANK_W - margin) {
+      agent.x = MINI_TANK_W - margin
+      agent.dir = -1
+    }
+
+    const decorNode: DecorNode = {
+      item: decor,
+      x: decorX * MINI_TANK_W,
+      flip: decorFlip,
+      active: false,
+    }
+
+    const ctx = this.showcaseCanvas.getContext('2d')
+    if (!ctx) return
+    const dpr = Math.min(2, window.devicePixelRatio || 1)
+    ctx.save()
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+    this.renderer.scene(ctx, {
+      width: MINI_TANK_W,
+      height: MINI_TANK_H,
+      agents: [agent],
+      decors: [decorNode],
+      time: elapsed,
+    })
+    ctx.restore()
   }
 
   // ------------------------------------------------------------- helpers
