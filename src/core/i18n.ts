@@ -115,7 +115,9 @@ export interface Copy {
   }
   tankHeading: (placed: number, cap: number, total: number) => string
   inTankTag: string
+  inUseLabel: string
   releaseBtn: string
+  confirmReleaseBtn: string
   placedMsg: (name: string, placed: number, cap: number) => string
   removedFromTankMsg: (name: string, placed: number, cap: number) => string
   tankDisplayFullMsg: (cap: number) => string
@@ -241,7 +243,9 @@ const ZH: Copy = {
   tankHeading: (placed, cap, total) =>
     `我的鱼群（鱼缸展示 ${placed}/${cap} · 背包共 ${total} 条）`,
   inTankTag: '鱼缸中',
+  inUseLabel: '使用中',
   releaseBtn: '放生',
+  confirmReleaseBtn: '确认放生',
   placedMsg: (name, placed, cap) => `已将 ${name} 放入鱼缸展示（${placed}/${cap}）。`,
   removedFromTankMsg: (name, placed, cap) => `已将 ${name} 收回背包（鱼缸 ${placed}/${cap}）。`,
   tankDisplayFullMsg: (cap) =>
@@ -333,9 +337,9 @@ const ZH: Copy = {
   resetDoneMsg: '存档已重置，已发放 3 条初始种鱼与 3 件初始装饰品。',
   settingsSaveNote: '游戏进度自动保存在当前浏览器的 localStorage 中，支持离线成长与爱心恢复结算。',
   gradeLabel: (g) => `品阶 ${g}`,
-  badgeReadyTitle: '可操作 / 已解锁',
-  badgePartialTitle: '成长或冷却中',
-  badgeNoneTitle: '次数已耗尽或未解锁',
+  badgeReadyTitle: '已放入鱼缸展示',
+  badgePartialTitle: '鱼缸中 / 冷却中',
+  badgeNoneTitle: '未放入鱼缸',
   describeAdult: '已成年',
   describeFry: (clock) => `成长/冷却中（剩余 ${clock}）`,
   describeFish: (name, starsStr, tierStr, grade, usesStr, stateStr) =>
@@ -396,7 +400,9 @@ const EN: Copy = {
   tankHeading: (placed, cap, total) =>
     `Your fish (${placed}/${cap} in tank · ${total} owned)`,
   inTankTag: 'In Tank',
+  inUseLabel: 'In Tank',
   releaseBtn: 'Release',
+  confirmReleaseBtn: 'Confirm',
   placedMsg: (name, placed, cap) => `Placed ${name} in the tank (${placed}/${cap}).`,
   removedFromTankMsg: (name, placed, cap) => `Removed ${name} from the tank (${placed}/${cap}).`,
   tankDisplayFullMsg: (cap) =>
@@ -491,9 +497,9 @@ const EN: Copy = {
   resetDoneMsg: 'Progress has been reset with 3 starter fish and 3 starter decorations.',
   settingsSaveNote: 'Progress lives in localStorage on this device only.',
   gradeLabel: (g) => `grade ${g}`,
-  badgeReadyTitle: 'Available to use now',
-  badgePartialTitle: 'Growing or cooling down',
-  badgeNoneTitle: 'Exhausted or locked',
+  badgeReadyTitle: 'Placed in aquarium tank',
+  badgePartialTitle: 'In tank / cooling down',
+  badgeNoneTitle: 'Not in tank',
   describeAdult: 'adult',
   describeFry: (clock) => `cooldown/fry (${clock} left)`,
   describeFish: (name, starsStr, tierStr, grade, usesStr, stateStr) =>

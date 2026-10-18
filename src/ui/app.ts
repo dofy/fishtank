@@ -125,8 +125,7 @@ export class App {
   private breedPick: string[] = []
   private mergePick: string[] = []
   private confirmingReset = false
-  private message = ''
-  private messageKind: 'good' | 'bad' | '' = ''
+  private confirmingReleaseUid: string | null = null
   private portraitCache = new Map<string, HTMLCanvasElement>()
   private showcase: ShowcaseState | null = null
   private showcaseCanvas: HTMLCanvasElement | null = null
@@ -171,6 +170,7 @@ export class App {
     this.breedPick = []
     this.mergePick = []
     this.confirmingReset = false
+    this.confirmingReleaseUid = null
     this.closeShowcase()
   }
 
@@ -186,12 +186,9 @@ export class App {
   }
 
   private say(text: string, kind: 'good' | 'bad' | '' = ''): void {
-    this.message = text
-    this.messageKind = kind
-    if (text) {
-      if (kind === 'bad') sound.play('error')
-      this.showToast(text, kind)
-    }
+    if (!text) return
+    if (kind === 'bad') sound.play('error')
+    this.showToast(text, kind)
   }
 
   private showToast(text: string, kind: 'good' | 'bad' | '' = ''): void {
@@ -239,7 +236,7 @@ export class App {
     for (const el of timers) {
       const target = Number(el.dataset.maturesAt)
       if (!Number.isNaN(target)) {
-        el.textContent = `⏱ ${formatClock(Math.max(0, target - now))}`
+        el.textContent = formatClock(Math.max(0, target - now))
       }
     }
   }
@@ -343,7 +340,7 @@ export class App {
           sound.play('click')
           this.tab = id
           this.confirmingReset = false
-          this.say('')
+          this.confirmingReleaseUid = null
           this.render()
         })
         b.setAttribute('aria-pressed', String(this.tab === id))
@@ -375,10 +372,6 @@ export class App {
         nodes.push(...this.settingsPanel())
         break
     }
-    const log = document.createElement('div')
-    log.className = `log${this.messageKind ? ` ${this.messageKind}` : ''}`
-    log.textContent = this.message
-    nodes.push(log)
     this.body.replaceChildren(...nodes)
   }
 
@@ -427,11 +420,13 @@ export class App {
     for (const fish of sorted) {
       const inTank = tankIds.has(fish.uid)
       const isStarter = fish.tier === 0
+      const confirmingRelease = this.confirmingReleaseUid === fish.uid
       grid.append(
         this.fishCell(fish, now, {
           selected: inTank,
-          tagText: inTank ? c.inTankTag : undefined,
+          inTankOverlay: inTank,
           onClick: () => {
+            this.confirmingReleaseUid = null
             const res = toggleTankFish(this.state, fish.uid)
             const name = speciesName(fish.speciesId, this.locale)
             const placedNow = syncTank(this.state).length
@@ -450,18 +445,38 @@ export class App {
           },
           action: isStarter
             ? undefined
-            : () => {
-                const name = speciesName(fish.speciesId, this.locale)
-                if (release(this.state, fish.uid)) {
-                  sound.play('release')
-                  this.breedPick = this.breedPick.filter((u) => u !== fish.uid)
-                  this.mergePick = this.mergePick.filter((u) => u !== fish.uid)
-                  this.hooks.onSave()
-                  this.say(c.releasedMsg(name))
+            : confirmingRelease
+              ? () => {
+                  const name = speciesName(fish.speciesId, this.locale)
+                  this.confirmingReleaseUid = null
+                  if (release(this.state, fish.uid)) {
+                    sound.play('release')
+                    this.breedPick = this.breedPick.filter((u) => u !== fish.uid)
+                    this.mergePick = this.mergePick.filter((u) => u !== fish.uid)
+                    this.hooks.onSave()
+                    this.say(c.releasedMsg(name))
+                  }
+                  this.render(now)
                 }
+              : () => {
+                  sound.play('click')
+                  this.confirmingReleaseUid = fish.uid
+                  this.render(now)
+                },
+          actionLabel: isStarter
+            ? undefined
+            : confirmingRelease
+              ? c.confirmReleaseBtn
+              : c.releaseBtn,
+          actionDanger: confirmingRelease,
+          secondaryAction: confirmingRelease
+            ? () => {
+                sound.play('click')
+                this.confirmingReleaseUid = null
                 this.render(now)
-              },
-          actionLabel: isStarter ? undefined : c.releaseBtn,
+              }
+            : undefined,
+          secondaryActionLabel: confirmingRelease ? c.cancelBtn : undefined,
         }),
       )
     }
@@ -522,6 +537,7 @@ export class App {
           selected: picked,
           pickOrder: picked ? idx + 1 : undefined,
           locked: !adult,
+          showCooldown: true,
           onClick: () => {
             if (!adult) {
               const name = speciesName(fish.speciesId, this.locale)
@@ -1224,13 +1240,6 @@ export class App {
     this.showcaseCanvas = miniCanvas
     tankWrap.append(miniCanvas)
 
-    if (!inCeremony && novel) {
-      const cornerNew = document.createElement('span')
-      cornerNew.className = 'mini-tank-new'
-      cornerNew.textContent = c.showcaseNewBadge
-      tankWrap.append(cornerNew)
-    }
-
     card.append(header, tankWrap)
 
     if (!inCeremony) {
@@ -1518,27 +1527,68 @@ export class App {
       selected?: boolean
       pickOrder?: number
       tagText?: string
+      inTankOverlay?: boolean
+      showCooldown?: boolean
       locked?: boolean
       onClick?: () => void
       action?: () => void
       actionLabel?: string
+      actionDanger?: boolean
+      secondaryAction?: () => void
+      secondaryActionLabel?: string
     },
   ): HTMLElement {
     const sp = species(fish.speciesId)
     const adult = isAdult(fish, now)
+    const inTank = syncTank(this.state).includes(fish.uid)
+    const coolingInBreed = Boolean(opts.showCooldown && !adult && fish.maturesAt !== null)
+
     const cell = document.createElement('div')
-    cell.className = `cell${opts.locked ? ' locked' : ''}`
+    cell.className = `cell${opts.locked ? ' locked' : ''}${opts.inTankOverlay ? ' in-tank-active' : ''}`
     cell.setAttribute('aria-pressed', String(Boolean(opts.selected)))
     if (opts.onClick) cell.onclick = opts.onClick
 
+    // Top-left green arrow badge indicates whether this fish is placed in the tank
+    if (inTank) {
+      cell.append(this.badge(coolingInBreed || opts.inTankOverlay ? 'partial' : 'ready'))
+    }
+
     const maxU = fish.maxUses ?? USES_BY_TIER[fish.tier]
     const usesText = fish.tier === 0 ? '∞' : `${fish.uses}/${maxU}`
-    const canUse = adult && (fish.tier === 0 || fish.uses > 0)
+
+    const artWrap = document.createElement('div')
+    artWrap.className = 'cell-art'
+    artWrap.append(this.portrait(sp, fish.tier, fish.grade, coolingInBreed || Boolean(opts.inTankOverlay)))
+
+    if (coolingInBreed && fish.maturesAt !== null) {
+      const cdOverlay = document.createElement('div')
+      cdOverlay.className = 'cell-overlay cooldown'
+      const clockIcon = document.createElement('span')
+      clockIcon.className = 'cd-clock'
+      clockIcon.innerHTML =
+        '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><path d="M8 4.5V8l2.5 1.5"/></svg>'
+      const timerEl = document.createElement('span')
+      timerEl.className = 'timer'
+      timerEl.dataset.maturesAt = String(fish.maturesAt)
+      timerEl.textContent = formatClock(Math.max(0, fish.maturesAt - now))
+      cdOverlay.append(clockIcon, timerEl)
+      artWrap.append(cdOverlay)
+    } else if (opts.inTankOverlay) {
+      const useOverlay = document.createElement('div')
+      useOverlay.className = 'cell-overlay in-use'
+      const checkIcon = document.createElement('span')
+      checkIcon.className = 'use-check'
+      checkIcon.textContent = '✓'
+      const useTxt = document.createElement('span')
+      useTxt.className = 'use-text'
+      useTxt.textContent = this.t.inUseLabel
+      useOverlay.append(checkIcon, useTxt)
+      artWrap.append(useOverlay)
+    }
 
     cell.append(
-      this.badge(canUse ? 'ready' : adult ? 'none' : 'partial'),
       count(usesText),
-      this.portrait(sp, fish.tier, fish.grade, !adult),
+      artWrap,
       label(speciesName(sp.id, this.locale), 'name'),
       this.tierMetaLine(fish.tier, fish.grade),
     )
@@ -1547,17 +1597,24 @@ export class App {
     } else if (opts.tagText) {
       cell.append(label(opts.tagText, 'pick-order'))
     }
-    if (!adult && fish.maturesAt !== null) {
-      const timerEl = label(`⏱ ${formatClock(fish.maturesAt - now)}`, 'timer')
-      timerEl.dataset.maturesAt = String(fish.maturesAt)
-      cell.append(timerEl)
-    }
     if (opts.action && opts.actionLabel) {
+      const actWrap = document.createElement('div')
+      actWrap.className = 'cell-actions'
       const b = makeButton(opts.actionLabel, (event) => {
         event.stopPropagation()
         opts.action?.()
       })
-      cell.append(b)
+      if (opts.actionDanger) b.className = 'danger-confirm'
+      actWrap.append(b)
+
+      if (opts.secondaryAction && opts.secondaryActionLabel) {
+        const b2 = makeButton(opts.secondaryActionLabel, (event) => {
+          event.stopPropagation()
+          opts.secondaryAction?.()
+        })
+        actWrap.append(b2)
+      }
+      cell.append(actWrap)
     }
     cell.title = this.describe(fish, now)
     return cell

@@ -8,7 +8,9 @@
   "palette": {
     "--bg": "#151c11",
     "--panel": "#1f2a18",
-    "--panel-2": "#283620",
+    "--panel-2": "#2c3c22",
+    "--btn-bg": "#314426",
+    "--btn-border": "#68854f",
     "--border": "#52693e",
     "--text": "#b8d88b",
     "--muted": "#7a9659",
@@ -22,7 +24,9 @@
   "lightPalette": {
     "--bg": "#8a9a63",
     "--panel": "#9cad74",
-    "--panel-2": "#93a46b",
+    "--panel-2": "#899a61",
+    "--btn-bg": "#82935a",
+    "--btn-border": "#3b4426",
     "--border": "#3b4426",
     "--text": "#20250f",
     "--muted": "#4b5530",
