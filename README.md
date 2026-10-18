@@ -15,11 +15,11 @@
 
 ---
 
-## 预览 / Screenshots
+## 预览 / Preview
 
-| 🌙 黑夜模式（深海氛围射灯） · Night Mode | ☀️ 日间模式（清透珊瑚礁） · Day Mode |
-| :---: | :---: |
-| ![Fishtank Night Mode](docs/screenshots/dark-mode.png) | ![Fishtank Day Mode](docs/screenshots/light-mode.png) |
+<div align="center">
+  <img src="docs/screenshots/preview.png" width="920" alt="Fishtank Dark & Light Mode Preview" />
+</div>
 
 ---
 
