@@ -1,6 +1,5 @@
 import {
   HEART_MAX,
-  MAX_LEVEL,
   SYNTHESIS_INPUT_COUNT,
   TRADE_HUB_LEVEL,
   USES_BY_TIER,
@@ -41,6 +40,23 @@ import type { Renderer } from '../render/renderer'
 type Tab = 'tank' | 'breed' | 'merge' | 'decor' | 'book' | 'settings'
 
 const TAB_IDS: readonly Tab[] = ['tank', 'breed', 'merge', 'decor', 'book', 'settings']
+
+const TAB_ICONS: Record<Tab, string> = {
+  tank: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 8s2.5-4.5 7-4.5c2.2 0 4 1.5 5 2.5l1.5-1.5v7L13.5 10c-1 1-2.8 2.5-5 2.5-4.5 0-7-4.5-7-4.5Z"/><circle cx="5.5" cy="7.5" r="0.8" fill="currentColor"/></svg>',
+  breed: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 13.8S2 9.8 2 5.6A3.1 3.1 0 0 1 8 4.3a3.1 3.1 0 0 1 6 1.3c0 4.2-6 8.2-6 8.2Z"/></svg>',
+  merge: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4m0 4v4M2 8h4m4 0h4M4.2 4.2l2.3 2.3m3 3 2.3 2.3m0-7.6-2.3 2.3m-3 3-2.3 2.3"/></svg>',
+  decor: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 14V5c0-2 1.8-3 1.8-3M5 14v-4c0-1.5-2-2.5-2-4.5M11 14V9c0-1.5 2-2 2-4M3 14h10"/></svg>',
+  book: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 3h4.2c1 0 1.3.5 1.3 1.3v9.2c0-.7-.5-1-1.3-1H2.5V3Zm11 0H9.3C8.3 3 8 3.5 8 4.3v9.2c0-.7.5-1 1.3-1h4.2V3Z"/></svg>',
+  settings: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="2.2"/><path d="M8 1.8v1.6m0 9.2v1.6M1.8 8h1.6m9.2 0h1.6M3.6 3.6l1.1 1.1m6.6 6.6 1.1 1.1m0-8.8-1.1 1.1M4.7 11.3l-1.1 1.1"/></svg>',
+}
+
+const STAT_ICONS = {
+  level: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m8 2 1.8 3.7 4.1.6-3 2.9.7 4.1L8 11.4l-3.6 1.9.7-4.1-3-2.9 4.1-.6L8 2Z"/></svg>',
+  tank: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="12" height="10" rx="1.5"/><path d="M2 6.5c2 1 4-1 6 0s4-1 6 0"/></svg>',
+  bag: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5.5h10l-.8 8H3.8L3 5.5Z"/><path d="M5.5 5.5V4a2.5 2.5 0 0 1 5 0v1.5"/></svg>',
+  heart: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 13.8S2 9.8 2 5.6A3.1 3.1 0 0 1 8 4.3a3.1 3.1 0 0 1 6 1.3c0 4.2-6 8.2-6 8.2Z"/></svg>',
+  book: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 3h4.2c1 0 1.3.5 1.3 1.3v9.2c0-.7-.5-1-1.3-1H2.5V3Zm11 0H9.3C8.3 3 8 3.5 8 4.3v9.2c0-.7.5-1 1.3-1h4.2V3Z"/></svg>',
+}
 
 export interface AppHooks {
   onThemeChange(id: string): void
@@ -147,17 +163,30 @@ export class App {
     const filled = next === null ? 1 : Math.min(1, Math.max(0, (s.exp - prev) / span))
     const heartWait =
       s.hearts >= HEART_MAX ? c.hudFull : formatClock(Math.max(0, s.nextHeartAt - now))
+    const placed = syncTank(s).length
+    const cap = capacity(s)
+    const prog = collectionProgress(s)
 
-    const topRow = document.createElement('div')
-    topRow.className = 'hud-top'
+    const lvGroup = document.createElement('div')
+    lvGroup.className = 'hud-lv-group'
+    lvGroup.title =
+      next === null
+        ? `${c.hudLevel} ${s.level}${c.hudMax} · ${c.hudExp} ${s.exp}`
+        : `${c.hudLevel} ${s.level} · ${s.exp} / ${next} EXP`
 
-    const lvStat = stat(c.hudLevel, `Lv.${s.level}${s.level >= MAX_LEVEL ? c.hudMax : ''}`)
-    lvStat.className = 'stat hud-lv'
-
+    const lvStat = stat(STAT_ICONS.level, c.hudLevel, `Lv.${s.level}`)
     const expBar = bar(filled)
     const expText = document.createElement('span')
     expText.className = 'hud-exp-text'
-    expText.textContent = next === null ? `${c.hudExp} ${s.exp}` : `${s.exp} / ${next} EXP`
+    expText.textContent = next === null ? `${s.exp}` : `${s.exp}/${next}`
+    lvGroup.append(lvStat, expBar, expText)
+
+    const heartStat = stat(STAT_ICONS.heart, c.hudHearts, `${s.hearts}/${HEART_MAX}`)
+    const timerChip = document.createElement('span')
+    timerChip.className = 'hud-sub'
+    timerChip.dataset.heartTimer = '1'
+    timerChip.textContent = heartWait
+    heartStat.append(timerChip)
 
     const langBtn = makeButton(c.langToggle, () => {
       const nextLocale: Locale = this.locale === 'zh' ? 'en' : 'zh'
@@ -165,42 +194,28 @@ export class App {
     })
     langBtn.className = 'lang-btn'
 
-    topRow.append(lvStat, expBar, expText, langBtn)
-
-    const grid = document.createElement('div')
-    grid.className = 'hud-grid'
-
-    const placed = syncTank(s).length
-    const cap = capacity(s)
-
-    const heartStat = stat(c.hudHearts, `${s.hearts}/${HEART_MAX}`)
-    const timerChip = document.createElement('span')
-    timerChip.className = 'hud-sub'
-    timerChip.dataset.heartTimer = '1'
-    timerChip.textContent = heartWait
-    heartStat.append(timerChip)
-
-    grid.append(
-      stat(c.hudTank, `${placed}/${cap}`),
-      stat(c.hudBag, `${s.fish.length}`),
+    this.hud.replaceChildren(
+      lvGroup,
+      stat(STAT_ICONS.tank, c.hudTank, `${placed}/${cap}`),
+      stat(STAT_ICONS.bag, c.hudBag, `${s.fish.length}`),
       heartStat,
-      stat(c.hudSpecies, `${collectionProgress(s).owned}/${collectionProgress(s).total}`),
+      stat(STAT_ICONS.book, c.hudSpecies, `${prog.owned}/${prog.total}`),
+      langBtn,
     )
-
-    this.hud.replaceChildren(topRow, grid)
   }
 
   private renderNav(): void {
     const c = this.t
     this.nav.replaceChildren(
       ...TAB_IDS.map((id) => {
-        const b = makeButton(c.tabs[id], () => {
+        const b = makeIconButton(TAB_ICONS[id], c.tabs[id], () => {
           this.tab = id
           this.confirmingReset = false
           this.say('')
           this.render()
         })
         b.setAttribute('aria-pressed', String(this.tab === id))
+        b.title = c.tabs[id]
         return b
       }),
     )
@@ -867,6 +882,24 @@ function makeButton(text: string, onClick: (event: MouseEvent) => void): HTMLBut
   return b
 }
 
+function makeIconButton(
+  svgHtml: string,
+  text: string,
+  onClick: (event: MouseEvent) => void,
+): HTMLButtonElement {
+  const b = document.createElement('button')
+  b.type = 'button'
+  const ico = document.createElement('span')
+  ico.className = 'ico'
+  ico.innerHTML = svgHtml
+  const txt = document.createElement('span')
+  txt.className = 'btn-text'
+  txt.textContent = text
+  b.append(ico, txt)
+  b.addEventListener('click', onClick)
+  return b
+}
+
 function checkRow(
   text: string,
   checked: boolean,
@@ -894,15 +927,19 @@ function checkRow(
   return row
 }
 
-function stat(labelText: string, value: string): HTMLElement {
+function stat(svgHtml: string, labelText: string, value: string): HTMLElement {
   const wrap = document.createElement('div')
   wrap.className = 'stat'
+  wrap.title = `${labelText}: ${value}`
+  const ico = document.createElement('span')
+  ico.className = 'ico'
+  ico.innerHTML = svgHtml
   const l = document.createElement('span')
   l.className = 'label'
   l.textContent = labelText
   const v = document.createElement('b')
   v.textContent = value
-  wrap.append(l, v)
+  wrap.append(ico, l, v)
   return wrap
 }
 

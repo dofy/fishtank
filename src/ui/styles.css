@@ -3,6 +3,7 @@
 html, body {
   margin: 0;
   height: 100%;
+  overflow: hidden;
   background: var(--bg, #071722);
   color: var(--text, #e8f4f8);
   font-family: var(--font, system-ui, sans-serif);
@@ -14,85 +15,95 @@ html, body {
 
 #app {
   max-width: 980px;
+  height: 100dvh;
   margin: 0 auto;
-  padding: 16px;
-  display: grid;
-  gap: 12px;
+  padding: 8px 12px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+}
+
+.ico {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+.ico svg {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
 header.hud {
-  display: grid;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 8px;
-  padding: 10px 12px;
+  padding: 6px 10px;
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: var(--radius);
+  min-width: 0;
+  overflow: hidden;
 }
 
-.hud-top {
+.hud-lv-group {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
+  flex: 1 1 auto;
   min-width: 0;
 }
 
 .hud-exp-text {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--muted);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
-.hud-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 6px;
-}
-
-.hud-grid .stat {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 6px;
-  align-items: baseline;
-  justify-content: space-between;
-  background: var(--cell-bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 5px 8px;
-  min-width: 0;
-}
-
 .hud .stat {
   display: flex;
-  gap: 6px;
-  align-items: baseline;
+  gap: 4px;
+  align-items: center;
   white-space: nowrap;
+  flex-shrink: 0;
 }
-.hud .stat b { font-size: 14px; font-variant-numeric: tabular-nums; }
+.hud .stat .ico {
+  color: var(--accent);
+}
+.hud .stat b { font-size: 13px; font-variant-numeric: tabular-nums; }
 .hud .label {
   color: var(--muted);
   font-size: 11px;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
 }
 .hud-sub {
   font-size: 11px;
   color: var(--accent);
   font-variant-numeric: tabular-nums;
-  margin-left: auto;
 }
 .hud .lang-btn {
-  margin-left: auto;
-  padding: 4px 10px;
-  font-size: 12px;
+  margin-left: 2px;
+  padding: 3px 8px;
+  font-size: 11px;
   font-weight: 600;
   flex-shrink: 0;
 }
 
 .bar {
-  flex: 1 1 80px;
-  height: 8px;
-  min-width: 50px;
+  flex: 1 1 56px;
+  max-width: 120px;
+  height: 6px;
+  min-width: 32px;
   background: var(--cell-bg);
   border: 1px solid var(--border);
   overflow: hidden;
@@ -100,6 +111,7 @@ header.hud {
 .bar > span { display: block; height: 100%; background: var(--accent); transition: width 0.2s ease; }
 
 #tank {
+  flex-shrink: 0;
   width: 100%;
   display: block;
   border: 1px solid var(--border);
@@ -108,7 +120,23 @@ header.hud {
   touch-action: none;
 }
 
-nav.tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+nav.tabs {
+  flex-shrink: 0;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 6px;
+}
+
+nav.tabs button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 8px;
+  font-size: 13px;
+  white-space: nowrap;
+  min-width: 0;
+}
 
 button {
   font: inherit;
@@ -116,7 +144,7 @@ button {
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 7px 12px;
+  padding: 6px 11px;
   cursor: pointer;
   user-select: none;
   touch-action: manipulation;
@@ -140,20 +168,24 @@ button.danger-confirm {
 }
 
 section.panel {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 14px;
+  padding: 12px;
 }
 
-h2 { margin: 0 0 10px; font-size: 15px; letter-spacing: 0.04em; text-transform: uppercase; }
-h3 { margin: 14px 0 8px; font-size: 13px; color: var(--muted); }
+h2 { margin: 0 0 8px; font-size: 14px; letter-spacing: 0.04em; text-transform: uppercase; }
+h3 { margin: 12px 0 6px; font-size: 12px; color: var(--muted); }
 p.note { margin: 8px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(124px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 8px;
 }
 
 .cell {
@@ -161,13 +193,13 @@ p.note { margin: 8px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5
   background: var(--cell-bg);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 8px 6px 8px;
+  padding: 7px 6px 7px;
   text-align: center;
   cursor: pointer;
   user-select: none;
   touch-action: manipulation;
   display: grid;
-  gap: 3px;
+  gap: 2px;
   justify-items: center;
   transition: transform 0.06s ease, border-color 0.12s ease, background-color 0.12s ease;
 }
@@ -183,8 +215,8 @@ p.note { margin: 8px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5
   pointer-events: none;
 }
 .cell > button {
-  margin-top: 4px;
-  padding: 4px 10px;
+  margin-top: 3px;
+  padding: 3px 8px;
   font-size: 11px;
   width: 100%;
 }
@@ -254,14 +286,14 @@ table.odds th:first-child, table.odds td:first-child { text-align: left; }
   background: var(--cell-bg);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 10px 12px;
-  margin-bottom: 12px;
+  padding: 8px 10px;
+  margin-bottom: 10px;
   display: grid;
-  gap: 8px;
+  gap: 6px;
 }
 
 .filter-title {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--muted);
   letter-spacing: 0.04em;
@@ -269,7 +301,7 @@ table.odds th:first-child, table.odds td:first-child { text-align: left; }
 
 .filter-list {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 6px;
 }
 
@@ -285,7 +317,7 @@ button.check-row {
   justify-content: space-between;
   gap: 8px;
   width: 100%;
-  padding: 7px 10px;
+  padding: 6px 9px;
   text-align: left;
   background: var(--panel);
   border: 1px solid var(--border);
@@ -305,8 +337,8 @@ button.check-row .check-label {
 button.check-row .check-box {
   pointer-events: none;
   flex-shrink: 0;
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   border-radius: 5px;
   background: rgba(0, 0, 0, 0.38);
   border: 1px solid var(--border);
@@ -321,9 +353,9 @@ button.check-row .check-box {
 }
 
 button.check-row .check-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 3px;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
   background: transparent;
   transition: transform 0.1s ease, background-color 0.1s ease;
   transform: scale(0.4);
@@ -342,16 +374,16 @@ button.check-row[aria-checked='true'] .check-dot {
   transform: scale(1);
 }
 
-.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 10px; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 8px; }
 .log {
-  margin-top: 10px;
+  margin-top: 8px;
   padding: 6px 10px;
   font-size: 12px;
   color: var(--text);
   background: var(--cell-bg);
   border-left: 3px solid var(--border);
   border-radius: var(--radius);
-  min-height: 28px;
+  min-height: 26px;
   display: flex;
   align-items: center;
 }
@@ -359,40 +391,49 @@ button.check-row[aria-checked='true'] .check-dot {
 .log.good { color: var(--accent); border-left-color: var(--accent); }
 .log.bad { color: var(--danger); border-left-color: var(--danger); }
 
-@media (max-width: 640px) {
+@media (max-width: 720px) {
   #app {
-    padding: 10px;
-    gap: 8px;
+    padding: 6px 8px 8px;
+    gap: 6px;
   }
 
   header.hud {
-    padding: 8px 10px;
+    padding: 5px 8px;
     gap: 6px;
   }
 
-  .hud-top {
-    gap: 8px;
+  .hud .label,
+  .hud-exp-text {
+    display: none;
   }
 
-  .hud-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 6px;
+  .hud .stat {
+    gap: 3px;
   }
 
-  .filter-tiers {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .hud .stat b {
+    font-size: 12px;
+  }
+
+  .hud-sub {
+    font-size: 10px;
   }
 
   nav.tabs {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 6px;
+    gap: 4px;
   }
 
   nav.tabs button {
-    padding: 6px 8px;
-    font-size: 13px;
-    text-align: center;
+    padding: 7px 4px;
+  }
+
+  nav.tabs .btn-text {
+    display: none;
+  }
+
+  nav.tabs .ico {
+    width: 17px;
+    height: 17px;
   }
 
   section.panel {
@@ -400,8 +441,12 @@ button.check-row[aria-checked='true'] .check-dot {
   }
 
   .grid {
-    grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
-    gap: 8px;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 6px;
+  }
+
+  .filter-tiers {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   table.odds {
@@ -414,12 +459,14 @@ button.check-row[aria-checked='true'] .check-dot {
   }
 }
 
-@media (max-width: 380px) {
-  .hud-exp-text {
-    font-size: 11px;
+@media (max-width: 400px) {
+  header.hud {
+    gap: 4px;
+    padding: 4px 6px;
   }
 
-  .hud .stat b {
-    font-size: 13px;
+  .bar {
+    max-width: 42px;
+    min-width: 24px;
   }
 }
