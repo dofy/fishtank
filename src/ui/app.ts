@@ -14,8 +14,10 @@ import {
   isAdult,
   recipeStatus,
   release,
+  syncTank,
   synthesize,
   tierOdds,
+  toggleTankFish,
 } from '../core/game'
 import { type Copy, copy, detectLocale, speciesName, themeName, tierName } from '../core/i18n'
 import { SEASON_RECIPES, SPECIES, species } from '../core/species'
@@ -110,7 +112,7 @@ export class App {
     for (const el of timers) {
       const target = Number(el.dataset.maturesAt)
       if (!Number.isNaN(target)) {
-        el.textContent = formatClock(Math.max(0, target - now))
+        el.textContent = `⏱ ${formatClock(Math.max(0, target - now))}`
       }
     }
   }
@@ -142,11 +144,15 @@ export class App {
     })
     langBtn.className = 'lang-btn'
 
+    const placed = syncTank(s).length
+    const cap = capacity(s)
+
     this.hud.replaceChildren(
       stat(c.hudLevel, `${s.level}${s.level >= MAX_LEVEL ? c.hudMax : ''}`),
       bar(filled),
       stat(c.hudExp, next === null ? `${s.exp}` : `${s.exp} / ${next}`),
-      stat(c.hudTank, `${s.fish.length} / ${capacity(s)}`),
+      stat(c.hudTank, `${placed} / ${cap}`),
+      stat(c.hudBag, `${s.fish.length}`),
       stat(c.hudHearts, `${s.hearts} / ${HEART_MAX}`),
       nextHeartStat,
       stat(c.hudSpecies, `${collectionProgress(s).owned} / ${collectionProgress(s).total}`),
@@ -203,32 +209,47 @@ export class App {
 
   private tankPanel(now: number): Node[] {
     const c = this.t
-    const title = heading(c.tankHeading)
+    const tankIds = new Set(syncTank(this.state))
+    const cap = capacity(this.state)
+    const title = heading(c.tankHeading(tankIds.size, cap, this.state.fish.length))
     const grid = document.createElement('div')
     grid.className = 'grid'
     const sorted = [...this.state.fish].sort((a, b) => a.bornAt - b.bornAt)
     for (const fish of sorted) {
+      const inTank = tankIds.has(fish.uid)
+      const isStarter = fish.tier === 0
       grid.append(
         this.fishCell(fish, now, {
+          selected: inTank,
+          tagText: inTank ? c.inTankTag : undefined,
           onClick: () => {
-            this.say(this.describe(fish, now))
-            this.render(now)
-          },
-          action: () => {
-            if (this.state.fish.length <= 1) {
-              this.say(c.lastFishStays, 'bad')
+            const res = toggleTankFish(this.state, fish.uid)
+            const name = speciesName(fish.speciesId, this.locale)
+            const placedNow = syncTank(this.state).length
+            if (res === 'placed') {
+              this.hooks.onSave()
+              this.say(c.placedMsg(name, placedNow, cap), 'good')
+            } else if (res === 'removed') {
+              this.hooks.onSave()
+              this.say(c.removedFromTankMsg(name, placedNow, cap))
             } else {
-              const name = speciesName(fish.speciesId, this.locale)
-              if (release(this.state, fish.uid)) {
-                this.breedPick = this.breedPick.filter((u) => u !== fish.uid)
-                this.mergePick = this.mergePick.filter((u) => u !== fish.uid)
-                this.hooks.onSave()
-                this.say(c.releasedMsg(name))
-              }
+              this.say(c.tankDisplayFullMsg(cap), 'bad')
             }
             this.render(now)
           },
-          actionLabel: c.releaseBtn,
+          action: isStarter
+            ? undefined
+            : () => {
+                const name = speciesName(fish.speciesId, this.locale)
+                if (release(this.state, fish.uid)) {
+                  this.breedPick = this.breedPick.filter((u) => u !== fish.uid)
+                  this.mergePick = this.mergePick.filter((u) => u !== fish.uid)
+                  this.hooks.onSave()
+                  this.say(c.releasedMsg(name))
+                }
+                this.render(now)
+              },
+          actionLabel: isStarter ? undefined : c.releaseBtn,
         }),
       )
     }
@@ -239,9 +260,10 @@ export class App {
 
   private breedPanel(now: number): Node[] {
     const c = this.t
-    const eligible = this.state.fish.filter(
-      (f) => isAdult(f, now) && f.uses > 0 && !species(f.speciesId).seasonal,
+    const candidates = this.state.fish.filter(
+      (f) => (f.tier === 0 || f.uses > 0) && !species(f.speciesId).seasonal,
     )
+    const eligible = candidates.filter((f) => isAdult(f, now))
     const eligibleIds = new Set(eligible.map((f) => f.uid))
     this.breedPick = this.breedPick.filter((uid) => eligibleIds.has(uid)).slice(-2)
 
@@ -249,14 +271,21 @@ export class App {
 
     const grid = document.createElement('div')
     grid.className = 'grid'
-    for (const fish of eligible) {
+    for (const fish of candidates) {
+      const adult = isAdult(fish, now)
       const idx = this.breedPick.indexOf(fish.uid)
       const picked = idx !== -1
       grid.append(
         this.fishCell(fish, now, {
           selected: picked,
           pickOrder: picked ? idx + 1 : undefined,
+          locked: !adult,
           onClick: () => {
+            if (!adult) {
+              this.say(c.breedError('not-adult'), 'bad')
+              this.render(now)
+              return
+            }
             this.breedPick = picked
               ? this.breedPick.filter((u) => u !== fish.uid)
               : [...this.breedPick, fish.uid].slice(-2)
@@ -296,7 +325,17 @@ export class App {
       } else {
         const name = speciesName(result.child.speciesId, this.locale)
         const tName = tierName(result.tier, this.locale)
-        this.say(c.hatchedMsg(name, stars(result.tier), tName, result.child.grade, result.novel), 'good')
+        this.say(
+          c.hatchedMsg(
+            name,
+            stars(result.tier),
+            tName,
+            result.child.grade,
+            result.expGained,
+            result.novel,
+          ),
+          'good',
+        )
         this.breedPick = []
         this.hooks.onSave()
       }
@@ -322,8 +361,9 @@ export class App {
 
   private mergePanel(now: number): Node[] {
     const c = this.t
+    const mergeCandidates = this.state.fish.filter((f) => f.tier > 0)
     const liveIds = new Set(
-      this.state.fish
+      mergeCandidates
         .filter((f) => !species(f.speciesId).seasonal && f.tier < 5)
         .map((f) => f.uid),
     )
@@ -342,7 +382,7 @@ export class App {
 
     const grid = document.createElement('div')
     grid.className = 'grid'
-    for (const fish of this.state.fish) {
+    for (const fish of mergeCandidates) {
       const seasonal = Boolean(species(fish.speciesId).seasonal)
       const wrongTier = pickTier !== undefined && fish.tier !== pickTier
       const idx = this.mergePick.indexOf(fish.uid)
@@ -593,6 +633,7 @@ export class App {
     opts: {
       selected?: boolean
       pickOrder?: number
+      tagText?: string
       locked?: boolean
       onClick?: () => void
       action?: () => void
@@ -606,18 +647,27 @@ export class App {
     cell.setAttribute('aria-pressed', String(Boolean(opts.selected)))
     if (opts.onClick) cell.onclick = opts.onClick
 
+    const maxU = fish.maxUses ?? USES_BY_TIER[fish.tier]
+    const usesText = fish.tier === 0 ? '∞' : `${fish.uses}/${maxU}`
+    const canUse = adult && (fish.tier === 0 || fish.uses > 0)
+
     cell.append(
-      this.badge(adult && fish.uses > 0 ? 'ready' : adult ? 'none' : 'partial'),
-      count(`${fish.uses}/${USES_BY_TIER[fish.tier]}`),
+      this.badge(canUse ? 'ready' : adult ? 'none' : 'partial'),
+      count(usesText),
       this.portrait(sp, fish.tier, fish.grade, !adult),
       label(speciesName(sp.id, this.locale), 'name'),
-      label(`${stars(fish.tier)} · ${this.t.gradeLabel(fish.grade)}`, 'meta'),
+      label(
+        `${stars(fish.tier)} ${tierName(fish.tier, this.locale)} · ${this.t.gradeLabel(fish.grade)}`,
+        `meta tier-${fish.tier}`,
+      ),
     )
     if (opts.pickOrder !== undefined) {
       cell.append(label(`#${opts.pickOrder}`, 'pick-order'))
+    } else if (opts.tagText) {
+      cell.append(label(opts.tagText, 'pick-order'))
     }
     if (!adult && fish.maturesAt !== null) {
-      const timerEl = label(formatClock(fish.maturesAt - now), 'timer')
+      const timerEl = label(`⏱ ${formatClock(fish.maturesAt - now)}`, 'timer')
       timerEl.dataset.maturesAt = String(fish.maturesAt)
       cell.append(timerEl)
     }
@@ -628,6 +678,7 @@ export class App {
       })
       cell.append(b)
     }
+    cell.title = this.describe(fish, now)
     return cell
   }
 
@@ -664,10 +715,12 @@ export class App {
     const c = this.t
     const name = speciesName(fish.speciesId, this.locale)
     const tName = tierName(fish.tier, this.locale)
+    const maxU = fish.maxUses ?? USES_BY_TIER[fish.tier]
+    const usesStr = fish.tier === 0 ? '∞' : `${fish.uses}/${maxU}`
     const stateStr = isAdult(fish, now)
       ? c.describeAdult
       : c.describeFry(formatClock((fish.maturesAt ?? now) - now))
-    return c.describeFish(name, stars(fish.tier), tName, fish.grade, fish.uses, stateStr)
+    return c.describeFish(name, stars(fish.tier), tName, fish.grade, usesStr, stateStr)
   }
 }
 

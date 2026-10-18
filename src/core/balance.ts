@@ -22,7 +22,10 @@ export const HEART_REGEN_MS = 7 * 60 * 1000
 /** SOURCE: synthesis consumes exactly 10 fish. */
 export const SYNTHESIS_INPUT_COUNT = 10
 
-/** SOURCE: tank capacity and cumulative EXP per aquarium level. */
+/** SOURCE: parent breeding cooldown (~3 minutes). */
+export const PARENT_COOLDOWN_MS = 3 * 60_000
+
+/** SOURCE: tank display capacity and cumulative EXP per aquarium level. */
 export const LEVELS: { level: number; totalExp: number; capacity: number }[] = [
   { level: 1, totalExp: 0, capacity: 3 },
   { level: 2, totalExp: 10, capacity: 4 },
@@ -77,21 +80,24 @@ export const BREEDING_MATRIX: Record<string, [number, number, number, number, nu
 /** Rows the original matrix leaves undefined, filled by nearest neighbour. */
 export const MATRIX_FALLBACK: [number, number, number, number, number] = [0, 0, 0, 45, 55]
 
-/** TUNED: breeding attempts a newborn starts with, by tier. */
-export const USES_BY_TIER: Record<Tier, number> = { 0: 8, 1: 5, 2: 4, 3: 3, 4: 2, 5: 2 }
+/**
+ * SOURCE: starter goldfish have infinite uses (represented as 999);
+ * bred/merged fish get 1..5 breeding uses (defaulted by tier if not rolled).
+ */
+export const USES_BY_TIER: Record<Tier, number> = { 0: 999, 1: 5, 2: 4, 3: 3, 4: 2, 5: 2 }
 
-/** TUNED: fry maturation time in ms, by tier. */
+/** SOURCE: fry maturation / cooldown time in ms (~7 minutes for regular offspring, 2m for starter). */
 export const GROWTH_MS_BY_TIER: Record<Tier, number> = {
   0: 2 * 60_000,
   1: 5 * 60_000,
-  2: 10 * 60_000,
-  3: 20 * 60_000,
-  4: 40 * 60_000,
-  5: 60 * 60_000,
+  2: 7 * 60_000,
+  3: 10 * 60_000,
+  4: 15 * 60_000,
+  5: 20 * 60_000,
 }
 
-/** TUNED: EXP banked when a fry reaches adulthood, by tier. */
-export const EXP_BY_TIER: Record<Tier, number> = { 0: 4, 1: 10, 2: 40, 3: 160, 4: 640, 5: 2_560 }
+/** TUNED: EXP banked when a fry is bred/matures, by tier. */
+export const EXP_BY_TIER: Record<Tier, number> = { 0: 5, 1: 10, 2: 40, 3: 160, 4: 640, 5: 2_560 }
 
 /** TUNED: EXP multiplier contributed by visual grade. */
 export function gradeExpMultiplier(grade: Grade): number {

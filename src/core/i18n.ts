@@ -37,7 +37,7 @@ const SPECIES_ZH: Record<SpeciesId, string> = {
 const TIER_ZH: readonly [string, string, string, string, string, string] = [
   '初始',
   '普通',
-  '优秀',
+  '高级',
   '稀有',
   '传说',
   '神话',
@@ -81,6 +81,7 @@ export interface Copy {
   hudMax: string
   hudExp: string
   hudTank: string
+  hudBag: string
   hudHearts: string
   hudNextHeart: string
   hudFull: string
@@ -94,9 +95,15 @@ export interface Copy {
     book: string
     settings: string
   }
-  tankHeading: string
+  tankHeading: (placed: number, cap: number, total: number) => string
+  inTankTag: string
+  placeInTankBtn: string
+  removeFromTankBtn: string
   releaseBtn: string
-  lastFishStays: string
+  starterCannotRelease: string
+  placedMsg: (name: string, placed: number, cap: number) => string
+  removedFromTankMsg: (name: string, placed: number, cap: number) => string
+  tankDisplayFullMsg: (cap: number) => string
   releasedMsg: (name: string) => string
   tankNote: string
   breedHeading: (picked: number) => string
@@ -105,7 +112,14 @@ export interface Copy {
   pairingCol: string
   breedBtn: (picked: number) => string
   clearBtn: string
-  hatchedMsg: (name: string, starsStr: string, tierStr: string, grade: number, novel: boolean) => string
+  hatchedMsg: (
+    name: string,
+    starsStr: string,
+    tierStr: string,
+    grade: number,
+    expGained: number,
+    novel: boolean,
+  ) => string
   mergeHeading: (count: number, picked: number) => string
   mergeBtn: (picked: number, total: number) => string
   mergedMsg: (name: string, starsStr: string, tierStr: string) => string
@@ -141,7 +155,7 @@ export interface Copy {
     starsStr: string,
     tierStr: string,
     grade: number,
-    uses: number,
+    usesStr: string,
     stateStr: string,
   ) => string
   breedError: (code: string) => string
@@ -153,7 +167,8 @@ const ZH: Copy = {
   hudLevel: '等级',
   hudMax: ' (满级)',
   hudExp: '经验',
-  hudTank: '容量',
+  hudTank: '鱼缸展示',
+  hudBag: '背包持有',
   hudHearts: '爱心',
   hudNextHeart: '恢复',
   hudFull: '已满',
@@ -167,29 +182,40 @@ const ZH: Copy = {
     book: '图鉴',
     settings: '设置',
   },
-  tankHeading: '我的鱼群',
+  tankHeading: (placed, cap, total) =>
+    `我的鱼群（鱼缸展示 ${placed}/${cap} · 背包共 ${total} 条）`,
+  inTankTag: '鱼缸中',
+  placeInTankBtn: '放入鱼缸',
+  removeFromTankBtn: '收回背包',
   releaseBtn: '放生',
-  lastFishStays: '至少需要保留最后一条鱼。',
+  starterCannotRelease: '初始鱼为永久保底种鱼，不可放生。',
+  placedMsg: (name, placed, cap) => `已将 ${name} 放入鱼缸展示（${placed}/${cap}）。`,
+  removedFromTankMsg: (name, placed, cap) => `已将 ${name} 收回背包（鱼缸 ${placed}/${cap}）。`,
+  tankDisplayFullMsg: (cap) =>
+    `当前鱼缸展示槽位已满（上限 ${cap} 条）。可先将其他鱼“收回背包”，或通过繁殖提升鱼缸等级扩大容量（不影响继续繁殖）。`,
   releasedMsg: (name) => `已放生 ${name}。`,
-  tankNote: '鱼苗随时间成长，成年瞬间自动结算经验（EXP）。经验可提升鱼缸等级并扩大容量上限。',
+  tankNote:
+    '初始赠送 3 条无限繁殖次数的初始鱼。繁殖与鱼苗长大均可获得经验（EXP）提升鱼缸等级。鱼缸容量仅限制上方画面同时展示的鱼数量，背包不设上限，随时可继续繁殖！',
   breedHeading: (picked) => `选择两条成年鱼进行繁殖（已选 ${picked}/2）`,
-  breedNotEnoughAdults: '需要至少两条有剩余繁殖次数的成年鱼。鱼苗需等待长大，次数耗尽的鱼可用于合成。',
+  breedNotEnoughAdults: '需要至少两条可繁殖的成年鱼。冷却或成长中的鱼请等待倒计时结束。',
   oddsHeading: '子代星级概率',
   pairingCol: '亲代组合',
   breedBtn: (picked) => `开始繁殖 · 消耗 1 爱心 (${picked}/2)`,
   clearBtn: '清空选择',
-  hatchedMsg: (name, starsStr, tierStr, grade, novel) =>
-    `孵化出 ${name}（${starsStr} ${tierStr} · 品阶 ${grade}）！${novel ? ' 解锁新图鉴！' : ''}`,
+  hatchedMsg: (name, starsStr, tierStr, grade, expGained, novel) =>
+    `孵化出 ${name}（${starsStr} ${tierStr} · 品阶 ${grade}），获得 +${expGained} EXP！${novel ? ' 解锁新图鉴！' : ''}`,
   mergeHeading: (count, picked) => `选择 ${count} 条同星级的鱼进行合成（已选 ${picked}/${count}）`,
   mergeBtn: (picked, total) => `开始合成 (${picked}/${total})`,
   mergedMsg: (name, starsStr, tierStr) => `合成成功：获得 ${name}（${starsStr} ${tierStr}）！`,
-  mergeNote: '消耗 10 条同星级鱼可合成 1 条高一星级的鱼，并继承材料中的最高品阶。建议优先消耗繁殖次数用尽的重复鱼。',
+  mergeNote:
+    '消耗 10 条同星级鱼（1★–4★）可 100% 合成 1 条高一星级的鱼，并继承材料中的最高品阶。建议优先消耗繁殖次数用尽（0/n）的重复鱼。',
   seasonHeading: '赛季限定合成',
   craftedSuffix: ' — 已合成',
   minTierLabel: (starsStr) => `最低 ${starsStr}`,
   craftBtn: '合成限定生物',
   craftedMsg: (name) => `成功合成赛季限定：${name}！`,
-  seasonNote: '材料鱼必须已成年且达到指定星级。绿色角标表示该槽位材料已集齐，合成时优先消耗最早获得的匹配鱼。',
+  seasonNote:
+    '材料鱼必须已成年且达到指定星级。绿色角标表示该槽位材料已集齐，合成时优先消耗最早获得的匹配鱼。',
   bookHeading: '生物图鉴',
   seasonalSuffix: ' · 赛季限定',
   settingsThemeHeading: '画面风格（支持素材替换）',
@@ -203,24 +229,22 @@ const ZH: Copy = {
   resetBtn: '重置存档进度',
   confirmResetBtn: '确认清空并重开？',
   cancelBtn: '取消',
-  resetDoneMsg: '存档已重置，重新开始养鱼之旅。',
+  resetDoneMsg: '存档已重置，已发放 3 条初始种鱼。',
   settingsSaveNote: '游戏进度自动保存在当前浏览器的 localStorage 中，支持离线成长与爱心恢复结算。',
   gradeLabel: (g) => `品阶 ${g}`,
-  badgeReadyTitle: '当前可用',
-  badgePartialTitle: '成长中或未齐备',
+  badgeReadyTitle: '可操作 / 可放入',
+  badgePartialTitle: '成长或冷却中',
   badgeNoneTitle: '次数已耗尽或不可用',
   describeAdult: '已成年',
-  describeFry: (clock) => `鱼苗（距成年还需 ${clock}）`,
-  describeFish: (name, starsStr, tierStr, grade, uses, stateStr) =>
-    `${name} — ${starsStr} ${tierStr}，品阶 ${grade}，剩余繁殖次数 ${uses}，${stateStr}。`,
+  describeFry: (clock) => `成长/冷却中（剩余 ${clock}）`,
+  describeFish: (name, starsStr, tierStr, grade, usesStr, stateStr) =>
+    `${name} — ${starsStr} ${tierStr}，品阶 ${grade}，繁殖次数 ${usesStr}，${stateStr}。`,
   breedError: (code) => {
     switch (code) {
       case 'no-hearts':
         return '爱心不足，每 7 分钟自动恢复 1 颗爱心。'
-      case 'tank-full':
-        return '鱼缸已满！请先提升鱼缸等级或在“鱼缸”页放生多余的鱼。'
       case 'not-adult':
-        return '亲代必须都是已成年的鱼。'
+        return '所选亲代正在成长或冷却中，请等待倒计时结束。'
       case 'no-uses':
         return '所选亲代中有繁殖次数已耗尽的鱼。'
       case 'seasonal-parent':
@@ -236,9 +260,7 @@ const ZH: Copy = {
       case 'max-tier':
         return '神话（5★）已是最高星级，无法继续向上合成。'
       case 'seasonal-material':
-        return '赛季限定生物不能作为合成材料消耗。'
-      case 'tank-full':
-        return '鱼缸已满。'
+        return '初始鱼与赛季限定生物不能作为合成材料消耗。'
       default:
         return `请先点击上方卡片选择满 ${count} 条同星级的鱼。`
     }
@@ -247,8 +269,6 @@ const ZH: Copy = {
     switch (code) {
       case 'missing-materials':
         return '合成所需材料鱼尚未集齐（需成年且满足最低星级）。'
-      case 'tank-full':
-        return '鱼缸已满。'
       default:
         return '未知合成配方。'
     }
@@ -260,6 +280,7 @@ const EN: Copy = {
   hudMax: ' (max)',
   hudExp: 'EXP',
   hudTank: 'Tank',
+  hudBag: 'Owned',
   hudHearts: 'Hearts',
   hudNextHeart: 'Next heart',
   hudFull: 'full',
@@ -273,26 +294,34 @@ const EN: Copy = {
     book: 'Book',
     settings: 'Settings',
   },
-  tankHeading: 'Your fish',
+  tankHeading: (placed, cap, total) =>
+    `Your fish (${placed}/${cap} in tank · ${total} owned)`,
+  inTankTag: 'In Tank',
+  placeInTankBtn: 'Put in Tank',
+  removeFromTankBtn: 'Store',
   releaseBtn: 'Release',
-  lastFishStays: 'The last fish stays.',
+  starterCannotRelease: 'Starter fish have infinite breeding uses and cannot be released.',
+  placedMsg: (name, placed, cap) => `Placed ${name} in the tank (${placed}/${cap}).`,
+  removedFromTankMsg: (name, placed, cap) => `Removed ${name} from the tank (${placed}/${cap}).`,
+  tankDisplayFullMsg: (cap) =>
+    `Tank display is full (${cap}/${cap} slots). Store a fish first or level up your aquarium to unlock more display slots.`,
   releasedMsg: (name) => `Released ${name}.`,
   tankNote:
-    'Fry mature on a timer and bank EXP the moment they become adults. EXP raises the aquarium level, which expands tank capacity.',
+    'You start with 3 starter fish with infinite breeding uses (∞). Breeding and maturing fry grant EXP to level up your aquarium. Tank capacity only limits how many fish swim in the display at once—your inventory is unlimited so you can always breed!',
   breedHeading: (picked) => `Pick two adults (${picked}/2 selected)`,
   breedNotEnoughAdults:
-    'Needs two adults with breeding attempts left. Fry have to grow up first, and an exhausted fish can still be merged.',
+    'Needs two ready adults with breeding uses left. Wait for fry growth or parent cooldown timers to finish.',
   oddsHeading: 'Offspring odds',
   pairingCol: 'Pairing',
   breedBtn: (picked) => `Breed · 1 heart (${picked}/2)`,
   clearBtn: 'Clear',
-  hatchedMsg: (name, starsStr, tierStr, grade, novel) =>
-    `${name} hatched at ${starsStr} ${tierStr}, grade ${grade}.${novel ? ' New species for the book!' : ''}`,
+  hatchedMsg: (name, starsStr, tierStr, grade, expGained, novel) =>
+    `${name} hatched at ${starsStr} ${tierStr}, grade ${grade} (+${expGained} EXP).${novel ? ' New species for the book!' : ''}`,
   mergeHeading: (count, picked) => `Merge ${count} fish of one tier (${picked}/${count} selected)`,
   mergeBtn: (picked, total) => `Merge (${picked}/${total})`,
   mergedMsg: (name, starsStr, tierStr) => `Merged into ${name}, ${starsStr} ${tierStr}.`,
   mergeNote:
-    'Ten go in, one comes out a tier higher, carrying the best grade among them. Spend exhausted duplicates here, never a fish that still has breeding attempts.',
+    'Ten go in, one comes out a tier higher, carrying the best grade among them. Spend exhausted duplicates (0/n) here, never a fish that still has breeding attempts.',
   seasonHeading: 'Season crafting',
   craftedSuffix: ' — crafted',
   minTierLabel: (starsStr) => `min ${starsStr}`,
@@ -314,24 +343,22 @@ const EN: Copy = {
   resetBtn: 'Reset progress',
   confirmResetBtn: 'Confirm reset?',
   cancelBtn: 'Cancel',
-  resetDoneMsg: 'Progress has been reset.',
+  resetDoneMsg: 'Progress has been reset with 3 starter fish.',
   settingsSaveNote: 'Progress lives in localStorage on this device only.',
   gradeLabel: (g) => `grade ${g}`,
   badgeReadyTitle: 'Available to use now',
-  badgePartialTitle: 'Present but not usable yet',
-  badgeNoneTitle: 'Nothing to use',
+  badgePartialTitle: 'Growing or cooling down',
+  badgeNoneTitle: 'Exhausted or unavailable',
   describeAdult: 'adult',
-  describeFry: (clock) => `fry, ${clock} to adulthood`,
-  describeFish: (name, starsStr, tierStr, grade, uses, stateStr) =>
-    `${name} — ${starsStr} ${tierStr}, grade ${grade}, ${uses} breeding attempts left, ${stateStr}.`,
+  describeFry: (clock) => `cooldown/fry (${clock} left)`,
+  describeFish: (name, starsStr, tierStr, grade, usesStr, stateStr) =>
+    `${name} — ${starsStr} ${tierStr}, grade ${grade}, uses ${usesStr}, ${stateStr}.`,
   breedError: (code) => {
     switch (code) {
       case 'no-hearts':
         return 'Out of hearts. One regenerates every seven minutes.'
-      case 'tank-full':
-        return 'Tank is full. Raise the aquarium level or release a fish.'
       case 'not-adult':
-        return 'Both parents must be adults.'
+        return 'Both parents must finish growing or cooling down first.'
       case 'no-uses':
         return 'One parent has no breeding attempts left.'
       case 'seasonal-parent':
@@ -347,9 +374,7 @@ const EN: Copy = {
       case 'max-tier':
         return 'Mythic is the ceiling; it cannot be merged upward.'
       case 'seasonal-material':
-        return 'Seasonal creatures are never consumed as materials.'
-      case 'tank-full':
-        return 'Tank is full.'
+        return 'Starter fish and seasonal creatures cannot be consumed as merge materials.'
       default:
         return `Select ${count} fish of the same tier from the grid above first.`
     }
@@ -358,8 +383,6 @@ const EN: Copy = {
     switch (code) {
       case 'missing-materials':
         return 'Materials are short (must be adults at or above the required tier).'
-      case 'tank-full':
-        return 'Tank is full.'
       default:
         return 'Unknown recipe.'
     }

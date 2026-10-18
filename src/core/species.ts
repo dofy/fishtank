@@ -59,7 +59,7 @@ export function poolForTier(tier: Tier): Species[] {
   return pool.length > 0 ? pool : SPECIES.filter((s) => !s.seasonal && s.tier <= tier)
 }
 
-export const STARTER_SPECIES: SpeciesId[] = ['goldfin', 'greyminnow']
+export const STARTER_SPECIES: SpeciesId[] = ['goldfin', 'goldfin', 'greyminnow']
 
 /**
  * Season recipes keep the original's shape: one keystone material plus

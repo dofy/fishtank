@@ -1,5 +1,7 @@
-import { SAVE_VERSION, newGame, tick } from './game'
+import { USES_BY_TIER } from './balance'
+import { SAVE_VERSION, makeFish, newGame, syncTank, tick } from './game'
 import { detectLocale } from './i18n'
+import { STARTER_SPECIES } from './species'
 import type { GameState } from './types'
 
 const KEY = 'fishtank.save.v1'
@@ -14,6 +16,30 @@ export function load(now = Date.now()): GameState {
     if (parsed.locale !== 'zh' && parsed.locale !== 'en') {
       parsed.locale = detectLocale()
     }
+
+    // Ensure at least the 3 starter goldfish exist and have infinite uses
+    const starters = parsed.fish.filter((f) => f.tier === 0)
+    for (const s of starters) {
+      s.uses = USES_BY_TIER[0]
+      s.maxUses = USES_BY_TIER[0]
+    }
+    while (parsed.fish.filter((f) => f.tier === 0).length < STARTER_SPECIES.length) {
+      const idx = parsed.fish.filter((f) => f.tier === 0).length
+      const spId = STARTER_SPECIES[idx] ?? 'goldfin'
+      parsed.fish.unshift(makeFish(spId, 0, 1, now, { adult: true }))
+    }
+
+    for (const f of parsed.fish) {
+      if (!f.maxUses || f.maxUses < f.uses) {
+        f.maxUses = Math.max(f.uses, USES_BY_TIER[f.tier])
+      }
+    }
+
+    if (!Array.isArray(parsed.tankUids) || parsed.tankUids.length === 0) {
+      parsed.tankUids = parsed.fish.slice(0, 3).map((f) => f.uid)
+    }
+    syncTank(parsed)
+
     // Offline progress: one catch-up tick covers however long the tab was shut.
     tick(parsed, now)
     return parsed

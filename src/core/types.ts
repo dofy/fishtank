@@ -1,4 +1,4 @@
-/** Rarity tier. 0 = starter stock, 1..5 = the five star ratings. */
+/** Rarity tier. 0 = starter goldfish, 1..5 = the five star ratings. */
 export type Tier = 0 | 1 | 2 | 3 | 4 | 5
 
 /** Visual quality grade, independent of rarity tier. */
@@ -46,9 +46,11 @@ export interface Fish {
   speciesId: SpeciesId
   tier: Tier
   grade: Grade
-  /** Remaining breeding attempts. Zero means synthesis or sale only. */
+  /** Remaining breeding attempts (null for infinite starter goldfish). */
   uses: number
-  /** Epoch ms when the fry becomes an adult. Null once adult. */
+  /** Initial breeding attempts rolled at birth, for x/y display. */
+  maxUses?: number
+  /** Epoch ms when the fry becomes an adult or finishes breeding cooldown. Null once ready. */
   maturesAt: number | null
   /** Epoch ms of birth, for the "acquisition order" sort. */
   bornAt: number
@@ -61,6 +63,8 @@ export type Locale = 'zh' | 'en'
 export interface GameState {
   version: number
   fish: Fish[]
+  /** Fish uids currently placed in the visual aquarium tank (capped by tank capacity). */
+  tankUids?: string[]
   hearts: number
   /** Epoch ms the next heart finishes regenerating. */
   nextHeartAt: number
@@ -82,6 +86,8 @@ export interface BreedOutcome {
   tier: Tier
   /** Whether the child is a species neither parent is. */
   novel: boolean
+  /** EXP gained from this breeding action. */
+  expGained: number
 }
 
 export interface SeasonRecipe {

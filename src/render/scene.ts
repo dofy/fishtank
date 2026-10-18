@@ -1,4 +1,4 @@
-import { isAdult } from '../core/game'
+import { isAdult, tankFish } from '../core/game'
 import type { Fish, GameState, Species } from '../core/types'
 import { hashString } from './shape'
 
@@ -30,7 +30,7 @@ export class Scene {
 
   sync(state: GameState, lookup: (id: string) => Species, width: number, height: number, now: number): void {
     const live = new Set<string>()
-    for (const fish of state.fish) {
+    for (const fish of tankFish(state)) {
       live.add(fish.uid)
       const adult = isAdult(fish, now)
       const existing = this.agents.get(fish.uid)
