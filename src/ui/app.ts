@@ -891,19 +891,23 @@ export class App {
         this.render()
       }
 
+      const artWrap = document.createElement('div')
+      artWrap.className = 'cell-art'
+      artWrap.append(this.decorPortrait(item, !unlocked))
+
+      const metaText = !unlocked
+        ? c.decorUnlockAt(item.unlockLevel)
+        : placed
+          ? `${c.decorUnlockedAt(item.unlockLevel)} · ${c.decorPlacedTag}`
+          : c.decorUnlockedAt(item.unlockLevel)
+
       cell.append(
-        this.badge(unlocked ? 'ready' : 'none'),
-        count(`Lv.${item.unlockLevel}`),
-        this.decorPortrait(item, !unlocked),
+        artWrap,
         label(name, 'name'),
-        label(
-          unlocked ? c.decorUnlockedAt(item.unlockLevel) : c.decorUnlockAt(item.unlockLevel),
-          'meta',
-        ),
+        label(metaText, `meta${placed ? ' text-[var(--accent)] font-semibold' : ''}`),
       )
 
       if (placed) {
-        cell.append(label(c.decorPlacedTag, 'pick-order'))
         const flipBtn = makeButton(c.decorFlipBtn, (event) => {
           event.stopPropagation()
           if (flipDecor(this.state, item.id)) {
