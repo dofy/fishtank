@@ -29,6 +29,8 @@ export interface Agent {
   scaredTimer?: number
   /** Vertical escape velocity while startled. */
   scaredVy?: number
+  /** Remaining seconds of satiety cooldown after eating a pellet (9s). */
+  eatCooldown?: number
 }
 
 export interface SplashEffect {
@@ -225,6 +227,9 @@ export class Scene {
     const maxY = Math.max(minY + 20, height - 44)
 
     for (const a of this.agents.values()) {
+      if (a.eatCooldown && a.eatCooldown > 0) {
+        a.eatCooldown = Math.max(0, a.eatCooldown - dt)
+      }
       const targetY = Math.min(maxY, Math.max(minY, height * (a.baseDepth ?? 0.45)))
       const halfLen = a.species.body.length * 4.2 * a.scale * 0.5
       const margin = Math.max(36, halfLen + 10)
@@ -277,14 +282,16 @@ export class Scene {
         continue
       }
 
-      // 3. Spot and chase nearest sinking food pellet within detection range
+      // 3. Spot and chase nearest sinking food pellet within detection range (if not on 9s satiety cooldown)
       let nearestFood: FoodPellet | null = null
-      let bestDist = 280
-      for (const f of this.foods) {
-        const d = Math.hypot(f.x - a.x, f.y - a.y)
-        if (d < bestDist) {
-          bestDist = d
-          nearestFood = f
+      if (!a.eatCooldown || a.eatCooldown <= 0) {
+        let bestDist = 280
+        for (const f of this.foods) {
+          const d = Math.hypot(f.x - a.x, f.y - a.y)
+          if (d < bestDist) {
+            bestDist = d
+            nearestFood = f
+          }
         }
       }
 
@@ -306,7 +313,12 @@ export class Scene {
         const mouthDist = Math.hypot(nearestFood.x - mouthX, nearestFood.y - a.y)
         if (mouthDist < 18 || dist < 15) {
           this.foods = this.foods.filter((f) => f.id !== nearestFood.id)
-          a.baseDepth = Math.min(0.82, Math.max(0.22, a.y / Math.max(1, height)))
+          a.eatCooldown = 9
+          // Swim away after eating: pick a fresh cruising depth and briskly glide away
+          a.dir = Math.random() < 0.65 ? (-a.dir as 1 | -1) : a.dir
+          a.baseDepth = 0.25 + Math.random() * 0.52
+          a.scaredTimer = 0.45
+          a.scaredVy = (Math.random() - 0.5) * 55
           this.splashes.push({ x: nearestFood.x, y: nearestFood.y, age: 0.2, duration: 0.45 })
           onEat?.()
         }
