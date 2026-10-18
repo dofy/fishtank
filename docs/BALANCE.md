@@ -1,8 +1,8 @@
-# Balance & Game Data Guide / 游戏帮助与数值说明 (`v1.3.6`)
+# Balance & Game Data Guide / 游戏帮助与数值说明 (`v1.3.7`)
 
 This document details the gameplay mechanics, progression curves, and breeding probabilities for **Fishtank**, modeled on [PC FISH: Taskbar Aquarium](https://store.steampowered.com/app/4842670/PC_FISH_Taskbar_Aquarium/).
 
-本文档详细说明 **Fishtank** 的核心玩法机制、升级容量曲线与繁殖概率矩阵（数值参考 Steam《[PC FISH: Taskbar Aquarium](https://store.steampowered.com/app/4842670/PC_FISH_Taskbar_Aquarium/?l=tchinese)》）。
+本文档详细说明 **Fishtank** 的核心玩法机制、升级容量曲线与繁育概率矩阵（数值参考 Steam《[PC FISH: Taskbar Aquarium](https://store.steampowered.com/app/4842670/PC_FISH_Taskbar_Aquarium/?l=tchinese)》）。
 
 ---
 
@@ -10,13 +10,12 @@ This document details the gameplay mechanics, progression curves, and breeding p
 
 | Parameter / 参数 | Value / 数值 | Description / 说明 |
 | :--- | :--- | :--- |
-| `HEART_COST_PER_BREED` | `1` | 每次繁殖消耗 1 颗爱心 / 1 heart consumed per breeding attempt |
+| `HEART_COST_PER_BREED` | `1` | 每次繁育消耗 1 颗爱心 / 1 heart consumed per breeding attempt |
 | `HEART_MAX` | `5` | 爱心存储上限 5 颗 / Maximum heart capacity |
 | `HEART_REGEN_MS` | `7 min` (`420,000 ms`) | 每 7 分钟恢复 1 颗爱心 / ~1 heart every 7 minutes (~8.57/hr) |
-| `PARENT_COOLDOWN_MS` | `3 min` (`180,000 ms`) | 初始鱼繁殖后的冷却时间 / Starter parent cooldown after breeding |
+| `PARENT_COOLDOWN_MS` | `3 min` (`180,000 ms`) | 初始鱼繁育后的冷却时间 / Starter parent cooldown after breeding |
 | `SYNTHESIS_INPUT_COUNT` | `10` | 10 条鱼（1★–4★）合成为 1 条高一星级鱼 / 10 fish merge into 1 higher-tier fish |
 | `EAT_COOLDOWN` | `9 sec` | 鱼缸内同一条鱼吃食后的饱腹间隔 / Satiety cooldown per fish after eating a pellet |
-| `EEL_SHOCK_STUN` | `3 sec` | 蓝弧电鳗偶发（或 30s 内被点 6 次）放电麻痹全缸其他鱼的持续时间 / Full-tank stun duration when Volt Electric Eel discharges |
 
 ---
 
@@ -24,7 +23,7 @@ This document details the gameplay mechanics, progression curves, and breeding p
 
 Breeding awards half of the offspring's EXP immediately and the remaining half when the fry matures into an adult.
 
-每次成功繁殖立即获得子代总经验的一半，鱼苗成年时自动结算另一半经验。
+每次成功繁育立即获得子代总经验的一半，鱼苗成年时自动结算另一半经验。
 
 | Level / 等级 | Cumulative EXP / 累计经验 | EXP Delta / 升级所需 | Fish Cap / 鱼展示上限 | Decor Cap / 装饰摆放上限 | Unlocked Decorations / 解锁装饰品 |
 | :---: | :---: | :---: | :---: | :---: | :--- |
@@ -41,7 +40,7 @@ Breeding awards half of the offspring's EXP immediately and the remaining half w
 
 ---
 
-## 3. Offspring Tier Probability Matrix / 亲代星级繁殖概率表
+## 3. Offspring Tier Probability Matrix / 亲代星级繁育概率表
 
 Percentages for offspring tiers `1★` through `5★` given parent tiers `low + high`:
 
@@ -67,7 +66,7 @@ Percentages for offspring tiers `1★` through `5★` given parent tiers `low + 
 
 ### Rarity Tier Base Stats / 星级基础参数
 
-| Tier / 稀有度 | Growth Time / 成长时间 | Base EXP / 基础经验 | Breeding Uses / 可繁殖次数 | Species Count / 鱼种数 |
+| Tier / 稀有度 | Growth Time / 成长时间 | Base EXP / 基础经验 | Breeding Uses / 可繁育次数 | Species Count / 鱼种数 |
 | :--- | :---: | :---: | :---: | :---: |
 | **— 初始 (Starter)** | `3 min` (cooldown) | `5 EXP` | `∞` (无限) | 2 (仅品阶 1 / Grade 1 only) |
 | **★ 普通 (Common)** | `5 min` | `10 EXP` | `1–5` (均值 5) | 7 (各 5 个品阶变种) |
@@ -80,5 +79,5 @@ Percentages for offspring tiers `1★` through `5★` given parent tiers `low + 
 
 - **EXP Multiplier / 经验倍率**: `1 + 0.25 × (Grade - 1)`
   - `Grade 1`: **1.00x** · `Grade 2`: **1.25x** · `Grade 3`: **1.50x** · `Grade 4`: **1.75x** · `Grade 5`: **2.00x**
-- **Breeding Inheritance / 繁殖品阶遗传**: Base weights `{ 1: 56, 2: 26, 3: 12, 4: 5, 5: 1 }`, shifted upward by parent average grade (`GRADE_PARENT_BIAS = 0.35`).
+- **Breeding Inheritance / 繁育品阶遗传**: Base weights `{ 1: 56, 2: 26, 3: 12, 4: 5, 5: 1 }`, shifted upward by parent average grade (`GRADE_PARENT_BIAS = 0.35`).
 - **Synthesis Inheritance / 合成品阶继承**: 10-to-1 synthesis guarantees the output fish inherits the **highest grade (`Math.max`)** among all 10 input fish. Using **1 high-grade + 9 Grade-1 fish** is the optimal strategy.

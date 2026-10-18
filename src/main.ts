@@ -285,6 +285,7 @@ async function main(): Promise<void> {
       elapsed,
       () => sound.play('eat'),
       () => sound.play('zap'),
+      night,
     )
 
     ctx.save()

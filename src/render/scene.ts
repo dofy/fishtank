@@ -75,6 +75,8 @@ export interface SceneView {
   decors: DecorNode[]
   splashes?: SplashEffect[]
   foods?: FoodPellet[]
+  /** Palette index (0..6) for each of the 3 overhead aquarium lamps. */
+  lampColors?: [number, number, number]
   /** Seconds since start, for idle motion. */
   time: number
   /** True in dark/night mode, turning on the aquarium decorative lamps. */
@@ -89,6 +91,8 @@ export class Scene {
   private decors: DecorNode[] = []
   private splashes: SplashEffect[] = []
   private foods: FoodPellet[] = []
+  /** Current color index (0..6) for the 3 overhead lamps. */
+  private lampColors: [number, number, number] = [1, 4, 1]
   private initialized = false
   activeDecorId: DecorId | null = null
 
@@ -198,7 +202,8 @@ export class Scene {
     a.clickTimestamps = recent
     if (a.fish.speciesId === 'volteel' && recent.length >= 6) {
       a.clickTimestamps = []
-      this.triggerDischarge(a)
+      const night = typeof document !== 'undefined' && document.documentElement.dataset.mode !== 'light'
+      this.triggerDischarge(a, undefined, night)
       return 'zapped'
     }
 
@@ -234,13 +239,20 @@ export class Scene {
   }
 
   /** Trigger an electric discharge from an electric eel, stunning all other fish for 3s. */
-  private triggerDischarge(eel: Agent, onZap?: () => void): void {
+  private triggerDischarge(eel: Agent, onZap?: () => void, night = true): void {
     eel.dischargingTimer = 0.85
     eel.zapCooldown = 22 + Math.random() * 18
     for (const other of this.agents.values()) {
       if (other.fish.uid === eel.fish.uid || other.dropping) continue
       other.shockedTimer = 3.0
       other.scaredTimer = 0
+    }
+    // When lamps are lit in night mode, randomly switch one of the 3 overhead lamps to a new color from the 7-color palette
+    if (night) {
+      const lampIdx = Math.floor(Math.random() * 3) as 0 | 1 | 2
+      const current = this.lampColors[lampIdx]
+      const nextColor = (current + 1 + Math.floor(Math.random() * 6)) % 7
+      this.lampColors[lampIdx] = nextColor
     }
     onZap?.()
   }
@@ -252,6 +264,7 @@ export class Scene {
     time: number,
     onEat?: () => void,
     onZap?: () => void,
+    night = true,
   ): void {
     // Update water entry splashes
     for (const s of this.splashes) s.age += dt
@@ -289,7 +302,7 @@ export class Scene {
         this.agents.size > 1 &&
         Math.random() < dt * 0.04
       ) {
-        this.triggerDischarge(a, onZap)
+        this.triggerDischarge(a, onZap, night)
       }
 
       const targetY = Math.min(maxY, Math.max(minY, height * (a.baseDepth ?? 0.45)))
@@ -500,6 +513,7 @@ export class Scene {
       decors: this.decors,
       splashes: this.splashes,
       foods: this.foods,
+      lampColors: [...this.lampColors] as [number, number, number],
       time,
       night,
     }

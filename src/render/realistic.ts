@@ -4,6 +4,107 @@ import type { Agent, DecorNode, FoodPellet, SceneView, SplashEffect } from './sc
 import { decorLayers, eyeAt, fishPath, hashString, patternBands, patternSpots } from './shape'
 import { type SceneColors, type ThemeManifest, sceneColorsFor, spriteFor } from './theme'
 
+/**
+ * 7-color spectrum palette for the overhead night aquarium lamps.
+ * Brightness and saturation are tuned for 'screen' blending against the deep navy night water (#0b2d3d -> #031018).
+ */
+interface LampColorSpec {
+  bulb: string
+  glow: string
+  coneTop: string
+  coneMid: string
+  haloInner: string
+  haloMid: string
+  sandPool: string
+  sandPoolZero: string
+}
+
+const LAMP_PALETTE: readonly LampColorSpec[] = [
+  // 0: Coral Rose (warm spectrum red-pink)
+  {
+    bulb: '#fecdd3',
+    glow: '#fb7185',
+    coneTop: 'rgba(251, 113, 133, 0.22)',
+    coneMid: 'rgba(244, 63, 94, 0.07)',
+    haloInner: 'rgba(254, 205, 211, 0.50)',
+    haloMid: 'rgba(251, 113, 133, 0.16)',
+    sandPool: 'rgba(251, 113, 133, 0.24)',
+    sandPoolZero: 'rgba(251, 113, 133, 0)',
+  },
+  // 1: Warm Amber Gold (classic warm aquarium glow)
+  {
+    bulb: '#fef08a',
+    glow: '#facc15',
+    coneTop: 'rgba(254, 240, 138, 0.25)',
+    coneMid: 'rgba(251, 191, 36, 0.08)',
+    haloInner: 'rgba(254, 249, 195, 0.54)',
+    haloMid: 'rgba(250, 204, 21, 0.16)',
+    sandPool: 'rgba(254, 240, 138, 0.26)',
+    sandPoolZero: 'rgba(254, 240, 138, 0)',
+  },
+  // 2: Sunset Peach-Orange (soft tangerine reef light)
+  {
+    bulb: '#fed7aa',
+    glow: '#fb923c',
+    coneTop: 'rgba(253, 186, 116, 0.24)',
+    coneMid: 'rgba(249, 115, 22, 0.08)',
+    haloInner: 'rgba(255, 237, 213, 0.52)',
+    haloMid: 'rgba(251, 146, 60, 0.16)',
+    sandPool: 'rgba(253, 186, 116, 0.25)',
+    sandPoolZero: 'rgba(253, 186, 116, 0)',
+  },
+  // 3: Bioluminescent Mint-Emerald (kelp & reef green)
+  {
+    bulb: '#a7f3d0',
+    glow: '#34d399',
+    coneTop: 'rgba(110, 231, 183, 0.22)',
+    coneMid: 'rgba(16, 185, 129, 0.07)',
+    haloInner: 'rgba(209, 250, 229, 0.50)',
+    haloMid: 'rgba(52, 211, 153, 0.16)',
+    sandPool: 'rgba(110, 231, 183, 0.24)',
+    sandPoolZero: 'rgba(110, 231, 183, 0)',
+  },
+  // 4: Ice Cyan (moonlit shallow water cyan)
+  {
+    bulb: '#bae6fd',
+    glow: '#38bdf8',
+    coneTop: 'rgba(125, 211, 252, 0.25)',
+    coneMid: 'rgba(56, 189, 248, 0.08)',
+    haloInner: 'rgba(224, 242, 254, 0.54)',
+    haloMid: 'rgba(56, 189, 248, 0.16)',
+    sandPool: 'rgba(125, 211, 252, 0.26)',
+    sandPoolZero: 'rgba(125, 211, 252, 0)',
+  },
+  // 5: Deep Indigo-Sapphire (actinic marine blue)
+  {
+    bulb: '#c7d2fe',
+    glow: '#818cf8',
+    coneTop: 'rgba(165, 180, 252, 0.24)',
+    coneMid: 'rgba(99, 102, 241, 0.08)',
+    haloInner: 'rgba(224, 231, 255, 0.52)',
+    haloMid: 'rgba(129, 140, 248, 0.17)',
+    sandPool: 'rgba(165, 180, 252, 0.25)',
+    sandPoolZero: 'rgba(165, 180, 252, 0)',
+  },
+  // 6: Amethyst Violet (nebula orchid-purple)
+  {
+    bulb: '#e9d5ff',
+    glow: '#c084fc',
+    coneTop: 'rgba(216, 180, 254, 0.23)',
+    coneMid: 'rgba(168, 85, 247, 0.08)',
+    haloInner: 'rgba(243, 232, 255, 0.50)',
+    haloMid: 'rgba(192, 132, 252, 0.16)',
+    sandPool: 'rgba(216, 180, 254, 0.24)',
+    sandPoolZero: 'rgba(216, 180, 254, 0)',
+  },
+]
+
+function lampSpecAt(lampColors: readonly number[] | undefined, idx: number): LampColorSpec {
+  const defaultIdx = idx % 2 === 0 ? 1 : 4
+  const raw = lampColors?.[idx] ?? defaultIdx
+  return LAMP_PALETTE[((raw % LAMP_PALETTE.length) + LAMP_PALETTE.length) % LAMP_PALETTE.length]!
+}
+
 /** Soft-shaded reef look: gradients, caustics, drifting bubbles, and night decorative lamps. */
 export class RealisticRenderer implements Renderer {
   constructor(readonly manifest: ThemeManifest) {}
@@ -21,11 +122,11 @@ export class RealisticRenderer implements Renderer {
 
     this.distantReef(ctx, w, h, view.time, night)
     if (night) {
-      this.lampLightCones(ctx, w, h, view.time)
+      this.lampLightCones(ctx, w, h, view.time, view.lampColors)
     }
     this.caustics(ctx, w, h, view.time, night)
     this.plankton(ctx, w, h, view.time, night)
-    this.sandFloor(ctx, w, h, s, night)
+    this.sandFloor(ctx, w, h, s, night, view.lampColors)
 
     for (const d of view.decors) this.decorNode(ctx, d, h, view.time, s, night)
     if (view.foods) {
@@ -47,7 +148,7 @@ export class RealisticRenderer implements Renderer {
     }
 
     this.bubbles(ctx, w, h, view.time)
-    this.lampsFixture(ctx, w, night)
+    this.lampsFixture(ctx, w, night, view.lampColors)
 
     // Glass edge, so the tank reads as a container.
     ctx.strokeStyle = night ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.38)'
@@ -161,13 +262,14 @@ export class RealisticRenderer implements Renderer {
   }
 
   /** Volumetric decorative light cones cast into the water when night mode is active. */
-  private lampLightCones(ctx: CanvasRenderingContext2D, w: number, h: number, t: number): void {
+  private lampLightCones(
+    ctx: CanvasRenderingContext2D,
+    w: number,
+    h: number,
+    t: number,
+    lampColors?: readonly number[],
+  ): void {
     const lamps = this.lampPositions(w)
-    const beamColors: [string, string][] = [
-      ['rgba(254, 240, 138, 0.26)', 'rgba(56, 189, 248, 0.08)'],
-      ['rgba(125, 211, 252, 0.26)', 'rgba(167, 139, 250, 0.08)'],
-      ['rgba(254, 240, 138, 0.26)', 'rgba(56, 189, 248, 0.08)'],
-    ]
 
     ctx.save()
     ctx.globalCompositeOperation = 'screen'
@@ -175,11 +277,11 @@ export class RealisticRenderer implements Renderer {
       const sway = Math.sin(t * 0.7 + idx * 1.4) * 14
       const topHalf = 14
       const botHalf = Math.max(75, w * 0.18)
-      const [c0, c1] = beamColors[idx % beamColors.length]!
+      const spec = lampSpecAt(lampColors, idx)
 
       const cone = ctx.createLinearGradient(lx, 8, lx + sway, h - 10)
-      cone.addColorStop(0, c0)
-      cone.addColorStop(0.55, c1)
+      cone.addColorStop(0, spec.coneTop)
+      cone.addColorStop(0.55, spec.coneMid)
       cone.addColorStop(1, 'rgba(0, 0, 0, 0)')
 
       ctx.fillStyle = cone
@@ -191,10 +293,10 @@ export class RealisticRenderer implements Renderer {
       ctx.closePath()
       ctx.fill()
 
-      // Warm halo right under the bulb
+      // Soft halo right under the bulb
       const halo = ctx.createRadialGradient(lx, 12, 2, lx, 16, 46)
-      halo.addColorStop(0, 'rgba(254, 249, 195, 0.55)')
-      halo.addColorStop(0.5, 'rgba(56, 189, 248, 0.16)')
+      halo.addColorStop(0, spec.haloInner)
+      halo.addColorStop(0.5, spec.haloMid)
       halo.addColorStop(1, 'rgba(0, 0, 0, 0)')
       ctx.fillStyle = halo
       ctx.beginPath()
@@ -205,7 +307,12 @@ export class RealisticRenderer implements Renderer {
   }
 
   /** Top aquarium decorative light bar & pendant bulbs (present in day & night, lit at night). */
-  private lampsFixture(ctx: CanvasRenderingContext2D, w: number, night: boolean): void {
+  private lampsFixture(
+    ctx: CanvasRenderingContext2D,
+    w: number,
+    night: boolean,
+    lampColors?: readonly number[],
+  ): void {
     const lamps = this.lampPositions(w)
     ctx.save()
 
@@ -226,11 +333,11 @@ export class RealisticRenderer implements Renderer {
 
       // Bulb LED strip
       if (night) {
-        const isWarm = idx % 2 === 0
+        const spec = lampSpecAt(lampColors, idx)
         ctx.save()
-        ctx.shadowColor = isWarm ? '#fde047' : '#38bdf8'
+        ctx.shadowColor = spec.glow
         ctx.shadowBlur = 12
-        ctx.fillStyle = isWarm ? '#fef08a' : '#bae6fd'
+        ctx.fillStyle = spec.bulb
         ctx.fillRect(lx - 10, 8, 20, 3.5)
         ctx.restore()
       } else {
@@ -272,6 +379,7 @@ export class RealisticRenderer implements Renderer {
     h: number,
     s: SceneColors,
     night: boolean,
+    lampColors?: readonly number[],
   ): void {
     ctx.fillStyle = s.sand
     ctx.beginPath()
@@ -285,10 +393,11 @@ export class RealisticRenderer implements Renderer {
     // Soft light pools on the sand floor under each decorative lamp at night
     if (night) {
       ctx.save()
-      for (const lx of this.lampPositions(w)) {
+      for (const [idx, lx] of this.lampPositions(w).entries()) {
+        const spec = lampSpecAt(lampColors, idx)
         const pool = ctx.createRadialGradient(lx, h - 10, 4, lx, h - 10, 68)
-        pool.addColorStop(0, 'rgba(254, 240, 138, 0.28)')
-        pool.addColorStop(1, 'rgba(254, 240, 138, 0)')
+        pool.addColorStop(0, spec.sandPool)
+        pool.addColorStop(1, spec.sandPoolZero)
         ctx.fillStyle = pool
         ctx.fillRect(lx - 70, h - 24, 140, 24)
       }

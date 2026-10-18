@@ -22,7 +22,6 @@ A browser idle aquarium game inspired by [PC FISH: Taskbar Aquarium](https://sto
 - **28 Distinct Species Silhouettes & Interactive Tank / 28 种独立生物外轮廓与鱼缸互动**
   - Every species has a bespoke anatomical silhouette (beak butterflyfish, unicorn tang, Moorish idol whip-streamer, spiky puffer, glider flying fish, leafy sea dragon, saucer/ribbon/crown jellyfish, electric/ribbon eels, manta ray, sea turtle, etc.) and locomotion trajectory.
   - **Interactive Feeding & Startle**: Click empty water to drop sinking food pellets one by one (nearby fish chase and eat 1 pellet per 9s satiety cooldown then swim away); click a fish to startle it into a long horizontal dash.
-  - **Electric Eel Discharge**: A *Volt Electric Eel* in the tank occasionally discharges (or immediately when clicked 6 times within 30s), stunning all other fish with lightning arcs for 3 seconds!
 - **18 Asymmetric Draggable Decorations & Night Lamps / 非对称可拖拽造景与夜晚灯光联动**
   - Unlocks 18 asymmetric floor ornaments (with wide height contrast from low clams/pebbles up to towering kelp & sunken castles exceeding 50% tank height) and **top-hanging lights** across `Lv.1–Lv.10` (up to `3 → 12` placed at once by level).
   - Drag any placed decoration directly inside the tank canvas (last dragged item automatically rises to the top layer).

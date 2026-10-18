@@ -436,7 +436,7 @@ const ZH: Copy = {
   helpModalTitle: '游戏帮助与数据说明',
   helpIntroTitle: '1. 核心玩法指南',
   helpIntroItems: [
-    '【鱼缸与互动】开局赠送 3 条无限繁育次数（∞）的初始鱼。点击鱼缸空白水域可一颗颗投放鱼食（附近的鱼会游过去抢食，每条鱼每 9 秒最多吃 1 颗并游开，落底自动消失）；点击正在游动的鱼会让它受惊远距离逃跑。若鱼缸中放有“蓝弧电鳗”，游动中偶发（或 30 秒内连续点击它 6 次）会触发全缸放电，使其他鱼麻痹颤抖 3 秒！',
+    '【鱼缸与互动】开局赠送 3 条无限繁育次数（∞）的初始鱼。点击鱼缸空白水域可一颗颗投放鱼食（附近的鱼会游过去抢食，每条鱼每 9 秒最多吃 1 颗并游开，落底自动消失）；点击正在游动的鱼会让它受惊远距离逃跑。',
     '【繁育系统】每次繁育消耗 1 颗爱心（每 7 分钟自动恢复 1 颗，上限 5 颗）。选择两条成年鱼即可配对产出 1★–5★ 后代，子代星级概率由双亲星级组合决定，双亲品阶越高越容易生出高品阶后代。',
     '【10 合 1 合成】消耗 10 条 1★–4★ 的鱼可合成 1 条高一星级的新鱼，并 100% 继承 10 条材料中的最高品阶（“1 拖 9”策略最优）。建议优先消耗繁育次数用尽（0/n）的鱼。',
     '【装饰与昼夜】鱼缸升级（Lv.1–Lv.10）会自动解锁 18 件非对称海底造景与顶挂彩灯，同时可摆放的装饰槽位从 3 件提升至 12 件；放入后可直接在鱼缸中按住拖拽位置（最后拖动的装饰自动置顶），黑夜模式下顶灯与彩灯会自动点亮。',
@@ -631,7 +631,7 @@ const EN: Copy = {
   helpModalTitle: 'Game Guide & Balance Data',
   helpIntroTitle: '1. Core Gameplay Guide',
   helpIntroItems: [
-    '[Tank & Interactions] Start with 3 infinite-use (∞) starter fish. Click empty water to drop food pellets one by one (nearby fish chase and eat 1 pellet per 9s cooldown then swim away; uneaten pellets vanish on the sand). Click a swimming fish to make it dart across the tank. A Volt Electric Eel in the tank occasionally discharges (or immediately when clicked 6 times within 30s), stunning all other fish for 3 seconds!',
+    '[Tank & Interactions] Start with 3 infinite-use (∞) starter fish. Click empty water to drop food pellets one by one (nearby fish chase and eat 1 pellet per 9s cooldown then swim away; uneaten pellets vanish on the sand). Click a swimming fish to make it dart across the tank.',
     '[Breeding] Each attempt costs 1 Heart (regenerates 1 every 7 minutes, cap 5). Pair two adults to hatch 1★–5★ offspring based on the parent star matrix. Higher parent grades boost high-grade offspring odds.',
     '[10-to-1 Merge] Combine 10 fish (1★–4★) into 1 higher-tier fish that inherits the best grade among all 10 inputs ("1 high-grade + 9 low-grade" is optimal). Spend 0-use duplicates here.',
     '[Decor & Night Mode] Leveling the aquarium (Lv.1–Lv.10) unlocks 18 asymmetric floor ornaments and top-hanging lights while expanding placement slots from 3 up to 12. Drag placed items directly inside the tank; overhead & hanging lights illuminate automatically in Night mode.',
