@@ -1789,8 +1789,17 @@ export class App {
     const dpr = Math.min(2, window.devicePixelRatio || 1)
     const night = resolveDarkMode(this.state.colorMode ?? 'auto')
 
+    const decorScale = Math.min(1, (MINI_TANK_H * 0.58) / decor.height)
+    const scaledDecor: DecorItem =
+      decorScale < 1
+        ? {
+            ...decor,
+            width: Math.round(decor.width * decorScale),
+            height: Math.round(decor.height * decorScale),
+          }
+        : decor
     const decorNode: DecorNode = {
-      item: decor,
+      item: scaledDecor,
       x: decorX * MINI_TANK_W,
       flip: decorFlip,
       active: false,

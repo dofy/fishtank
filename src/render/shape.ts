@@ -310,12 +310,12 @@ export function decorLayers(id: DecorId, w: number, h: number, time = 0): DecorL
 
   switch (id) {
     case 'kelp': {
-      // Asymmetric cluster of 4 kelp blades leaning with the current
+      // Dramatic height contrast: towering main kelp frond + medium & short shoots
       const blades = [
-        { ox: -w * 0.28, tall: h * 0.62, bw: w * 0.11, lean: -w * 0.08, phase: 0 },
-        { ox: -w * 0.08, tall: h * 0.98, bw: w * 0.15, lean: w * 0.14, phase: 0.9 },
-        { ox: w * 0.12, tall: h * 0.82, bw: w * 0.13, lean: w * 0.18, phase: 1.8 },
-        { ox: w * 0.28, tall: h * 0.48, bw: w * 0.1, lean: w * 0.1, phase: 2.7 },
+        { ox: -w * 0.3, tall: h * 0.42, bw: w * 0.1, lean: -w * 0.08, phase: 0 },
+        { ox: -w * 0.08, tall: h * 1.0, bw: w * 0.16, lean: w * 0.16, phase: 0.9 },
+        { ox: w * 0.12, tall: h * 0.68, bw: w * 0.13, lean: w * 0.18, phase: 1.8 },
+        { ox: w * 0.28, tall: h * 0.28, bw: w * 0.09, lean: w * 0.08, phase: 2.7 },
       ]
       for (const [idx, b] of blades.entries()) {
         const target = idx === 1 || idx === 2 ? primary : secondary
@@ -374,12 +374,12 @@ export function decorLayers(id: DecorId, w: number, h: number, time = 0): DecorL
     }
 
     case 'mushroom': {
-      // Asymmetric cluster: one large leaning cap on left-center, medium tilted right, tiny sprout far right
+      // Extreme height contrast: one towering canopy shroom, one mid shroom, one tiny sprout
       secondary.ellipse(-w * 0.04, -h * 0.14, w * 0.38, h * 0.14, 0.08, 0, Math.PI * 2)
       const shrooms = [
-        { bx: -w * 0.14, x: -w * 0.22, y: -h * 0.84, r: w * 0.25, tilt: -0.18 },
-        { bx: w * 0.04, x: w * 0.14, y: -h * 0.58, r: w * 0.19, tilt: 0.22 },
-        { bx: w * 0.2, x: w * 0.3, y: -h * 0.34, r: w * 0.12, tilt: 0.3 },
+        { bx: -w * 0.14, x: -w * 0.2, y: -h * 0.92, r: w * 0.26, tilt: -0.18 },
+        { bx: w * 0.05, x: w * 0.14, y: -h * 0.52, r: w * 0.18, tilt: 0.22 },
+        { bx: w * 0.22, x: w * 0.32, y: -h * 0.24, r: w * 0.11, tilt: 0.3 },
       ]
       for (const s of shrooms) {
         addCapsule(secondary, s.bx, -h * 0.12, s.x, s.y, s.r * 0.25)
@@ -397,13 +397,13 @@ export function decorLayers(id: DecorId, w: number, h: number, time = 0): DecorL
     }
 
     case 'crystal': {
-      // Asymmetric geode: dominant spire sweeping right, smaller jagged shards on left
+      // Asymmetric geode: towering main obelisk shard + contrasting short crystals
       secondary.ellipse(-w * 0.05, -h * 0.15, w * 0.39, h * 0.15, -0.08, 0, Math.PI * 2)
       const shards = [
-        { bx: -w * 0.26, tx: -w * 0.4, ty: -h * 0.52, bw: w * 0.11 },
-        { bx: -w * 0.12, tx: -w * 0.24, ty: -h * 0.78, bw: w * 0.14 },
-        { bx: w * 0.04, tx: w * 0.18, ty: -h * 0.98, bw: w * 0.18 },
-        { bx: w * 0.2, tx: w * 0.38, ty: -h * 0.64, bw: w * 0.12 },
+        { bx: -w * 0.26, tx: -w * 0.4, ty: -h * 0.36, bw: w * 0.11 },
+        { bx: -w * 0.12, tx: -w * 0.24, ty: -h * 0.68, bw: w * 0.14 },
+        { bx: w * 0.04, tx: w * 0.18, ty: -h * 1.0, bw: w * 0.18 },
+        { bx: w * 0.22, tx: w * 0.38, ty: -h * 0.46, bw: w * 0.12 },
       ]
       for (const [idx, sh] of shards.entries()) {
         const target = idx === 2 || idx === 0 ? primary : detail
@@ -442,11 +442,11 @@ export function decorLayers(id: DecorId, w: number, h: number, time = 0): DecorL
     }
 
     case 'starlamps': {
-      // Asymmetric cascade of 3 star pendants (short left, deep center-left, medium far-right)
+      // Wide height contrast cascade of 3 star pendants
       const stars = [
-        { ox: -w * 0.34, drop: h * 0.46, r: h * 0.19, phase: 0 },
-        { ox: -w * 0.06, drop: h * 0.84, r: h * 0.26, phase: 1.2 },
-        { ox: w * 0.28, drop: h * 0.64, r: h * 0.22, phase: 2.4 },
+        { ox: -w * 0.34, drop: h * 0.34, r: h * 0.14, phase: 0 },
+        { ox: -w * 0.04, drop: h * 0.9, r: h * 0.2, phase: 1.2 },
+        { ox: w * 0.28, drop: h * 0.58, r: h * 0.16, phase: 2.4 },
       ]
       for (const st of stars) {
         const sx = st.ox + Math.sin(time * 1.4 + st.phase) * 3
@@ -639,25 +639,25 @@ export function decorLayers(id: DecorId, w: number, h: number, time = 0): DecorL
     }
 
     case 'castle': {
-      // Asymmetric sunken castle: tall spire on left, central arched gate, shorter ruined tower on right
-      primary.rect(-w * 0.16, -h * 0.62, w * 0.38, h * 0.62)
+      // Dramatic silhouette: towering left spire (1.0h), mid keep (0.54h), low ruined right wall (0.28h)
+      primary.rect(-w * 0.16, -h * 0.54, w * 0.38, h * 0.54)
       // Tall left wizard tower
-      secondary.rect(-w * 0.42, -h * 0.74, w * 0.26, h * 0.74)
-      // Short right bastion
-      secondary.rect(w * 0.22, -h * 0.42, w * 0.22, h * 0.42)
+      secondary.rect(-w * 0.42, -h * 0.76, w * 0.26, h * 0.76)
+      // Short right ruined bastion
+      secondary.rect(w * 0.22, -h * 0.28, w * 0.22, h * 0.28)
       // Pointed spire on left tower & central keep roof
-      detail.moveTo(-w * 0.46, -h * 0.74)
+      detail.moveTo(-w * 0.46, -h * 0.76)
       detail.lineTo(-w * 0.29, -h * 1.0)
-      detail.lineTo(-w * 0.12, -h * 0.74)
+      detail.lineTo(-w * 0.12, -h * 0.76)
       detail.closePath()
 
-      detail.moveTo(-w * 0.18, -h * 0.62)
-      detail.lineTo(w * 0.03, -h * 0.86)
-      detail.lineTo(w * 0.24, -h * 0.62)
+      detail.moveTo(-w * 0.18, -h * 0.54)
+      detail.lineTo(w * 0.03, -h * 0.72)
+      detail.lineTo(w * 0.24, -h * 0.54)
       detail.closePath()
 
       // Glowing window in tall tower
-      detail.rect(-w * 0.33, -h * 0.56, w * 0.08, h * 0.14)
+      detail.rect(-w * 0.33, -h * 0.58, w * 0.08, h * 0.14)
       break
     }
 
