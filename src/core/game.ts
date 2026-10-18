@@ -89,6 +89,7 @@ export function newGame(now = Date.now(), locale: Locale = detectLocale()): Game
     tankUids: fish.map((f) => f.uid),
     placedDecor: STARTER_DECOR.map((d) => ({ ...d })),
     mergeFilter: defaultMergeFilter(),
+    tankSort: 'inTank',
     breedSort: 'tier',
     audio: defaultAudioConfig(),
     hearts: HEART_MAX,
@@ -427,6 +428,43 @@ export function filterMergeCandidates(state: GameState): Fish[] {
     if (filter.zeroUsesOnly && f.uses > 0) return false
     if (filter.excludeInTank && tankSet.has(f.uid)) return false
     return true
+  })
+}
+
+export function sortTankFish(
+  list: Fish[],
+  sort: FishSort,
+  tankIds: Set<string>,
+): Fish[] {
+  return [...list].sort((a, b) => {
+    switch (sort) {
+      case 'inTank': {
+        const aIn = tankIds.has(a.uid) ? 1 : 0
+        const bIn = tankIds.has(b.uid) ? 1 : 0
+        if (aIn !== bIn) return bIn - aIn
+        if (b.tier !== a.tier) return b.tier - a.tier
+        if (b.grade !== a.grade) return b.grade - a.grade
+        return a.bornAt - b.bornAt
+      }
+      case 'tier':
+        if (b.tier !== a.tier) return b.tier - a.tier
+        if (b.grade !== a.grade) return b.grade - a.grade
+        if (b.uses !== a.uses) return b.uses - a.uses
+        return a.bornAt - b.bornAt
+      case 'grade':
+        if (b.grade !== a.grade) return b.grade - a.grade
+        if (b.tier !== a.tier) return b.tier - a.tier
+        if (b.uses !== a.uses) return b.uses - a.uses
+        return a.bornAt - b.bornAt
+      case 'uses':
+        if (b.uses !== a.uses) return b.uses - a.uses
+        if (b.tier !== a.tier) return b.tier - a.tier
+        if (b.grade !== a.grade) return b.grade - a.grade
+        return a.bornAt - b.bornAt
+      case 'acquired':
+      default:
+        return a.bornAt - b.bornAt
+    }
   })
 }
 

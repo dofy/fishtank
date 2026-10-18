@@ -18,6 +18,7 @@ import {
   isDecorUnlocked,
   release,
   sortBreedCandidates,
+  sortTankFish,
   syncDecor,
   syncMergeFilter,
   syncTank,
@@ -387,10 +388,42 @@ export class App {
     const c = this.t
     const tankIds = new Set(syncTank(this.state))
     const cap = capacity(this.state)
-    const title = heading(c.tankHeading(tankIds.size, cap, this.state.fish.length))
+    const currentSort: FishSort = this.state.tankSort ?? 'inTank'
+
+    const headRow = document.createElement('div')
+    headRow.className = 'panel-head'
+    headRow.append(heading(c.tankHeading(tankIds.size, cap, this.state.fish.length)))
+
+    const sortBar = document.createElement('div')
+    sortBar.className = 'sort-bar'
+    const sortLbl = document.createElement('span')
+    sortLbl.className = 'sort-label'
+    sortLbl.textContent = c.sortLabel
+    sortBar.append(sortLbl)
+
+    const sorts: { id: FishSort; label: string }[] = [
+      { id: 'inTank', label: c.sortInTank },
+      { id: 'tier', label: c.sortTier },
+      { id: 'grade', label: c.sortGrade },
+      { id: 'uses', label: c.sortUses },
+      { id: 'acquired', label: c.sortAcquired },
+    ]
+    for (const s of sorts) {
+      const b = makeButton(s.label, () => {
+        sound.play('click')
+        this.state.tankSort = s.id
+        this.hooks.onSave()
+        this.render(now)
+      })
+      b.className = 'sort-btn'
+      b.setAttribute('aria-pressed', String(currentSort === s.id))
+      sortBar.append(b)
+    }
+    headRow.append(sortBar)
+
     const grid = document.createElement('div')
     grid.className = 'grid'
-    const sorted = [...this.state.fish].sort((a, b) => a.bornAt - b.bornAt)
+    const sorted = sortTankFish(this.state.fish, currentSort, tankIds)
     for (const fish of sorted) {
       const inTank = tankIds.has(fish.uid)
       const isStarter = fish.tier === 0
@@ -432,7 +465,7 @@ export class App {
         }),
       )
     }
-    return [title, grid, note(c.tankNote)]
+    return [headRow, grid, note(c.tankNote)]
   }
 
   // --------------------------------------------------------------- breed

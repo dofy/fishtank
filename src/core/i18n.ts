@@ -123,6 +123,7 @@ export interface Copy {
   tankNote: string
   breedHeading: (picked: number) => string
   sortLabel: string
+  sortInTank: string
   sortTier: string
   sortGrade: string
   sortUses: string
@@ -250,6 +251,7 @@ const ZH: Copy = {
     '初始赠送 3 条无限繁殖次数的初始鱼。繁殖与鱼苗长大均可获得经验（EXP）提升鱼缸等级。鱼缸底部已摆放的装饰品可直接用鼠标左右拖拽移动位置！',
   breedHeading: (picked) => `选择两条成年鱼进行繁殖（已选 ${picked}/2）`,
   sortLabel: '排序：',
+  sortInTank: '鱼缸优先',
   sortTier: '星级优先',
   sortGrade: '品阶优先',
   sortUses: '次数优先',
@@ -404,6 +406,7 @@ const EN: Copy = {
     'You start with 3 starter fish with infinite breeding uses (∞). Breeding and maturing fry grant EXP to level up your aquarium. You can drag decorations along the bottom of the tank at any time!',
   breedHeading: (picked) => `Pick two adults (${picked}/2 selected)`,
   sortLabel: 'Sort:',
+  sortInTank: 'In Tank',
   sortTier: 'Rarity ★',
   sortGrade: 'Grade',
   sortUses: 'Uses Left',

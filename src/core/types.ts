@@ -82,7 +82,7 @@ export interface Fish {
 
 export type Locale = 'zh' | 'en'
 export type ColorMode = 'auto' | 'light' | 'dark'
-export type FishSort = 'tier' | 'grade' | 'uses' | 'acquired'
+export type FishSort = 'inTank' | 'tier' | 'grade' | 'uses' | 'acquired'
 export type BgmTrackId = 'lofi' | 'tide' | 'chiptune'
 
 export interface AudioConfig {
@@ -111,6 +111,8 @@ export interface GameState {
   placedDecor?: PlacedDecor[]
   /** Filter and auto-select settings on the Merge tab. */
   mergeFilter?: MergeFilter
+  /** Preferred sort order on the Tank tab. */
+  tankSort?: FishSort
   /** Preferred sort order on the Breed tab. */
   breedSort?: FishSort
   /** Audio settings (SFX & Lo-Fi BGM). */
