@@ -109,7 +109,7 @@ const HELP_ICON =
 const GITHUB_ICON =
   '<svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 .2a8 8 0 0 0-2.53 15.59c.4.07.55-.17.55-.38l-.01-1.49c-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.42 7.42 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48l-.01 2.2c0 .21.15.46.55.38A8.01 8.01 0 0 0 8 .2Z"/></svg>'
 
-export const APP_VERSION = '1.4.0'
+export const APP_VERSION = '1.4.1'
 export const GITHUB_URL = 'https://github.com/dofy/fishtank'
 
 export interface AppHooks {
@@ -560,7 +560,7 @@ export class App {
         }),
       )
     }
-    return [headRow, grid, note(c.tankNote)]
+    return [headRow, grid, note(c.tankNote, c.tankNoteTitle, TAB_ICONS.tank)]
   }
 
   // --------------------------------------------------------------- breed
@@ -731,7 +731,7 @@ export class App {
       row.append(clear)
     }
 
-    out.push(row)
+    out.push(row, note(c.breedNote, c.breedNoteTitle, TAB_ICONS.breed))
     return out
   }
 
@@ -909,7 +909,7 @@ export class App {
     clear.setAttribute('aria-disabled', String(this.mergePick.length === 0))
 
     row.append(go, autoBtn, clear)
-    out.push(row, note(c.mergeNote))
+    out.push(row, note(c.mergeNote, c.mergeNoteTitle, TAB_ICONS.merge))
     return out
   }
 
@@ -985,7 +985,7 @@ export class App {
       grid.append(cell)
     }
 
-    out.push(grid, note(c.decorNote))
+    out.push(grid, note(c.decorNote, c.decorNoteTitle, TAB_ICONS.decor))
     return out
   }
 
@@ -1075,7 +1075,7 @@ export class App {
     }
 
     layout.append(grid)
-    out.push(layout)
+    out.push(layout, note(c.bookNote, c.bookNoteTitle, TAB_ICONS.book))
     return out
   }
 
@@ -2298,11 +2298,60 @@ function heading(text: string, tag: 'h2' | 'h3' = 'h2'): HTMLElement {
   return el
 }
 
-function note(text: string): HTMLElement {
-  const p = document.createElement('p')
-  p.className = 'note'
-  p.textContent = text
-  return p
+const NOTE_INFO_ICON =
+  '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6.2"/><path d="M8 7.2v4M8 4.8h.01"/></svg>'
+
+function appendFormattedNoteText(container: HTMLElement, text: string): void {
+  const tokenRe = /【([^】]+)】|\*\*([^*]+)\*\*/g
+  let lastIdx = 0
+  let match: RegExpExecArray | null
+  while ((match = tokenRe.exec(text)) !== null) {
+    if (match.index > lastIdx) {
+      container.append(document.createTextNode(text.slice(lastIdx, match.index)))
+    }
+    if (match[1] !== undefined) {
+      const tag = document.createElement('span')
+      tag.className = 'note-tag'
+      tag.textContent = match[1]
+      container.append(tag)
+    } else if (match[2] !== undefined) {
+      const strong = document.createElement('strong')
+      strong.className = 'note-em'
+      strong.textContent = match[2]
+      container.append(strong)
+    }
+    lastIdx = tokenRe.lastIndex
+  }
+  if (lastIdx < text.length) {
+    container.append(document.createTextNode(text.slice(lastIdx)))
+  }
+}
+
+function note(text: string, title?: string, iconSvg?: string): HTMLElement {
+  const box = document.createElement('div')
+  box.className = title ? 'note note-featured' : 'note'
+
+  const ico = document.createElement('span')
+  ico.className = 'note-ico'
+  ico.innerHTML = iconSvg ?? NOTE_INFO_ICON
+
+  const content = document.createElement('div')
+  content.className = 'note-content'
+
+  if (title) {
+    const head = document.createElement('div')
+    head.className = 'note-title'
+    head.textContent = title
+    content.append(head)
+  }
+
+  const body = document.createElement('div')
+  body.className = 'note-text'
+  appendFormattedNoteText(body, text)
+  content.append(body)
+
+  box.append(ico, content)
+  return box
 }
 
 function label(text: string, className: string): HTMLElement {

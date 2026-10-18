@@ -139,6 +139,7 @@ export interface Copy {
   removedFromTankMsg: (name: string, placed: number, cap: number) => string
   tankDisplayFullMsg: (cap: number) => string
   releasedMsg: (name: string) => string
+  tankNoteTitle: string
   tankNote: string
   breedHeading: (picked: number) => string
   sortLabel: string
@@ -149,6 +150,8 @@ export interface Copy {
   sortAcquired: string
   breedAutoPickBtn: string
   breedNotEnoughAdults: string
+  breedNoteTitle: string
+  breedNote: string
   oddsHeading: string
   pairingCol: string
   breedBtn: (picked: number) => string
@@ -181,6 +184,7 @@ export interface Copy {
   mergeNothingToClearMsg: string
   mergeBtn: (picked: number, total: number) => string
   mergedMsg: (name: string, starsStr: string, tierStr: string) => string
+  mergeNoteTitle: string
   mergeNote: string
   decorHeading: (placed: number, cap: number, unlocked: number, total: number) => string
   decorPlacedTag: string
@@ -192,6 +196,7 @@ export interface Copy {
   decorFullMsg: (cap: number) => string
   decorFlippedMsg: (name: string) => string
   decorLockedMsg: (name: string, lv: number) => string
+  decorNoteTitle: string
   decorNote: string
   bookHeading: string
   bookOwnedBadge: (count: number) => string
@@ -205,6 +210,8 @@ export interface Copy {
   bookGoMergeAction: string
   bookVariantRate: (unlocked: number, total: number, pct: number) => string
   bookLockedMsg: (tierStr: string) => string
+  bookNoteTitle: string
+  bookNote: string
   settingsThemeHeading: string
   settingsThemeNote: string
   settingsColorModeHeading: string
@@ -296,8 +303,9 @@ const ZH: Copy = {
   tankDisplayFullMsg: (cap) =>
     `当前鱼缸展示槽位已满（上限 ${cap} 条）。可先将其他鱼“收回背包”，或通过繁育提升鱼缸等级扩大容量（不影响继续繁育）。`,
   releasedMsg: (name) => `已放生 ${name}。`,
+  tankNoteTitle: '鱼缸与互动指南',
   tankNote:
-    '初始赠送 3 条无限繁育次数的初始鱼。繁育与鱼苗长大均可获得经验（EXP）提升鱼缸等级。鱼缸底部已摆放的装饰品可直接用鼠标左右拖拽移动位置！',
+    '【鱼群管理】点击卡片可将鱼放入鱼缸展示或收回背包（开局赠送 **3 条 ∞ 无限繁育次数** 的初始鱼）。【水域互动】点击上方空白水域可投放鱼食，点击游动的鱼会让它受惊冲刺，按住已摆放的造景可直接左右拖拽调整位置！',
   breedHeading: (picked) => `选择两条成年鱼进行繁育（已选 ${picked}/2）`,
   sortLabel: '排序：',
   sortInTank: '鱼缸优先',
@@ -307,6 +315,9 @@ const ZH: Copy = {
   sortAcquired: '取得顺序',
   breedAutoPickBtn: '推荐配对',
   breedNotEnoughAdults: '需要至少两条可繁育的成年鱼。冷却或成长中的鱼请等待倒计时结束。',
+  breedNoteTitle: '繁育规则与遗传说明',
+  breedNote:
+    '【爱心消耗】每次繁育消耗 **1 颗爱心**（每 **7 分钟** 恢复 1 颗，上限 5 颗）。【星级与品阶】双亲星级组合决定子代 **1★–5★** 产出概率，双亲品阶越高越易孵化出高品阶后代（最高 **2.0x EXP**）。【次数与经验】初始鱼拥有 **∞ 无限次数**（冷却 3 分钟），子代鱼拥有 **1–5 次** 繁育次数；孵化与成年时各获得一半经验。',
   oddsHeading: '子代星级概率',
   pairingCol: '亲代组合',
   breedBtn: (picked) => `开始繁育 · 消耗 1 爱心 (${picked}/2)`,
@@ -338,8 +349,9 @@ const ZH: Copy = {
   mergeNothingToClearMsg: '当前没有已选中的合成材料鱼。',
   mergeBtn: (picked, total) => `开始合成 (${picked}/${total})`,
   mergedMsg: (name, starsStr, tierStr) => `合成成功：获得 ${name}（${starsStr} ${tierStr}）！`,
+  mergeNoteTitle: '10 合 1 聚变合成技巧',
   mergeNote:
-    '消耗 10 条材料鱼（1★–4★）可合成 1 条高一星级的鱼，并继承材料中的最高品阶（10 条同星级时 100% 升入下一星级；混搭不同星级时按投入比例决定产出星级）。建议优先消耗繁育次数用尽（0/n）的重复鱼。',
+    '【升星规则】消耗 **10 条 1★–4★** 材料鱼可合成为 **1 条高一星级** 的新鱼（10 条同星级时 **100% 升入下一星级**，混搭星级按投入比例决定概率）。【品阶继承】新鱼 **100% 继承 10 条材料中的最高品阶**，采用 **「1 高品阶 + 9 低品阶」** 搭配并优先消耗繁育次数为 **0/n** 的鱼最为划算！',
   decorHeading: (placed, cap, unlocked, total) =>
     `鱼缸装饰品（已摆放 ${placed}/${cap} 件 · 已解锁 ${unlocked}/${total}）`,
   decorPlacedTag: '已摆放',
@@ -353,8 +365,9 @@ const ZH: Copy = {
     `当前鱼缸装饰槽位已满（上限 ${cap} 件）。请先收起一件已摆放的装饰，或提升鱼缸等级扩大装饰容量！`,
   decorFlippedMsg: (name) => `已翻转「${name}」的朝向。`,
   decorLockedMsg: (name, lv) => `「${name}」尚未解锁，需鱼缸等级达到 Lv.${lv}。`,
+  decorNoteTitle: '造景摆放与夜晚灯光联动',
   decorNote:
-    '随着鱼缸等级提升（Lv.1–Lv.10），可同时摆放的装饰槽位会从 3 件逐步提升至 12 件（共 18 件可解锁）。珍珠扇贝会间歇开合，顶挂彩灯在黑夜模式下会自动点亮；放入后可在鱼缸中直接按住拖动！',
+    '【等级解锁】随鱼缸等级提升（**Lv.1–Lv.10**），可同时摆放槽位从 **3 件扩展至 12 件**，逐步解锁全部 **18 件海底造景与顶挂彩灯**。【自由布置】在上方鱼缸中直接按住造景即可左右拖动位置（最后拖动的装饰自动置于最前层），黑夜模式下顶灯与挂灯会自动点亮。',
   bookHeading: '生物图鉴',
   bookOwnedBadge: (count) => `持有 x${count}`,
   bookCompletion: (pct) => `图鉴完成度：${pct}%`,
@@ -367,6 +380,9 @@ const ZH: Copy = {
   bookGoMergeAction: '去合成',
   bookVariantRate: (u, t, pct) => `变种发现率：${pct}% (${u}/${t})`,
   bookLockedMsg: (tierStr) => `该鱼种（${tierStr}）尚未解锁，可通过繁育或合成发现新品种！`,
+  bookNoteTitle: '生物图鉴与品阶变种收集',
+  bookNote:
+    '【全图鉴收集】共收录 **28 种海洋生物**（初始鱼 1 种品阶，1★–5★ 鱼种各含 **5 种品阶色相变种**）。【详情与快捷操作】点击任意已解锁的鱼种卡片可展开详情面板，自由切换预览已点亮的品阶外观、查看当前持有个体，或一键放入鱼缸、跳转繁育与合成。',
   settingsThemeHeading: '画面风格（支持素材替换）',
   settingsThemeNote:
     '每个主题位于 public/themes/<主题名>/ 目录下，包含配色清单与渲染器配置；将 <speciesId>.png 或 decor-<id>.png 放入对应 sprites/ 目录即可直接替换鱼类或装饰品外观，无需修改代码。',
@@ -489,8 +505,9 @@ const EN: Copy = {
   tankDisplayFullMsg: (cap) =>
     `Tank display is full (${cap}/${cap} slots). Store a fish first or level up your aquarium to unlock more display slots.`,
   releasedMsg: (name) => `Released ${name}.`,
+  tankNoteTitle: 'Tank & Interaction Guide',
   tankNote:
-    'You start with 3 starter fish with infinite breeding uses (∞). Breeding and maturing fry grant EXP to level up your aquarium. You can drag decorations along the bottom of the tank at any time!',
+    '【Manage Fish】Click a card to place or store fish in the tank (starts with **3 ∞ infinite-use** starter fish). 【Tank Interactions】Click empty water to drop food pellets, click a swimming fish to startle it, or drag placed ornaments directly inside the tank!',
   breedHeading: (picked) => `Pick two adults (${picked}/2 selected)`,
   sortLabel: 'Sort:',
   sortInTank: 'In Tank',
@@ -501,6 +518,9 @@ const EN: Copy = {
   breedAutoPickBtn: 'Best Pair',
   breedNotEnoughAdults:
     'Needs two ready adults with breeding uses left. Wait for fry growth or parent cooldown timers to finish.',
+  breedNoteTitle: 'Breeding & Genetics Guide',
+  breedNote:
+    '【Heart Cost】Each breeding attempt costs **1 Heart** (regenerates 1 every **7 min**, cap 5). 【Rarity & Grade】Parent star tiers determine **1★–5★** offspring odds, while higher parent grades boost high-grade offspring odds (up to **2.0x EXP**). 【Uses & EXP】Starter fish have **∞ infinite uses** (3m cooldown) and bred fish have **1–5 uses**; half EXP is awarded on hatching and half on maturation.',
   oddsHeading: 'Offspring odds',
   pairingCol: 'Pairing',
   breedBtn: (picked) => `Breed · 1 heart (${picked}/2)`,
@@ -533,8 +553,9 @@ const EN: Copy = {
   mergeNothingToClearMsg: 'No selected merge materials to clear.',
   mergeBtn: (picked, total) => `Merge (${picked}/${total})`,
   mergedMsg: (name, starsStr, tierStr) => `Merged into ${name}, ${starsStr} ${tierStr}.`,
+  mergeNoteTitle: '10-to-1 Synthesis Tips',
   mergeNote:
-    'Consume 10 material fish (1★–4★) to synthesize 1 higher-tier fish inheriting the highest grade among them (10 same-tier fish guarantee +1 tier; mixed tiers roll proportionally). Prioritize exhausted duplicates (0/n).',
+    '【Tier Upgrade】Combine **10 material fish (1★–4★)** into **1 higher-tier fish** (10 same-tier fish guarantee **100% +1 tier**; mixed tiers roll proportionally). 【Grade Inheritance】The synthesized fish **100% inherits the highest grade** among all 10 inputs — using **"1 high-grade + 9 low-grade"** and spending **0/n exhausted fish** is optimal!',
   decorHeading: (placed, cap, unlocked, total) =>
     `Aquarium Decorations (${placed}/${cap} placed · ${unlocked}/${total} unlocked)`,
   decorPlacedTag: 'Placed',
@@ -548,8 +569,9 @@ const EN: Copy = {
     `Decoration slots are full (${cap}/${cap} max for your current level). Store a placed decoration first or level up your aquarium!`,
   decorFlippedMsg: (name) => `Flipped "${name}".`,
   decorLockedMsg: (name, lv) => `"${name}" is locked until your aquarium reaches Level ${lv}.`,
+  decorNoteTitle: 'Aquascaping & Night Lighting',
   decorNote:
-    'Decoration slots expand from 3 up to 12 as your aquarium levels up (Lv.1–Lv.10), with 18 total ornaments & hanging lights to unlock. Drag any placed item directly inside the tank!',
+    '【Level Unlocks】Leveling your aquarium (**Lv.1–Lv.10**) expands placement slots from **3 up to 12** and unlocks all **18 asymmetric floor ornaments & hanging lights**. 【Free Dragging】Drag any placed decoration directly inside the tank (last dragged item rises to the front layer); lights glow automatically in Night mode!',
   bookHeading: 'Collection',
   bookOwnedBadge: (count) => `Owned x${count}`,
   bookCompletion: (pct) => `Catalog Completion: ${pct}%`,
@@ -562,6 +584,9 @@ const EN: Copy = {
   bookGoMergeAction: 'Merge',
   bookVariantRate: (u, t, pct) => `Variant Discovery: ${pct}% (${u}/${t})`,
   bookLockedMsg: (tierStr) => `Undiscovered ${tierStr} species. Breed or merge fish to unlock it!`,
+  bookNoteTitle: 'Encyclopedia & Grade Variants',
+  bookNote:
+    '【Full Collection】Features **28 marine species** (1 grade for starter fish and **5 color-grade variants** for each 1★–5★ species). 【Inspector & Actions】Click any discovered species card to open the detail inspector, preview unlocked grade variants, inspect owned specimens, or jump straight to Breed & Merge.',
   settingsThemeHeading: 'Art theme',
   settingsThemeNote:
     'A theme is a folder under public/themes/. Its manifest supplies the palette, the renderer and an optional sprites/ directory; dropping <speciesId>.png or decor-<id>.png in there replaces that art everywhere with no code change.',
