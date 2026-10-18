@@ -282,7 +282,8 @@ export class LcdRenderer implements Renderer {
   }
 
   portrait(ctx: CanvasRenderingContext2D, w: number, h: number, req: PortraitRequest): void {
-    const len = Math.min(w * 0.86, h * 1.65)
+    const depth = Math.max(0.35, req.species.body.depth)
+    const len = Math.min(w * 0.82, (h * 0.76) / depth)
     const night = document.documentElement.dataset.mode !== 'light'
     const s = sceneColorsFor(this.manifest, night)
     ctx.save()

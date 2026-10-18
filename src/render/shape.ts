@@ -181,23 +181,25 @@ export function fishPath(
 
     case 'fish':
     default: {
+      // Shift by +tail/2 so the drawn silhouette [0..nose] is horizontally centered at len/2
       const tail = len * body.tail
-      const nose = len - tail
+      const ox = tail * 0.5
+      const nose = ox + (len - tail)
       const wag = animPhase ? Math.sin(animPhase * 4.5) * (h * 0.08) : 0
 
       // Body: a lens from the snout to the caudal peduncle.
       path.moveTo(nose, 0)
-      path.quadraticCurveTo(nose * 0.55, -h / 2, tail * 0.6, -h * 0.22)
-      path.quadraticCurveTo(tail * 0.15, 0, tail * 0.6, h * 0.22)
-      path.quadraticCurveTo(nose * 0.55, h / 2, nose, 0)
+      path.quadraticCurveTo(ox + (len - tail) * 0.55, -h / 2, ox + tail * 0.6, -h * 0.22)
+      path.quadraticCurveTo(ox + tail * 0.15, 0, ox + tail * 0.6, h * 0.22)
+      path.quadraticCurveTo(ox + (len - tail) * 0.55, h / 2, nose, 0)
       path.closePath()
 
       // Caudal fin.
       const fin = new Path2D()
-      fin.moveTo(tail * 0.62, 0)
-      fin.lineTo(0, -h * 0.5 + wag)
-      fin.lineTo(tail * 0.35, wag * 0.5)
-      fin.lineTo(0, h * 0.5 + wag)
+      fin.moveTo(ox + tail * 0.62, 0)
+      fin.lineTo(ox, -h * 0.5 + wag)
+      fin.lineTo(ox + tail * 0.35, wag * 0.5)
+      fin.lineTo(ox, h * 0.5 + wag)
       fin.closePath()
       path.addPath(fin)
 
@@ -205,8 +207,8 @@ export function fishPath(
       if (body.dorsal > 0.05) {
         const d = new Path2D()
         const peak = h * 0.5 * (0.4 + body.dorsal)
-        d.moveTo(nose * 0.75, -h * 0.3)
-        d.quadraticCurveTo(nose * 0.5, -peak, tail * 0.8, -h * 0.26)
+        d.moveTo(ox + (len - tail) * 0.75, -h * 0.3)
+        d.quadraticCurveTo(ox + (len - tail) * 0.5, -peak, ox + tail * 0.8, -h * 0.26)
         d.closePath()
         path.addPath(d)
       }
@@ -242,8 +244,10 @@ export function eyeAt(
       return { x: len * 0.88, y: -h * 0.08, r: Math.max(1, len * 0.045) }
     case 'fish':
     default: {
-      const nose = len - len * body.tail
-      return { x: nose * 0.82, y: -h * 0.12, r: Math.max(1, len * 0.055) }
+      const tail = len * body.tail
+      const ox = tail * 0.5
+      const span = len - tail
+      return { x: ox + span * 0.82, y: -h * 0.12, r: Math.max(1, len * 0.055) }
     }
   }
 }
@@ -251,12 +255,13 @@ export function eyeAt(
 /** Pattern stripes as local-space rectangles, for either renderer to use. */
 export function patternBands(body: BodyShape, len: number): { x: number; w: number }[] {
   const tail = len * body.tail
+  const ox = (body.form ?? 'fish') === 'fish' ? tail * 0.5 : 0
   const span = len - tail
   switch (body.pattern) {
     case 'stripes':
-      return [0.3, 0.5, 0.7].map((t) => ({ x: tail + span * t, w: Math.max(1, len * 0.05) }))
+      return [0.3, 0.5, 0.7].map((t) => ({ x: ox + tail + span * t * 0.8, w: Math.max(1, len * 0.05) }))
     case 'bands':
-      return [0.25, 0.6].map((t) => ({ x: tail + span * t, w: Math.max(2, len * 0.12) }))
+      return [0.25, 0.6].map((t) => ({ x: ox + tail + span * t * 0.8, w: Math.max(2, len * 0.12) }))
     default:
       return []
   }
@@ -271,6 +276,7 @@ export function patternSpots(
   if (body.pattern !== 'spots') return []
   const h = len * body.depth
   const tail = len * body.tail
+  const ox = (body.form ?? 'fish') === 'fish' ? tail * 0.5 : 0
   const out: { x: number; y: number; r: number }[] = []
   let s = seed || 1
   for (let i = 0; i < 6; i++) {
@@ -279,7 +285,7 @@ export function patternSpots(
     s = (s * 1103515245 + 12345) & 0x7fffffff
     const fy = ((s >> 7) % 1000) / 1000
     out.push({
-      x: tail + (len - tail) * (0.2 + fx * 0.7),
+      x: ox + tail * 0.6 + (len - tail) * (0.15 + fx * 0.7),
       y: (fy - 0.5) * h * 0.55,
       r: Math.max(1, len * 0.045),
     })

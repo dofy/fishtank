@@ -349,7 +349,8 @@ export class RealisticRenderer implements Renderer {
   }
 
   portrait(ctx: CanvasRenderingContext2D, w: number, h: number, req: PortraitRequest): void {
-    const len = Math.min(w * 0.86, h * 1.65)
+    const depth = Math.max(0.35, req.species.body.depth)
+    const len = Math.min(w * 0.82, (h * 0.76) / depth)
     ctx.save()
     if (req.dim) ctx.globalAlpha = 0.35
     ctx.translate((w - len) / 2, h / 2)
