@@ -293,7 +293,7 @@ h3 { @apply mt-3 mb-1.5 text-xs font-semibold text-[var(--muted)]; }
 .sort-label { @apply text-[11px] text-[var(--muted)] mr-0.5; }
 button.sort-btn { @apply py-[3px] px-2 text-[11px]; }
 
-.grid { @apply grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-2 max-[720px]:grid-cols-[repeat(auto-fill,minmax(100px,1fr))] max-[720px]:gap-1.5; }
+.fish-grid { @apply grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-2 max-[720px]:grid-cols-[repeat(auto-fill,minmax(100px,1fr))] max-[720px]:gap-1.5; }
 
 .cell {
   @apply relative p-[7px_6px] text-center cursor-pointer select-none touch-manipulation grid gap-0.5 justify-items-center transition-all duration-100;
@@ -553,20 +553,20 @@ button.check-row[aria-checked='true'] .check-dot {
 }
 
 .settings-grid {
-  @apply grid grid-cols-2 gap-2.5 items-start max-[720px]:grid-cols-1;
+  @apply grid grid-cols-2 gap-3 items-stretch max-[720px]:grid-cols-1;
 }
 .settings-card {
-  @apply py-2.5 px-3 grid gap-2;
+  @apply py-3 px-3.5 flex flex-col gap-2.5 min-w-0 h-full;
   background: var(--cell-bg);
   border: 1px solid var(--border);
   border-radius: var(--radius);
 }
 .settings-card > h3 { @apply mt-1 mb-0 first:mt-0; }
-.settings-card > .note { @apply mt-0.5; }
-.audio-row { @apply flex flex-wrap items-center gap-2.5; }
-.audio-row > button { @apply min-w-[138px] justify-start; }
-.vol-slider { @apply flex-1 min-w-[120px] accent-[var(--accent)] cursor-pointer; }
-.vol-pct { @apply text-xs text-[var(--muted)] tabular-nums min-w-[38px] text-right; }
+.settings-card > .note { @apply mt-auto; }
+.audio-row { @apply flex items-center gap-2.5 max-[480px]:flex-wrap; }
+.audio-row > button { @apply shrink-0 min-w-[138px] justify-start whitespace-nowrap; }
+.vol-slider { @apply flex-1 min-w-[100px] accent-[var(--accent)] cursor-pointer; }
+.vol-pct { @apply text-xs text-[var(--muted)] tabular-nums min-w-[38px] text-right shrink-0; }
 
 .toast-host {
   @apply fixed bottom-[18px] left-1/2 -translate-x-1/2 z-120 grid gap-1.5 w-[min(540px,calc(100vw-24px))] pointer-events-none empty:hidden;

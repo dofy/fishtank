@@ -95,7 +95,7 @@ import {
 
 export { formatClock, stars } from './dom'
 
-export const APP_VERSION = '1.4.4'
+export const APP_VERSION = '1.4.5'
 export const GITHUB_URL = 'https://github.com/dofy/fishtank'
 
 export interface AppHooks {
@@ -479,7 +479,7 @@ export class App {
     )
 
     const grid = document.createElement('div')
-    grid.className = 'grid'
+    grid.className = 'fish-grid'
     const sorted = sortTankFish(this.state.fish, currentSort, tankIds)
     for (const fish of sorted) {
       const inTank = tankIds.has(fish.uid)
@@ -670,7 +670,7 @@ export class App {
     const out: Node[] = [headRow, actionBar]
 
     const grid = document.createElement('div')
-    grid.className = 'grid'
+    grid.className = 'fish-grid'
     for (const fish of candidates) {
       const adult = isAdult(fish, now)
       const idx = this.breedPick.indexOf(fish.uid)
@@ -861,7 +861,7 @@ export class App {
     out.push(filterBox)
 
     const grid = document.createElement('div')
-    grid.className = 'grid'
+    grid.className = 'fish-grid'
     for (const fish of mergeCandidates) {
       const idx = this.mergePick.indexOf(fish.uid)
       const picked = idx !== -1
@@ -909,7 +909,7 @@ export class App {
     const out: Node[] = [heading(c.decorHeading(placedIds.size, cap, prog.unlocked, prog.total))]
 
     const grid = document.createElement('div')
-    grid.className = 'grid'
+    grid.className = 'fish-grid'
 
     for (const item of DECORATIONS) {
       const unlocked = isDecorUnlocked(this.state, item.id)
@@ -1010,7 +1010,7 @@ export class App {
     }
 
     const grid = document.createElement('div')
-    grid.className = 'grid book-grid'
+    grid.className = 'fish-grid book-grid'
     for (const sp of SPECIES) {
       const owned = this.state.discovered.includes(sp.id)
       const ownedCopies = this.state.fish.filter((f) => f.speciesId === sp.id)
@@ -1253,9 +1253,9 @@ export class App {
   private settingsPanel(): Node[] {
     const c = this.t
 
-    // Card 1: Theme & Color Mode
-    const visualCard = document.createElement('div')
-    visualCard.className = 'settings-card'
+    // Card 1: Theme
+    const themeCard = document.createElement('div')
+    themeCard.className = 'settings-card'
 
     const themeRow = document.createElement('div')
     themeRow.className = 'row m-0'
@@ -1267,6 +1267,11 @@ export class App {
       b.setAttribute('aria-pressed', String(this.state.theme === theme.id))
       themeRow.append(b)
     }
+    themeCard.append(heading(c.settingsThemeHeading, 'h3'), themeRow, note(c.settingsThemeNote))
+
+    // Card 2: Color Mode
+    const modeCard = document.createElement('div')
+    modeCard.className = 'settings-card'
 
     const modeRow = document.createElement('div')
     modeRow.className = 'row m-0'
@@ -1285,20 +1290,13 @@ export class App {
       b.setAttribute('aria-pressed', String(currentMode === m.id))
       modeRow.append(b)
     }
-
-    visualCard.append(
-      heading(c.settingsThemeHeading, 'h3'),
-      themeRow,
-      note(c.settingsThemeNote),
+    modeCard.append(
       heading(c.settingsColorModeHeading, 'h3'),
       modeRow,
       note(c.settingsColorModeNote),
     )
 
-    // Card 2: Audio & BGM controls + Language & Save
-    const rightCol = document.createElement('div')
-    rightCol.className = 'grid gap-2.5 content-start'
-
+    // Card 3: Audio & BGM controls
     const audioCfg = syncAudioConfig(this.state.audio)
     const audioCard = document.createElement('div')
     audioCard.className = 'settings-card'
@@ -1398,7 +1396,7 @@ export class App {
       trackRow,
     )
 
-    // Card 3: Language, Help & Save Management
+    // Card 4: Language, Help & Save Management
     const systemCard = document.createElement('div')
     systemCard.className = 'settings-card'
 
@@ -1457,11 +1455,9 @@ export class App {
       note(c.settingsSaveNote),
     )
 
-    rightCol.append(audioCard, systemCard)
-
     const grid = document.createElement('div')
     grid.className = 'settings-grid'
-    grid.append(visualCard, rightCol)
+    grid.append(themeCard, audioCard, modeCard, systemCard)
 
     return [grid]
   }
