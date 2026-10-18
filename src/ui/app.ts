@@ -95,7 +95,7 @@ import {
 
 export { formatClock, stars } from './dom'
 
-export const APP_VERSION = '1.4.3'
+export const APP_VERSION = '1.4.4'
 export const GITHUB_URL = 'https://github.com/dofy/fishtank'
 
 export interface AppHooks {
@@ -127,8 +127,8 @@ interface ShowcaseState {
   agent: Agent
 }
 
-const MINI_TANK_W = 296
-const MINI_TANK_H = 164
+const MINI_TANK_W = 384
+const MINI_TANK_H = 208
 const CEREMONY_MS = 1350
 
 export class App {
@@ -1666,9 +1666,9 @@ export class App {
         x: MINI_TANK_W * 0.5,
         y: MINI_TANK_H * 0.42,
         dir: 1,
-        speed: 32,
+        speed: 38,
         phase: 0,
-        scale: 0.9,
+        scale: 1.05,
       },
     }
     this.startShowcaseLoop()
@@ -1734,11 +1734,9 @@ export class App {
     tankWrap.className = 'mini-tank-wrap'
     const miniCanvas = document.createElement('canvas')
     miniCanvas.className = 'mini-tank'
-    const dpr = Math.min(2, window.devicePixelRatio || 1)
+    const dpr = Math.min(2.5, (window.devicePixelRatio || 1) * 1.35)
     miniCanvas.width = Math.round(MINI_TANK_W * dpr)
     miniCanvas.height = Math.round(MINI_TANK_H * dpr)
-    miniCanvas.style.width = `${MINI_TANK_W}px`
-    miniCanvas.style.height = `${MINI_TANK_H}px`
     this.showcaseCanvas = miniCanvas
     tankWrap.append(miniCanvas)
 
@@ -1822,7 +1820,7 @@ export class App {
     const { ceremony, agent, decor, decorX, decorFlip } = this.showcase
     const ctx = this.showcaseCanvas.getContext('2d')
     if (!ctx) return
-    const dpr = Math.min(2, window.devicePixelRatio || 1)
+    const dpr = Math.min(2.5, (window.devicePixelRatio || 1) * 1.35)
     const night = resolveDarkMode(this.state.colorMode ?? 'auto')
 
     const decorScale = Math.min(1, (MINI_TANK_H * 0.58) / decor.height)
@@ -1855,7 +1853,7 @@ export class App {
         const pA = ceremony.parents[0]!
         const pB = ceremony.parents[1]!
         const dist = (1 - p * 0.85) * (MINI_TANK_W * 0.34)
-        const bob = Math.sin(p * Math.PI * 4) * 8
+        const bob = Math.sin(p * Math.PI * 4) * 9
         tempAgents.push(
           {
             fish: pA,
@@ -1865,7 +1863,7 @@ export class App {
             dir: 1,
             speed: 0,
             phase: 0,
-            scale: 0.72 * (1 - p * 0.25),
+            scale: 0.85 * (1 - p * 0.22),
           },
           {
             fish: pB,
@@ -1875,7 +1873,7 @@ export class App {
             dir: -1,
             speed: 0,
             phase: Math.PI,
-            scale: 0.72 * (1 - p * 0.25),
+            scale: 0.85 * (1 - p * 0.22),
           },
         )
       } else {
@@ -1895,7 +1893,7 @@ export class App {
             dir: Math.sin(angle) >= 0 ? -1 : 1,
             speed: 0,
             phase: i,
-            scale: 0.58 * (1 - p * 0.45),
+            scale: 0.68 * (1 - p * 0.42),
           })
         }
       }
@@ -1912,7 +1910,7 @@ export class App {
       })
 
       // Draw glowing convergence core / heart rings
-      const glowRadius = 10 + p * 56
+      const glowRadius = 14 + p * 72
       const grad = ctx.createRadialGradient(cx, cy, 2, cx, cy, glowRadius)
       grad.addColorStop(0, `rgba(255, 255, 255, ${0.25 + p * 0.7})`)
       grad.addColorStop(
