@@ -1,82 +1,66 @@
-# Fishtank
+<div align="center">
 
-A browser idle aquarium game inspired by [PC FISH: Taskbar Aquarium](https://store.steampowered.com/app/4842670/PC_FISH_Taskbar_Aquarium/). Raise, breed, merge, and collect marine creatures across two swappable art styles (**Realistic Reef** and **Monochrome LCD**), with full **Simplified Chinese / English (`zh` / `en`)** localization.
+<img src="public/favicon.svg" width="96" height="96" alt="Fishtank Logo" />
 
-一款受 Steam《[PC FISH: Taskbar Aquarium](https://store.steampowered.com/app/4842670/PC_FISH_Taskbar_Aquarium/?l=tchinese)》启发的网页端桌面放置水族箱游戏。支持繁育、10 合 1 合成、品阶变种图鉴收集、海底与顶挂造景拖拽布置，内置**写实珊瑚礁**与**单色液晶屏**两种可热替换素材的视觉主题。
+# Fishtank · 桌面放置水族箱
 
----
+**在浏览器或桌面上养一缸安静游动的深海小鱼。**  
+*A cozy idle aquarium for your browser and desktop — raise, breed, merge, and collect 28 marine creatures.*
 
-## Live Demo / 在线体验
+[![Live Demo](https://img.shields.io/badge/🌊_立即游玩_/_Play_Now-fishtank.phpz.org-0284c7?style=for-the-badge)](https://fishtank.phpz.org)
+[![PWA Ready](https://img.shields.io/badge/PWA-支持安装到桌面_/_离线游玩-10b981?style=for-the-badge)](https://fishtank.phpz.org)
+[![License: MIT](https://img.shields.io/badge/License-MIT-f59e0b?style=for-the-badge)](LICENSE)
 
-**[https://fishtank.phpz.org](https://fishtank.phpz.org)**
-
----
-
-## Features / 核心特性
-
-- **Authentic Progression & Balance / 还原核心数值平衡**
-  - **Hearts & Breeding**: 1 heart per breeding attempt, regenerates 1 heart every 7 minutes (cap 5). Starter fish have infinite (`∞`) breeding uses; bred fish roll `1–5` uses.
-  - **Aquarium Level (`Lv.1–Lv.10`)**: Breeding and fry maturation grant EXP, expanding both visual fish display slots and decoration placement slots from `3` up to `12` while keeping inventory unlimited.
-  - **Two-Axis Quality**: Rarity Tier (`Starter` / `1★ Common` → `5★ Mythic`) × Visual Grade (`Grade 1–5`, granting up to `2.0x` EXP and distinct color variants).
-  - **Exact Breeding Matrix & 10-to-1 Synthesis**: Reproduces the official parent-tier probability matrix and 10-fish synthesis (with rarity/0-use filters and optimal `1+9` grade inheritance auto-select). See [`docs/BALANCE.md`](docs/BALANCE.md).
-- **28 Distinct Species Silhouettes & Interactive Tank / 28 种独立生物外轮廓与鱼缸互动**
-  - Every species has a bespoke anatomical silhouette (beak butterflyfish, unicorn tang, Moorish idol whip-streamer, spiky puffer, glider flying fish, leafy sea dragon, saucer/ribbon/crown jellyfish, electric/ribbon eels, manta ray, sea turtle, etc.) and locomotion trajectory.
-  - **Interactive Feeding & Startle**: Click empty water to drop sinking food pellets one by one (nearby fish chase and eat 1 pellet per 9s satiety cooldown then swim away); click a fish to startle it into a long horizontal dash.
-- **18 Asymmetric Draggable Decorations & Night Lamps / 非对称可拖拽造景与夜晚灯光联动**
-  - Unlocks 18 asymmetric floor ornaments (with wide height contrast from low clams/pebbles up to towering kelp & sunken castles exceeding 50% tank height) and **top-hanging lights** across `Lv.1–Lv.10` (up to `3 → 12` placed at once by level).
-  - Drag any placed decoration directly inside the tank canvas (last dragged item automatically rises to the top layer).
-- **Auto / Day / Night Color Modes & Immersive Mode / 昼夜模式与全屏沉浸模式**
-  - Supports **Auto** (follows system appearance), **Day (Light)**, and **Night (Dark)** modes. In Night mode, aquarium overhead lamps and top-hanging fairy lights automatically illuminate the water with volumetric light cones.
-  - **Immersive Mode**: One-click full-viewport aquarium view hiding bottom tabs and panels.
-- **Web Audio SFX & 3 Procedural BGM Tracks / 交互音效与三首背景音乐**
-  - Zero-dependency Web Audio synthesizer providing tactile click/select/splash/hatch SFX and 3 selectable background tracks (*Coral Lo-Fi*, *Deep Sea Tide*, *Pixel Chiptune*) with independent volume sliders and mute toggles.
-- **Installable PWA & Offline Play / 支持 PWA 安装与离线游玩**
-  - Includes a Web App Manifest, Service Worker offline cache, and pixel-art app icons so you can install Fishtank as a standalone desktop or mobile app and play offline anytime.
-- **Swappable Theme & Sprite Assets / 零代码素材替换**
-  - Two built-in renderers: **Realistic Reef (`realistic`)** and **Monochrome LCD (`lcd`)**.
-  - Dropping `<speciesId>.png` or `decor-<decorId>.png` into `public/themes/<theme>/sprites/` automatically replaces the procedural artwork for that creature or decoration without code changes.
+</div>
 
 ---
 
-## Development / 本地开发
+## 预览 / Screenshots
 
-**Tech Stack:** TypeScript · Vite 6 · Tailwind CSS v4 (`@tailwindcss/vite`) · HTML5 Canvas · Web Audio API
-
-```bash
-# Install dependencies
-pnpm install
-
-# Start dev server (http://localhost:5173)
-pnpm dev
-
-# Typecheck & build for production (outputs to dist/)
-pnpm typecheck
-pnpm build
-pnpm preview
-```
+| 🌙 黑夜模式（深海氛围射灯） · Night Mode | ☀️ 日间模式（清透珊瑚礁） · Day Mode |
+| :---: | :---: |
+| ![Fishtank Night Mode](docs/screenshots/dark-mode.png) | ![Fishtank Day Mode](docs/screenshots/light-mode.png) |
 
 ---
 
-## Customizing Themes & Sprites / 主题与素材替换说明
+## 产品简介 / About Fishtank
 
-Each theme lives in `public/themes/<theme-id>/`:
+**Fishtank** 是一款灵感源自 Steam 桌面放置游戏《[PC FISH: Taskbar Aquarium](https://store.steampowered.com/app/4842670/PC_FISH_Taskbar_Aquarium/?l=tchinese)》的网页端放置养成水族箱。无需注册登录、即开即玩，既可以在工作间隙体验配对繁育与全图鉴收集的乐趣，也可以一键切换至**全屏沉浸模式**，伴随轻柔的海洋白噪音与 Lo-Fi 音乐作为桌面生态屏保。
 
-```text
-public/themes/
-├── realistic/
-│   ├── manifest.json       # Palette tokens (dark & light), scene colors, renderer: "realistic"
-│   └── sprites/            # Optional PNG overrides
-└── lcd/
-    ├── manifest.json       # Dot-matrix cell size, monochrome palettes, renderer: "lcd"
-    └── sprites/            # Optional PNG overrides
-```
+---
 
-- **Fish Sprite Override**: Place `public/themes/<theme-id>/sprites/<speciesId>.png` (e.g. `goldfin.png`, `goldenseahorse.png`, `moonjelly.png`).
-- **Decoration Sprite Override**: Place `public/themes/<theme-id>/sprites/decor-<decorId>.png` (e.g. `decor-shell.png`, `decor-castle.png`, `decor-fairylights.png`).
-- Any missing PNG automatically falls back to the built-in procedural renderer.
+## 玩法与亮点 / Highlights
+
+### 🐠 28 种独立海洋生物与 5 阶幻彩变种
+- 收录从初始金鱼、月光水母、黄金海马、蓝弧电鳗、天翼飞鱼到神话级**皇冠冥河水母**、**幻彩叶海龙**、**深海绿海龟**等 **28 种海洋生物**。
+- 每种生物均拥有专属的生理轮廓与游动姿态（鱼群摆尾、水母脉冲舒缩、海马直立点头、海龙拟态漂浮、蝠鲼展翼滑翔）。
+- 除初始鱼外，每种鱼拥有 **品阶 1 至 品阶 5** 五种色相变种，高品阶不仅外观独特，还可提供最高 **2.0x 经验加成**。
+
+### 💕 亲代配对繁育与 10 合 1 聚变合成
+- **爱心繁育**：消耗 1 颗爱心（每 7 分钟自动恢复 1 颗，上限 5 颗）即可让两条成年鱼配对孵化后代。双亲星级越高，越容易孵化出高星级稀有鱼种；双亲品阶越高，后代遗传高品阶的概率越大。
+- **10 合 1 合成**：将 10 条低星级或繁育次数耗尽（`0/n`）的鱼进行聚变合成，**100% 升级为高一星级的新鱼**，并 **100% 继承 10 条材料鱼中的最高品阶**（支持一键自动按“1 高品阶 + 9 低品阶”最优策略选鱼）。
+- 完整繁育概率与等级数值表可查阅游戏内「帮助」面板或 [《游戏帮助与数值说明》](docs/BALANCE.md)。
+
+### 🪸 18 件可拖拽海底造景与昼夜灯光系统
+- 随着鱼缸等级从 **Lv.1 提升至 Lv.10**，鱼缸展示容量与装饰摆放槽位同步从 **3 个扩展至 12 个**，逐步解锁翠绿海草、鹿角珊瑚、沉船宝箱、海底城堡、深海神像以及星芒吊灯、霓虹水母灯等 **18 件非对称造景**。
+- **自由拖拽布置**：直接在鱼缸画面中按住任意装饰即可左右拖动调整位置，打造独一无二的海底景观。
+- **自动 / 日间 / 黑夜模式**：黑夜模式下，鱼缸顶部的氛围射灯与顶挂彩灯会自动点亮，向深海水域投射柔和的体积光束。
+
+### 🫧 鲜活的鱼缸互动
+- **点水投喂**：点击鱼缸空白水域可一颗颗撒下鱼食，附近的鱼会争相游来抢食，吃饱后欢快游开。
+- **受惊冲刺**：轻点正在游动的小鱼，它会受惊加速横穿鱼缸（鱼缸里还藏着意想不到的**隐藏彩蛋**等待发现）。
+- **全屏沉浸模式**：一键隐藏所有操作面板，将鱼缸铺满整个窗口；鼠标静置 3 秒后顶部状态栏自动半透明隐去。
+
+### 🎵 氛围音效与三首原创背景音乐
+- 内置清脆的水滴、投喂、孵化、合成音效，以及三首可随时切换的轻音乐曲目：**《珊瑚礁 Lo-Fi》**、**《深海潮汐》**、**《液晶八音盒》**，支持独立调节音效与音乐音量。
+- **双视觉主题**：内置 **写实珊瑚礁（Realistic Reef）** 与复古掌机风格的 **单色液晶屏（Monochrome LCD）** 两种画面主题。
+
+### 📱 随处可玩（支持安装到桌面与离线运行）
+- **立即在线游玩**：访问 **[https://fishtank.phpz.org](https://fishtank.phpz.org)** 即可直接开始。
+- **安装为独立应用（PWA）**：支持通过 Chrome / Edge 地址栏右侧「安装应用」或手机浏览器「添加到主屏幕」，作为无边框独立桌面小组件运行；游戏进度自动保存在本地，断网离线也能正常游玩与结算成长。
 
 ---
 
 ## License
 
-[MIT](LICENSE) © Seven Yu
+[MIT](LICENSE) © 2026 [Seven Yu](https://yahaha.net)
