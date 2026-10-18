@@ -84,8 +84,8 @@ async function main(): Promise<void> {
   let dpr = 1
 
   const resizeCanvas = () => {
-    const nextW = Math.max(320, Math.floor(app.canvas.clientWidth || root.clientWidth - 32 || 920))
-    const nextH = TANK_HEIGHT
+    const nextW = Math.max(280, Math.floor(app.canvas.clientWidth || root.clientWidth - 20 || 920))
+    const nextH = window.innerWidth <= 640 ? 220 : TANK_HEIGHT
     const nextDpr = Math.min(2, window.devicePixelRatio || 1)
     if (nextW === cssWidth && nextH === cssHeight && nextDpr === dpr) return
     cssWidth = nextW

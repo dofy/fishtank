@@ -21,30 +21,78 @@ html, body {
 }
 
 header.hud {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px 18px;
-  align-items: center;
-  padding: 10px 14px;
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px;
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: var(--radius);
 }
 
-.hud .stat { display: flex; gap: 6px; align-items: baseline; }
-.hud .stat b { font-size: 15px; font-variant-numeric: tabular-nums; }
-.hud .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; }
+.hud-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.hud-exp-text {
+  font-size: 12px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.hud-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.hud-grid .stat {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+  align-items: baseline;
+  justify-content: space-between;
+  background: var(--cell-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 5px 8px;
+  min-width: 0;
+}
+
+.hud .stat {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  white-space: nowrap;
+}
+.hud .stat b { font-size: 14px; font-variant-numeric: tabular-nums; }
+.hud .label {
+  color: var(--muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.hud-sub {
+  font-size: 11px;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+  margin-left: auto;
+}
 .hud .lang-btn {
   margin-left: auto;
   padding: 4px 10px;
   font-size: 12px;
   font-weight: 600;
+  flex-shrink: 0;
 }
 
 .bar {
-  flex: 1 1 140px;
+  flex: 1 1 80px;
   height: 8px;
-  min-width: 100px;
+  min-width: 50px;
   background: var(--cell-bg);
   border: 1px solid var(--border);
   overflow: hidden;
@@ -218,3 +266,64 @@ table.odds th:first-child, table.odds td:first-child { text-align: left; }
 .log:empty { display: none; }
 .log.good { color: var(--accent); border-left-color: var(--accent); }
 .log.bad { color: var(--danger); border-left-color: var(--danger); }
+
+@media (max-width: 640px) {
+  #app {
+    padding: 10px;
+    gap: 8px;
+  }
+
+  header.hud {
+    padding: 8px 10px;
+    gap: 6px;
+  }
+
+  .hud-top {
+    gap: 8px;
+  }
+
+  .hud-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  nav.tabs {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  nav.tabs button {
+    padding: 6px 8px;
+    font-size: 13px;
+    text-align: center;
+  }
+
+  section.panel {
+    padding: 10px;
+  }
+
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+    gap: 8px;
+  }
+
+  table.odds {
+    font-size: 11px;
+  }
+
+  table.odds th,
+  table.odds td {
+    padding: 3px 4px;
+  }
+}
+
+@media (max-width: 380px) {
+  .hud-exp-text {
+    font-size: 11px;
+  }
+
+  .hud .stat b {
+    font-size: 13px;
+  }
+}

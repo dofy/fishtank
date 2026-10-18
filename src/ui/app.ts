@@ -145,9 +145,16 @@ export class App {
     const heartWait =
       s.hearts >= HEART_MAX ? c.hudFull : formatClock(Math.max(0, s.nextHeartAt - now))
 
-    const nextHeartStat = stat(c.hudNextHeart, heartWait)
-    const valueEl = nextHeartStat.querySelector('b')
-    if (valueEl) valueEl.dataset.heartTimer = '1'
+    const topRow = document.createElement('div')
+    topRow.className = 'hud-top'
+
+    const lvStat = stat(c.hudLevel, `Lv.${s.level}${s.level >= MAX_LEVEL ? c.hudMax : ''}`)
+    lvStat.className = 'stat hud-lv'
+
+    const expBar = bar(filled)
+    const expText = document.createElement('span')
+    expText.className = 'hud-exp-text'
+    expText.textContent = next === null ? `${c.hudExp} ${s.exp}` : `${s.exp} / ${next} EXP`
 
     const langBtn = makeButton(c.langToggle, () => {
       const nextLocale: Locale = this.locale === 'zh' ? 'en' : 'zh'
@@ -155,20 +162,29 @@ export class App {
     })
     langBtn.className = 'lang-btn'
 
+    topRow.append(lvStat, expBar, expText, langBtn)
+
+    const grid = document.createElement('div')
+    grid.className = 'hud-grid'
+
     const placed = syncTank(s).length
     const cap = capacity(s)
 
-    this.hud.replaceChildren(
-      stat(c.hudLevel, `${s.level}${s.level >= MAX_LEVEL ? c.hudMax : ''}`),
-      bar(filled),
-      stat(c.hudExp, next === null ? `${s.exp}` : `${s.exp} / ${next}`),
-      stat(c.hudTank, `${placed} / ${cap}`),
+    const heartStat = stat(c.hudHearts, `${s.hearts}/${HEART_MAX}`)
+    const timerChip = document.createElement('span')
+    timerChip.className = 'hud-sub'
+    timerChip.dataset.heartTimer = '1'
+    timerChip.textContent = heartWait
+    heartStat.append(timerChip)
+
+    grid.append(
+      stat(c.hudTank, `${placed}/${cap}`),
       stat(c.hudBag, `${s.fish.length}`),
-      stat(c.hudHearts, `${s.hearts} / ${HEART_MAX}`),
-      nextHeartStat,
-      stat(c.hudSpecies, `${collectionProgress(s).owned} / ${collectionProgress(s).total}`),
-      langBtn,
+      heartStat,
+      stat(c.hudSpecies, `${collectionProgress(s).owned}/${collectionProgress(s).total}`),
     )
+
+    this.hud.replaceChildren(topRow, grid)
   }
 
   private renderNav(): void {
