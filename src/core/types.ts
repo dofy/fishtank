@@ -81,6 +81,7 @@ export interface Fish {
 }
 
 export type Locale = 'zh' | 'en'
+export type ColorMode = 'auto' | 'light' | 'dark'
 
 export interface MergeFilter {
   /** Only include fish with 0 remaining breeding attempts. */
@@ -108,6 +109,7 @@ export interface GameState {
   /** Species ids ever owned, for the collection book. */
   discovered: SpeciesId[]
   theme: string
+  colorMode?: ColorMode
   locale?: Locale
   /** Epoch ms of the last simulation tick. */
   lastTick: number

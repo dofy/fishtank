@@ -93,6 +93,7 @@ export function newGame(now = Date.now(), locale: Locale = detectLocale()): Game
     level: 1,
     discovered: [...new Set(STARTER_SPECIES)],
     theme: 'realistic',
+    colorMode: 'auto',
     locale,
     lastTick: now,
   }

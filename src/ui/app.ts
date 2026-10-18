@@ -36,6 +36,7 @@ import {
 import { DECORATIONS, SPECIES, species } from '../core/species'
 import type {
   BreedOutcome,
+  ColorMode,
   DecorItem,
   Fish,
   GameState,
@@ -46,6 +47,7 @@ import type {
 } from '../core/types'
 import type { Renderer } from '../render/renderer'
 import type { Agent, DecorNode } from '../render/scene'
+import { resolveDarkMode } from '../render/theme'
 
 type Tab = 'tank' | 'breed' | 'merge' | 'decor' | 'book' | 'settings'
 
@@ -68,8 +70,15 @@ const STAT_ICONS = {
   book: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 3h4.2c1 0 1.3.5 1.3 1.3v9.2c0-.7-.5-1-1.3-1H2.5V3Zm11 0H9.3C8.3 3 8 3.5 8 4.3v9.2c0-.7.5-1 1.3-1h4.2V3Z"/></svg>',
 }
 
+const MODE_ICONS: Record<ColorMode, string> = {
+  auto: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="5.5"/><path d="M8 2.5v11A5.5 5.5 0 0 0 8 2.5Z" fill="currentColor"/></svg>',
+  light: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="2.8"/><path d="M8 1.5v1.8m0 9.4v1.8M1.5 8h1.8m9.4 0h1.8M3.4 3.4l1.3 1.3m6.6 6.6 1.3 1.3m0-9.2-1.3 1.3M4.7 11.3 3.4 12.6"/></svg>',
+  dark: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13.2 9.8A5.5 5.5 0 0 1 6.2 2.8a5.5 5.5 0 1 0 7 7Z"/></svg>',
+}
+
 export interface AppHooks {
   onThemeChange(id: string): void
+  onColorModeChange(mode: ColorMode): void
   onLocaleChange(locale: Locale): void
   onSave(): void
   onReset(): void
@@ -217,6 +226,16 @@ export class App {
     timerChip.textContent = heartWait
     heartStat.append(timerChip)
 
+    const mode: ColorMode = s.colorMode ?? 'auto'
+    const modeLabel =
+      mode === 'auto' ? c.colorModeAuto : mode === 'light' ? c.colorModeLight : c.colorModeDark
+    const modeBtn = makeIconButton(MODE_ICONS[mode], modeLabel, () => {
+      const nextMode: ColorMode = mode === 'auto' ? 'light' : mode === 'light' ? 'dark' : 'auto'
+      this.hooks.onColorModeChange(nextMode)
+    })
+    modeBtn.className = 'mode-btn'
+    modeBtn.title = `${c.settingsColorModeHeading}: ${modeLabel}`
+
     const langBtn = makeButton(c.langToggle, () => {
       const nextLocale: Locale = this.locale === 'zh' ? 'en' : 'zh'
       this.hooks.onLocaleChange(nextLocale)
@@ -229,6 +248,7 @@ export class App {
       stat(STAT_ICONS.bag, c.hudBag, `${s.fish.length}`),
       heartStat,
       stat(STAT_ICONS.book, c.hudSpecies, `${prog.owned}/${prog.total}`),
+      modeBtn,
       langBtn,
     )
   }
@@ -699,6 +719,23 @@ export class App {
       themeRow.append(b)
     }
 
+    const modeRow = document.createElement('div')
+    modeRow.className = 'row'
+    const currentMode: ColorMode = this.state.colorMode ?? 'auto'
+    const modes: { id: ColorMode; label: string }[] = [
+      { id: 'auto', label: c.colorModeAuto },
+      { id: 'light', label: c.colorModeLight },
+      { id: 'dark', label: c.colorModeDark },
+    ]
+    for (const m of modes) {
+      const b = makeIconButton(MODE_ICONS[m.id], m.label, () => {
+        this.hooks.onColorModeChange(m.id)
+      })
+      b.className = 'icon-btn'
+      b.setAttribute('aria-pressed', String(currentMode === m.id))
+      modeRow.append(b)
+    }
+
     const langRow = document.createElement('div')
     langRow.className = 'row'
     const zhBtn = makeButton('简体中文', () => this.hooks.onLocaleChange('zh'))
@@ -710,6 +747,9 @@ export class App {
     out.push(
       themeRow,
       note(c.settingsThemeNote),
+      heading(c.settingsColorModeHeading, 'h3'),
+      modeRow,
+      note(c.settingsColorModeNote),
       heading(c.settingsLangHeading, 'h3'),
       langRow,
       heading(c.settingsTradeHeading, 'h3'),
@@ -917,6 +957,7 @@ export class App {
     const ctx = this.showcaseCanvas.getContext('2d')
     if (!ctx) return
     const dpr = Math.min(2, window.devicePixelRatio || 1)
+    const night = resolveDarkMode(this.state.colorMode ?? 'auto')
     ctx.save()
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
     this.renderer.scene(ctx, {
@@ -925,6 +966,7 @@ export class App {
       agents: [agent],
       decors: [decorNode],
       time: elapsed,
+      night,
     })
     ctx.restore()
   }
@@ -935,7 +977,8 @@ export class App {
     const dpr = Math.min(2, window.devicePixelRatio || 1)
     const w = 96
     const h = 52
-    const key = `fish:${this.renderer.manifest.id}:${sp.id}:${tier}:${grade}:${dim ? 1 : 0}:${dpr}`
+    const mode = document.documentElement.dataset.mode ?? 'dark'
+    const key = `fish:${this.renderer.manifest.id}:${mode}:${sp.id}:${tier}:${grade}:${dim ? 1 : 0}:${dpr}`
 
     let cached = this.portraitCache.get(key)
     if (!cached) {
@@ -964,7 +1007,8 @@ export class App {
     const dpr = Math.min(2, window.devicePixelRatio || 1)
     const w = 96
     const h = 56
-    const key = `decor:${this.renderer.manifest.id}:${item.id}:${dim ? 1 : 0}:${dpr}`
+    const mode = document.documentElement.dataset.mode ?? 'dark'
+    const key = `decor:${this.renderer.manifest.id}:${mode}:${item.id}:${dim ? 1 : 0}:${dpr}`
 
     let cached = this.portraitCache.get(key)
     if (!cached) {

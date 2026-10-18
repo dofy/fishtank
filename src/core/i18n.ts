@@ -164,6 +164,11 @@ export interface Copy {
   bookHeading: string
   settingsThemeHeading: string
   settingsThemeNote: string
+  settingsColorModeHeading: string
+  colorModeAuto: string
+  colorModeLight: string
+  colorModeDark: string
+  settingsColorModeNote: string
   settingsLangHeading: string
   settingsTradeHeading: string
   settingsTradeUnlocked: string
@@ -266,6 +271,11 @@ const ZH: Copy = {
   settingsThemeHeading: '画面风格（支持素材替换）',
   settingsThemeNote:
     '每个主题位于 public/themes/<主题名>/ 目录下，包含配色清单与渲染器配置；将 <speciesId>.png 或 decor-<id>.png 放入对应 sprites/ 目录即可直接替换鱼类或装饰品外观，无需修改代码。',
+  settingsColorModeHeading: '颜色模式（昼夜与鱼缸装饰灯）',
+  colorModeAuto: '自动',
+  colorModeLight: '日间（浅色）',
+  colorModeDark: '黑夜（深色）',
+  settingsColorModeNote: '默认“自动”跟随系统深浅色模式。处于黑夜模式时，鱼缸顶部的装饰灯会自动点亮并投射氛围光束。',
   settingsLangHeading: '界面语言 / Language',
   settingsTradeHeading: '交易中心',
   settingsTradeUnlocked: '已解锁（当前单机版不包含联网交易与经济市场）。',
@@ -386,6 +396,11 @@ const EN: Copy = {
   settingsThemeHeading: 'Art theme',
   settingsThemeNote:
     'A theme is a folder under public/themes/. Its manifest supplies the palette, the renderer and an optional sprites/ directory; dropping <speciesId>.png or decor-<id>.png in there replaces that art everywhere with no code change.',
+  settingsColorModeHeading: 'Color Mode & Aquarium Lamps',
+  colorModeAuto: 'Auto',
+  colorModeLight: 'Day (Light)',
+  colorModeDark: 'Night (Dark)',
+  settingsColorModeNote: 'Defaults to Auto (follows system appearance). In Night mode, the aquarium decorative lamps automatically light up.',
   settingsLangHeading: 'Language / 界面语言',
   settingsTradeHeading: 'Trade hub',
   settingsTradeUnlocked:

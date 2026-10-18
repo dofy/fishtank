@@ -2,7 +2,7 @@ import type { BodyShape, DecorItem, Grade, Tier } from '../core/types'
 import type { DecorPortraitRequest, PortraitRequest, Renderer } from './renderer'
 import type { Agent, DecorNode, SceneView } from './scene'
 import { decorLayers, eyeAt, fishPath, hashString, patternBands, patternSpots } from './shape'
-import { spriteFor, type ThemeManifest } from './theme'
+import { type SceneColors, type ThemeManifest, sceneColorsFor, spriteFor } from './theme'
 
 /** Identity-transform scratch context used only for point-in-path tests. */
 const probe = document.createElement('canvas').getContext('2d')!
@@ -21,17 +21,23 @@ export class LcdRenderer implements Renderer {
 
   scene(ctx: CanvasRenderingContext2D, view: SceneView): void {
     const { width: w, height: h } = view
-    const s = this.manifest.scene
+    const night = Boolean(view.night)
+    const s = sceneColorsFor(this.manifest, night)
 
     ctx.fillStyle = s.waterTop
     ctx.fillRect(0, 0, w, h)
 
-    this.dotGrid(ctx, w, h)
-    this.waterline(ctx, w, view.time)
-    this.floor(ctx, w, h)
+    this.dotGrid(ctx, w, h, s)
+    if (night) {
+      this.lampCones(ctx, w, h, s)
+    }
+    this.waterline(ctx, w, view.time, s)
+    this.floor(ctx, w, h, s)
 
-    for (const d of view.decors) this.decorNode(ctx, d, h, view.time)
-    for (const a of view.agents) this.agent(ctx, a, view.time)
+    for (const d of view.decors) this.decorNode(ctx, d, h, view.time, s)
+    for (const a of view.agents) this.agent(ctx, a, view.time, s)
+
+    this.lampsFixture(ctx, w, s, night)
 
     // Panel border drawn in whole cells, like a bezel.
     ctx.fillStyle = s.ink
@@ -46,27 +52,76 @@ export class LcdRenderer implements Renderer {
     }
   }
 
-  /** The unlit dots of the panel, faintly visible the way real LCDs are. */
-  private dotGrid(ctx: CanvasRenderingContext2D, w: number, h: number): void {
+  private lampPositions(w: number): number[] {
+    if (w < 380) return [w * 0.28, w * 0.72]
+    return [w * 0.22, w * 0.5, w * 0.78]
+  }
+
+  /** Dot-matrix dithered light cones under the decorative lamps in night mode. */
+  private lampCones(ctx: CanvasRenderingContext2D, w: number, h: number, s: SceneColors): void {
     const c = this.cell
-    ctx.fillStyle = this.manifest.scene.decor
+    const lamps = this.lampPositions(w).map((x) => Math.round(x / c) * c)
+    ctx.fillStyle = s.accent
+    for (let y = c * 3; y < h - c * 4; y += c) {
+      const progress = (y - c * 3) / Math.max(1, h - c * 7)
+      const halfSpan = c * 2 + progress * (w * 0.14)
+      for (const lx of lamps) {
+        const startX = Math.max(c, Math.floor((lx - halfSpan) / c) * c)
+        const endX = Math.min(w - c * 2, Math.ceil((lx + halfSpan) / c) * c)
+        for (let x = startX; x <= endX; x += c) {
+          const gx = (x / c) | 0
+          const gy = (y / c) | 0
+          // Sparse dither near the bottom, denser near the lamp
+          const mask = progress < 0.45 ? (gx + gy) % 2 === 0 : gx % 2 === 0 && gy % 2 === 0
+          if (mask) ctx.fillRect(x, y, c - 1, c - 1)
+        }
+      }
+    }
+  }
+
+  /** Pixelated lamp hoods mounted along the top bezel. */
+  private lampsFixture(
+    ctx: CanvasRenderingContext2D,
+    w: number,
+    s: SceneColors,
+    night: boolean,
+  ): void {
+    const c = this.cell
+    const lamps = this.lampPositions(w).map((x) => Math.round(x / c) * c)
+    for (const lx of lamps) {
+      ctx.fillStyle = s.ink
+      for (let dx = -c * 3; dx <= c * 3; dx += c) {
+        ctx.fillRect(lx + dx, c, c - 1, c - 1)
+      }
+      if (night) {
+        for (let dx = -c * 2; dx <= c * 2; dx += c) {
+          ctx.fillRect(lx + dx, c * 2, c - 1, c - 1)
+        }
+      }
+    }
+  }
+
+  /** The unlit dots of the panel, faintly visible the way real LCDs are. */
+  private dotGrid(ctx: CanvasRenderingContext2D, w: number, h: number, s: SceneColors): void {
+    const c = this.cell
+    ctx.fillStyle = s.decor
     for (let y = 0; y < h; y += c) {
       for (let x = 0; x < w; x += c) ctx.fillRect(x, y, c - 1, c - 1)
     }
   }
 
-  private waterline(ctx: CanvasRenderingContext2D, w: number, t: number): void {
+  private waterline(ctx: CanvasRenderingContext2D, w: number, t: number, s: SceneColors): void {
     const c = this.cell
-    ctx.fillStyle = this.manifest.scene.ink
+    ctx.fillStyle = s.ink
     for (let x = 0; x < w; x += c) {
       const y = Math.round((6 + Math.sin(x * 0.05 + t) * 2) / c) * c
       ctx.fillRect(x, y + c * 2, c - 1, c - 1)
     }
   }
 
-  private floor(ctx: CanvasRenderingContext2D, w: number, h: number): void {
+  private floor(ctx: CanvasRenderingContext2D, w: number, h: number, s: SceneColors): void {
     const c = this.cell
-    ctx.fillStyle = this.manifest.scene.sand
+    ctx.fillStyle = s.sand
     const rows = 3
     for (let r = 0; r < rows; r++) {
       const y = h - c * (r + 2)
@@ -78,7 +133,13 @@ export class LcdRenderer implements Renderer {
     }
   }
 
-  private decorNode(ctx: CanvasRenderingContext2D, node: DecorNode, tankH: number, t: number): void {
+  private decorNode(
+    ctx: CanvasRenderingContext2D,
+    node: DecorNode,
+    tankH: number,
+    t: number,
+    s: SceneColors,
+  ): void {
     const c = this.cell
     const floorY = Math.round((tankH - c * 4) / c) * c
     const bx = Math.round(node.x / c) * c
@@ -87,7 +148,7 @@ export class LcdRenderer implements Renderer {
     if (node.active) {
       const hw = Math.ceil(node.item.width / 2 / c) * c + c
       const hh = Math.ceil(node.item.height / c) * c + c
-      ctx.fillStyle = this.manifest.scene.ink
+      ctx.fillStyle = s.ink
       for (let x = -hw; x <= hw; x += c * 2) {
         ctx.fillRect(x, -hh, c - 1, c - 1)
         ctx.fillRect(x, 0, c - 1, c - 1)
@@ -98,7 +159,7 @@ export class LcdRenderer implements Renderer {
       }
     }
     ctx.scale(node.flip, 1)
-    this.drawDecor(ctx, node.item, node.item.width, node.item.height, t)
+    this.drawDecor(ctx, node.item, node.item.width, node.item.height, t, s)
     ctx.restore()
   }
 
@@ -107,10 +168,12 @@ export class LcdRenderer implements Renderer {
     const scale = Math.min((w * 0.72) / item.width, (h * 0.82) / item.height)
     const dw = item.width * scale
     const dh = item.height * scale
+    const night = document.documentElement.dataset.mode !== 'light'
+    const s = sceneColorsFor(this.manifest, night)
     ctx.save()
     if (req.dim) ctx.globalAlpha = 0.4
     ctx.translate(Math.round(w / 2), Math.round(h - (h - dh) / 2))
-    this.drawDecor(ctx, item, dw, dh, 0)
+    this.drawDecor(ctx, item, dw, dh, 0, s)
     ctx.restore()
   }
 
@@ -120,6 +183,7 @@ export class LcdRenderer implements Renderer {
     w: number,
     h: number,
     t: number,
+    s: SceneColors,
   ): void {
     const sprite = spriteFor(this.manifest, `decor-${item.id}`)
     if (sprite) {
@@ -149,26 +213,25 @@ export class LcdRenderer implements Renderer {
 
         const checker = (((gx / c) | 0) + ((gy / c) | 0)) % 2 === 0
         if (inDetail) {
-          // Detail contrasts with primary via inverted checker or accent ink
           if (checker) {
-            ctx.fillStyle = this.manifest.scene.waterTop
+            ctx.fillStyle = s.waterTop
             ctx.fillRect(gx, gy, c - 1, c - 1)
           } else {
-            ctx.fillStyle = this.manifest.scene.ink
+            ctx.fillStyle = s.ink
             ctx.fillRect(gx, gy, c - 1, c - 1)
           }
         } else if (inPrimary) {
-          ctx.fillStyle = this.manifest.scene.ink
+          ctx.fillStyle = s.ink
           ctx.fillRect(gx, gy, c - 1, c - 1)
         } else if (inSecondary && checker) {
-          ctx.fillStyle = this.manifest.scene.accent
+          ctx.fillStyle = s.accent
           ctx.fillRect(gx, gy, c - 1, c - 1)
         }
       }
     }
   }
 
-  private agent(ctx: CanvasRenderingContext2D, a: Agent, t: number): void {
+  private agent(ctx: CanvasRenderingContext2D, a: Agent, t: number, s: SceneColors): void {
     const len = a.species.body.length * 4.2 * a.scale
     const c = this.cell
     const x = Math.round((a.x - len / 2) / c) * c
@@ -179,16 +242,18 @@ export class LcdRenderer implements Renderer {
       ctx.translate(len, 0)
       ctx.scale(-1, 1)
     }
-    this.body(ctx, a.species.body, len, a.fish.grade, a.fish.tier, a.fish.speciesId)
+    this.body(ctx, a.species.body, len, a.fish.grade, a.fish.tier, a.fish.speciesId, s)
     ctx.restore()
   }
 
   portrait(ctx: CanvasRenderingContext2D, w: number, h: number, req: PortraitRequest): void {
     const len = Math.min(w * 0.86, h * 1.65)
+    const night = document.documentElement.dataset.mode !== 'light'
+    const s = sceneColorsFor(this.manifest, night)
     ctx.save()
     if (req.dim) ctx.globalAlpha = 0.4
     ctx.translate(Math.round((w - len) / 2), Math.round(h / 2))
-    this.body(ctx, req.species.body, len, req.grade, req.tier, req.species.id)
+    this.body(ctx, req.species.body, len, req.grade, req.tier, req.species.id, s)
     ctx.restore()
   }
 
@@ -199,6 +264,7 @@ export class LcdRenderer implements Renderer {
     grade: Grade,
     tier: Tier,
     speciesId: string,
+    s: SceneColors,
   ): void {
     const height = len * bodyShape.depth
     const sprite = spriteFor(this.manifest, speciesId)
@@ -210,7 +276,7 @@ export class LcdRenderer implements Renderer {
 
     const c = this.cell
     const { path } = fishPath(bodyShape, len)
-    const ink = this.manifest.scene.ink
+    const ink = s.ink
     const bands = patternBands(bodyShape, len)
     const spots = patternSpots(bodyShape, len, hashString(speciesId))
 
@@ -222,7 +288,7 @@ export class LcdRenderer implements Renderer {
         if (!probe.isPointInPath(path, cx, cy)) continue
 
         const onBand = bands.some((b) => Math.abs(cx - b.x) <= b.w / 2)
-        const onSpot = spots.some((s) => Math.hypot(cx - s.x, cy - s.y) <= s.r)
+        const onSpot = spots.some((sp) => Math.hypot(cx - sp.x, cy - sp.y) <= sp.r)
         const checker = (((gx / c) | 0) + ((gy / c) | 0)) % 2 === 0
         const hollow = (onBand || onSpot) && checker
         const interiorOnly = tier <= 1 && !this.isEdge(path, cx, cy, c)
@@ -233,14 +299,14 @@ export class LcdRenderer implements Renderer {
     }
 
     if (grade > 1) {
-      ctx.fillStyle = this.manifest.scene.accent
+      ctx.fillStyle = s.accent
       for (let i = 0; i < grade - 1; i++) {
         ctx.fillRect(len * 0.3 + i * c * 1.5, -height * 0.1, c - 1, c - 1)
       }
     }
 
     const eye = eyeAt(bodyShape, len)
-    ctx.fillStyle = this.manifest.scene.waterTop
+    ctx.fillStyle = s.waterTop
     ctx.fillRect(Math.round(eye.x / c) * c, Math.round(eye.y / c) * c, c - 1, c - 1)
   }
 

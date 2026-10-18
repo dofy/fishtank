@@ -16,6 +16,13 @@ export function load(now = Date.now()): GameState {
     if (parsed.locale !== 'zh' && parsed.locale !== 'en') {
       parsed.locale = detectLocale()
     }
+    if (
+      parsed.colorMode !== 'auto' &&
+      parsed.colorMode !== 'light' &&
+      parsed.colorMode !== 'dark'
+    ) {
+      parsed.colorMode = 'auto'
+    }
 
     parsed.fish = parsed.fish.filter((f) => f && hasSpecies(f.speciesId))
     parsed.discovered = Array.isArray(parsed.discovered)

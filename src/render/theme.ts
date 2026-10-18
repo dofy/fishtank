@@ -1,3 +1,15 @@
+import type { ColorMode } from '../core/types'
+
+export interface SceneColors {
+  waterTop: string
+  waterBottom: string
+  sand: string
+  ink: string
+  accent: string
+  /** Drawn behind the fish: plants, rocks, bubbles. */
+  decor: string
+}
+
 /**
  * A theme is a folder under public/themes/<id>/ holding a manifest, a CSS
  * variable block and optional PNG overrides. Swapping the art direction of
@@ -12,18 +24,14 @@ export interface ThemeManifest {
   pixelated: boolean
   /** Dot pitch in CSS pixels. Only the lcd renderer reads it. */
   cell?: number
-  /** CSS custom properties applied to :root. */
+  /** CSS custom properties applied to :root in dark/night mode. */
   palette: Record<string, string>
-  /** Scene colours consumed by the canvas renderers. */
-  scene: {
-    waterTop: string
-    waterBottom: string
-    sand: string
-    ink: string
-    accent: string
-    /** Drawn behind the fish: plants, rocks, bubbles. */
-    decor: string
-  }
+  /** Optional CSS custom properties applied to :root in light/day mode. */
+  lightPalette?: Record<string, string>
+  /** Scene colours consumed by the canvas renderers in dark/night mode. */
+  scene: SceneColors
+  /** Optional scene colours consumed by the canvas renderers in light/day mode. */
+  lightScene?: SceneColors
   /** Relative directory holding optional per-species PNG overrides. */
   spriteDir?: string
 }
@@ -40,12 +48,32 @@ export async function loadTheme(id: string): Promise<ThemeManifest> {
   return manifest
 }
 
-export function applyTheme(manifest: ThemeManifest): void {
+export function resolveDarkMode(mode: ColorMode = 'auto'): boolean {
+  if (mode === 'dark') return true
+  if (mode === 'light') return false
+  if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)')
+    if (mq.matches) return true
+    const mqLight = window.matchMedia('(prefers-color-scheme: light)')
+    if (mqLight.matches) return false
+  }
+  const hour = new Date().getHours()
+  return hour < 6 || hour >= 19
+}
+
+export function sceneColorsFor(manifest: ThemeManifest, night: boolean): SceneColors {
+  if (!night && manifest.lightScene) return manifest.lightScene
+  return manifest.scene
+}
+
+export function applyTheme(manifest: ThemeManifest, night = true): void {
   const root = document.documentElement
-  for (const [key, value] of Object.entries(manifest.palette)) {
+  const palette = !night && manifest.lightPalette ? manifest.lightPalette : manifest.palette
+  for (const [key, value] of Object.entries(palette)) {
     root.style.setProperty(key.startsWith('--') ? key : `--${key}`, value)
   }
   root.dataset.theme = manifest.id
+  root.dataset.mode = night ? 'dark' : 'light'
   root.dataset.pixelated = manifest.pixelated ? 'on' : 'off'
 }
 

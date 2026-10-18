@@ -2,15 +2,16 @@ import type { DecorItem, Grade, Tier } from '../core/types'
 import type { DecorPortraitRequest, PortraitRequest, Renderer } from './renderer'
 import type { Agent, DecorNode, SceneView } from './scene'
 import { decorLayers, eyeAt, fishPath, hashString, patternBands, patternSpots } from './shape'
-import { spriteFor, type ThemeManifest } from './theme'
+import { type SceneColors, type ThemeManifest, sceneColorsFor, spriteFor } from './theme'
 
-/** Soft-shaded reef look: gradients, caustics, drifting bubbles. */
+/** Soft-shaded reef look: gradients, caustics, drifting bubbles, and night decorative lamps. */
 export class RealisticRenderer implements Renderer {
   constructor(readonly manifest: ThemeManifest) {}
 
   scene(ctx: CanvasRenderingContext2D, view: SceneView): void {
     const { width: w, height: h } = view
-    const s = this.manifest.scene
+    const night = Boolean(view.night)
+    const s = sceneColorsFor(this.manifest, night)
 
     const water = ctx.createLinearGradient(0, 0, 0, h)
     water.addColorStop(0, s.waterTop)
@@ -18,24 +19,121 @@ export class RealisticRenderer implements Renderer {
     ctx.fillStyle = water
     ctx.fillRect(0, 0, w, h)
 
-    this.caustics(ctx, w, h, view.time)
-    this.sandFloor(ctx, w, h)
+    if (night) {
+      this.lampLightCones(ctx, w, h, view.time)
+    }
+    this.caustics(ctx, w, h, view.time, night)
+    this.sandFloor(ctx, w, h, s, night)
 
-    for (const d of view.decors) this.decorNode(ctx, d, h, view.time)
+    for (const d of view.decors) this.decorNode(ctx, d, h, view.time, s, night)
     for (const a of view.agents) this.agent(ctx, a, view.time)
 
     this.bubbles(ctx, w, h, view.time)
+    this.lampsFixture(ctx, w, night)
 
     // Glass edge, so the tank reads as a container.
-    ctx.strokeStyle = 'rgba(255,255,255,0.22)'
+    ctx.strokeStyle = night ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.38)'
     ctx.lineWidth = 2
     ctx.strokeRect(1, 1, w - 2, h - 2)
   }
 
-  private caustics(ctx: CanvasRenderingContext2D, w: number, h: number, t: number): void {
+  private lampPositions(w: number): number[] {
+    if (w < 380) return [w * 0.28, w * 0.72]
+    return [w * 0.22, w * 0.5, w * 0.78]
+  }
+
+  /** Volumetric decorative light cones cast into the water when night mode is active. */
+  private lampLightCones(ctx: CanvasRenderingContext2D, w: number, h: number, t: number): void {
+    const lamps = this.lampPositions(w)
+    const beamColors: [string, string][] = [
+      ['rgba(254, 240, 138, 0.26)', 'rgba(56, 189, 248, 0.08)'],
+      ['rgba(125, 211, 252, 0.26)', 'rgba(167, 139, 250, 0.08)'],
+      ['rgba(254, 240, 138, 0.26)', 'rgba(56, 189, 248, 0.08)'],
+    ]
+
     ctx.save()
-    ctx.globalAlpha = 0.12
-    ctx.strokeStyle = '#ffffff'
+    ctx.globalCompositeOperation = 'screen'
+    for (const [idx, lx] of lamps.entries()) {
+      const sway = Math.sin(t * 0.7 + idx * 1.4) * 14
+      const topHalf = 14
+      const botHalf = Math.max(75, w * 0.18)
+      const [c0, c1] = beamColors[idx % beamColors.length]!
+
+      const cone = ctx.createLinearGradient(lx, 8, lx + sway, h - 10)
+      cone.addColorStop(0, c0)
+      cone.addColorStop(0.55, c1)
+      cone.addColorStop(1, 'rgba(0, 0, 0, 0)')
+
+      ctx.fillStyle = cone
+      ctx.beginPath()
+      ctx.moveTo(lx - topHalf, 8)
+      ctx.lineTo(lx + topHalf, 8)
+      ctx.lineTo(lx + botHalf + sway, h)
+      ctx.lineTo(lx - botHalf + sway, h)
+      ctx.closePath()
+      ctx.fill()
+
+      // Warm halo right under the bulb
+      const halo = ctx.createRadialGradient(lx, 12, 2, lx, 16, 46)
+      halo.addColorStop(0, 'rgba(254, 249, 195, 0.55)')
+      halo.addColorStop(0.5, 'rgba(56, 189, 248, 0.16)')
+      halo.addColorStop(1, 'rgba(0, 0, 0, 0)')
+      ctx.fillStyle = halo
+      ctx.beginPath()
+      ctx.arc(lx, 12, 46, 0, Math.PI * 2)
+      ctx.fill()
+    }
+    ctx.restore()
+  }
+
+  /** Top aquarium decorative light bar & pendant bulbs (present in day & night, lit at night). */
+  private lampsFixture(ctx: CanvasRenderingContext2D, w: number, night: boolean): void {
+    const lamps = this.lampPositions(w)
+    ctx.save()
+
+    // Top mounting rail
+    ctx.fillStyle = night ? '#112636' : '#234b61'
+    ctx.fillRect(12, 2, w - 24, 4)
+
+    for (const [idx, lx] of lamps.entries()) {
+      // Lamp hood
+      ctx.fillStyle = night ? '#1b394f' : '#2d5c75'
+      ctx.beginPath()
+      ctx.moveTo(lx - 18, 3)
+      ctx.lineTo(lx + 18, 3)
+      ctx.lineTo(lx + 13, 10)
+      ctx.lineTo(lx - 13, 10)
+      ctx.closePath()
+      ctx.fill()
+
+      // Bulb LED strip
+      if (night) {
+        const isWarm = idx % 2 === 0
+        ctx.save()
+        ctx.shadowColor = isWarm ? '#fde047' : '#38bdf8'
+        ctx.shadowBlur = 12
+        ctx.fillStyle = isWarm ? '#fef08a' : '#bae6fd'
+        ctx.fillRect(lx - 10, 8, 20, 3.5)
+        ctx.restore()
+      } else {
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.35)'
+        ctx.fillRect(lx - 10, 8, 20, 2.5)
+      }
+    }
+
+    ctx.restore()
+  }
+
+  private caustics(
+    ctx: CanvasRenderingContext2D,
+    w: number,
+    h: number,
+    t: number,
+    night: boolean,
+  ): void {
+    ctx.save()
+    ctx.globalAlpha = night ? 0.08 : 0.15
+    ctx.strokeStyle = night ? '#7dd3fc' : '#ffffff'
     ctx.lineWidth = 2
     for (let i = 0; i < 7; i++) {
       ctx.beginPath()
@@ -50,8 +148,13 @@ export class RealisticRenderer implements Renderer {
     ctx.restore()
   }
 
-  private sandFloor(ctx: CanvasRenderingContext2D, w: number, h: number): void {
-    const s = this.manifest.scene
+  private sandFloor(
+    ctx: CanvasRenderingContext2D,
+    w: number,
+    h: number,
+    s: SceneColors,
+    night: boolean,
+  ): void {
     ctx.fillStyle = s.sand
     ctx.beginPath()
     ctx.moveTo(0, h)
@@ -60,15 +163,35 @@ export class RealisticRenderer implements Renderer {
     ctx.lineTo(w, h)
     ctx.closePath()
     ctx.fill()
+
+    // Soft light pools on the sand floor under each decorative lamp at night
+    if (night) {
+      ctx.save()
+      for (const lx of this.lampPositions(w)) {
+        const pool = ctx.createRadialGradient(lx, h - 10, 4, lx, h - 10, 68)
+        pool.addColorStop(0, 'rgba(254, 240, 138, 0.28)')
+        pool.addColorStop(1, 'rgba(254, 240, 138, 0)')
+        ctx.fillStyle = pool
+        ctx.fillRect(lx - 70, h - 24, 140, 24)
+      }
+      ctx.restore()
+    }
   }
 
-  private decorNode(ctx: CanvasRenderingContext2D, node: DecorNode, tankH: number, t: number): void {
+  private decorNode(
+    ctx: CanvasRenderingContext2D,
+    node: DecorNode,
+    tankH: number,
+    t: number,
+    s: SceneColors,
+    night: boolean,
+  ): void {
     const floorY = tankH - 14
     ctx.save()
     ctx.translate(node.x, floorY)
     if (node.active) {
       ctx.save()
-      ctx.strokeStyle = this.manifest.scene.accent
+      ctx.strokeStyle = s.accent
       ctx.lineWidth = 2
       ctx.setLineDash([4, 3])
       ctx.strokeRect(
@@ -80,7 +203,7 @@ export class RealisticRenderer implements Renderer {
       ctx.restore()
     }
     ctx.scale(node.flip, 1)
-    this.drawDecor(ctx, node.item, node.item.width, node.item.height, t)
+    this.drawDecor(ctx, node.item, node.item.width, node.item.height, t, night)
     ctx.restore()
   }
 
@@ -89,10 +212,11 @@ export class RealisticRenderer implements Renderer {
     const scale = Math.min((w * 0.72) / item.width, (h * 0.82) / item.height)
     const dw = item.width * scale
     const dh = item.height * scale
+    const night = document.documentElement.dataset.mode !== 'light'
     ctx.save()
     if (req.dim) ctx.globalAlpha = 0.35
     ctx.translate(w / 2, h - (h - dh) / 2)
-    this.drawDecor(ctx, item, dw, dh, 0)
+    this.drawDecor(ctx, item, dw, dh, 0, night)
     ctx.restore()
   }
 
@@ -102,6 +226,7 @@ export class RealisticRenderer implements Renderer {
     w: number,
     h: number,
     t: number,
+    night = false,
   ): void {
     const sprite = spriteFor(this.manifest, `decor-${item.id}`)
     if (sprite) {
@@ -113,7 +238,7 @@ export class RealisticRenderer implements Renderer {
     const primaryTop = `hsl(${item.hue} ${item.sat * 100}% ${Math.min(82, item.light * 115)}%)`
     const primaryBot = `hsl(${item.hue} ${item.sat * 100}% ${Math.max(18, item.light * 75)}%)`
     const secondaryFill = `hsl(${item.hue} ${Math.max(10, item.sat * 75)}% ${Math.max(14, item.light * 65)}%)`
-    const detailFill = `hsl(${(item.hue + 38) % 360} 85% 74%)`
+    const detailFill = `hsl(${(item.hue + 38) % 360} 90% ${night ? 78 : 72}%)`
 
     ctx.save()
     ctx.shadowColor = 'rgba(0,0,0,0.28)'
@@ -123,15 +248,23 @@ export class RealisticRenderer implements Renderer {
     for (const layer of layers) {
       if (layer.role === 'secondary') {
         ctx.fillStyle = secondaryFill
+        ctx.fill(layer.path)
       } else if (layer.role === 'primary') {
         const grad = ctx.createLinearGradient(0, -h, 0, 0)
         grad.addColorStop(0, primaryTop)
         grad.addColorStop(1, primaryBot)
         ctx.fillStyle = grad
+        ctx.fill(layer.path)
       } else {
+        ctx.save()
+        if (night) {
+          ctx.shadowColor = detailFill
+          ctx.shadowBlur = 8
+        }
         ctx.fillStyle = detailFill
+        ctx.fill(layer.path)
+        ctx.restore()
       }
-      ctx.fill(layer.path)
     }
     ctx.restore()
   }

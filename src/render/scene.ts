@@ -34,6 +34,8 @@ export interface SceneView {
   decors: DecorNode[]
   /** Seconds since start, for idle motion. */
   time: number
+  /** True in dark/night mode, turning on the aquarium decorative lamps. */
+  night?: boolean
 }
 
 /** Swimming state lives outside the save: it is scenery, not progress. */
@@ -112,7 +114,7 @@ export class Scene {
     }
   }
 
-  view(width: number, height: number, time: number): SceneView {
-    return { width, height, agents: [...this.agents.values()], decors: this.decors, time }
+  view(width: number, height: number, time: number, night = true): SceneView {
+    return { width, height, agents: [...this.agents.values()], decors: this.decors, time, night }
   }
 }

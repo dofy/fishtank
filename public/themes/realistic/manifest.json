@@ -5,9 +5,9 @@
   "pixelated": false,
   "spriteDir": "sprites/",
   "palette": {
-    "--bg": "#071722",
-    "--panel": "#0e2634",
-    "--panel-2": "#143244",
+    "--bg": "#06131d",
+    "--panel": "#0c2230",
+    "--panel-2": "#133042",
     "--border": "#1f4a60",
     "--text": "#e8f4f8",
     "--muted": "#8fb2c0",
@@ -18,12 +18,34 @@
     "--font": "ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif",
     "--cell-bg": "rgba(255,255,255,0.04)"
   },
+  "lightPalette": {
+    "--bg": "#e4f2f7",
+    "--panel": "#f5fbfd",
+    "--panel-2": "#d7edf5",
+    "--border": "#9fc5d6",
+    "--text": "#0d2b3a",
+    "--muted": "#4b7285",
+    "--accent": "#0d9488",
+    "--accent-2": "#d97706",
+    "--danger": "#dc2626",
+    "--radius": "10px",
+    "--font": "ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif",
+    "--cell-bg": "rgba(13,43,58,0.045)"
+  },
   "scene": {
-    "waterTop": "#1b5e78",
-    "waterBottom": "#062330",
-    "sand": "#c8ab7a",
-    "ink": "#06141c",
+    "waterTop": "#0b2d3d",
+    "waterBottom": "#031018",
+    "sand": "#8a724d",
+    "ink": "#041016",
     "accent": "#4fd1c5",
-    "decor": "#2f7d55"
+    "decor": "#236443"
+  },
+  "lightScene": {
+    "waterTop": "#3aa6c9",
+    "waterBottom": "#0f4c68",
+    "sand": "#dec292",
+    "ink": "#06141c",
+    "accent": "#38bdf8",
+    "decor": "#2f855a"
   }
 }

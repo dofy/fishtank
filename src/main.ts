@@ -1,12 +1,18 @@
 import { moveDecor, newGame, tick } from './core/game'
 import { load, save, wipe } from './core/save'
 import { species } from './core/species'
-import type { DecorId, Locale } from './core/types'
+import type { ColorMode, DecorId, Locale } from './core/types'
 import { LcdRenderer } from './render/lcd'
 import { RealisticRenderer } from './render/realistic'
 import type { Renderer } from './render/renderer'
 import { Scene } from './render/scene'
-import { type ThemeManifest, applyTheme, loadTheme, onSpriteLoad } from './render/theme'
+import {
+  type ThemeManifest,
+  applyTheme,
+  loadTheme,
+  onSpriteLoad,
+  resolveDarkMode,
+} from './render/theme'
 import { App } from './ui/app'
 import './ui/styles.css'
 
@@ -38,7 +44,8 @@ async function main(): Promise<void> {
   let state = load(Date.now())
   let manifest = await safeLoadTheme(state.theme)
   state.theme = manifest.id
-  applyTheme(manifest)
+  let night = resolveDarkMode(state.colorMode ?? 'auto')
+  applyTheme(manifest, night)
 
   let renderer = makeRenderer(manifest)
   const scene = new Scene()
@@ -49,9 +56,17 @@ async function main(): Promise<void> {
       const next = await safeLoadTheme(id)
       manifest = next
       state.theme = next.id
-      applyTheme(next)
+      night = resolveDarkMode(state.colorMode ?? 'auto')
+      applyTheme(next, night)
       renderer = makeRenderer(next)
       app.setRenderer(renderer)
+      save(state)
+    },
+    onColorModeChange: (mode: ColorMode) => {
+      state.colorMode = mode
+      night = resolveDarkMode(mode)
+      applyTheme(manifest, night)
+      app.invalidatePortraits()
       save(state)
     },
     onLocaleChange: (locale: Locale) => {
@@ -64,17 +79,32 @@ async function main(): Promise<void> {
     },
     onReset: () => {
       const currentLocale = state.locale
+      const currentColorMode = state.colorMode ?? 'auto'
       wipe()
       state = newGame(Date.now(), currentLocale)
       state.theme = manifest.id
+      state.colorMode = currentColorMode
+      night = resolveDarkMode(currentColorMode)
+      applyTheme(manifest, night)
       app.setState(state)
-      app.render(Date.now())
+      app.invalidatePortraits()
       save(state)
     },
   })
 
   app.mount(root)
   onSpriteLoad(() => app.invalidatePortraits())
+
+  if (typeof window.matchMedia === 'function') {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)')
+    mq.addEventListener('change', () => {
+      if ((state.colorMode ?? 'auto') === 'auto') {
+        night = resolveDarkMode('auto')
+        applyTheme(manifest, night)
+        app.invalidatePortraits()
+      }
+    })
+  }
 
   const ctx = app.canvas.getContext('2d')
   if (!ctx) throw new Error('2D canvas context unavailable')
@@ -172,13 +202,14 @@ async function main(): Promise<void> {
     lastMs = nowMs
     const elapsed = (nowMs - startMs) / 1000
     const wallNow = Date.now()
+    night = resolveDarkMode(state.colorMode ?? 'auto')
 
     scene.sync(state, species, cssWidth, cssHeight, wallNow)
     scene.update(dt, cssWidth, cssHeight, elapsed)
 
     ctx.save()
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-    renderer.scene(ctx, scene.view(cssWidth, cssHeight, elapsed))
+    renderer.scene(ctx, scene.view(cssWidth, cssHeight, elapsed, night))
     ctx.restore()
 
     requestAnimationFrame(frame)
