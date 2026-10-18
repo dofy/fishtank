@@ -305,9 +305,11 @@ export class LcdRenderer implements Renderer {
       }
     }
 
-    const eye = eyeAt(bodyShape, len)
-    ctx.fillStyle = s.waterTop
-    ctx.fillRect(Math.round(eye.x / c) * c, Math.round(eye.y / c) * c, c - 1, c - 1)
+    if (bodyShape.form !== 'jellyfish') {
+      const eye = eyeAt(bodyShape, len)
+      ctx.fillStyle = s.waterTop
+      ctx.fillRect(Math.round(eye.x / c) * c, Math.round(eye.y / c) * c, c - 1, c - 1)
+    }
   }
 
   /** True when a neighbouring sample falls outside the body. */

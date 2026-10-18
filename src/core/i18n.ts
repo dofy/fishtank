@@ -17,18 +17,26 @@ const SPECIES_ZH: Record<SpeciesId, string> = {
   mossback: '苔背小精灵',
   sapphiredamsel: '蓝宝石雀鲷',
   banggai: '邦盖天竺鲷',
+  moonjelly: '海月水母',
   goldbutterfly: '黄金蝶鱼',
   neonstreak: '霓虹灯鱼',
   blushingfire: '绯红雷达鱼',
   creampuff: '奶油河豚',
+  coralseahorse: '珊瑚海马',
+  bandedkrait: '环纹海蛇',
   royalgoldtail: '皇家金尾鲷',
   skywing: '天翼飞鱼',
   emberbarb: '余烬虎皮鱼',
+  volteel: '蓝弧电鳗',
+  crystaljelly: '樱花水晶水母',
   goldenmoorish: '黄金神像鱼',
-  voidray: '虚空鳐',
-  auroraeel: '极光鳗',
+  voidray: '虚空魔鬼鳐',
+  auroraeel: '极光彩带鳗',
+  goldenseahorse: '黄金海马',
+  jadeturtle: '翡翠海龟',
   prismkoi: '棱镜锦鲤',
-  leviathanfry: '利维坦幼体',
+  leviathanfry: '利维坦海龙',
+  astraljelly: '星冕帝王水母',
 }
 
 const DECOR_ZH: Record<DecorId, string> = {
@@ -176,6 +184,16 @@ export interface Copy {
   decorLockedMsg: (name: string, lv: number) => string
   decorNote: string
   bookHeading: string
+  bookOwnedBadge: (count: number) => string
+  bookCompletion: (pct: string) => string
+  bookVariantsTitle: string
+  bookSpecimensTitle: (count: number) => string
+  bookNoSpecimens: string
+  bookPlaceAction: string
+  bookStoreAction: string
+  bookGoBreedAction: string
+  bookGoMergeAction: string
+  bookVariantRate: (unlocked: number, total: number, pct: number) => string
   bookLockedMsg: (tierStr: string) => string
   settingsThemeHeading: string
   settingsThemeNote: string
@@ -308,6 +326,16 @@ const ZH: Copy = {
   decorNote:
     '随着鱼缸等级提升（Lv.1–Lv.10），每升一级都会解锁新的海底装饰品。点击已解锁的装饰卡片可放入或收起；放入后直接在上方鱼缸底部按住装饰品左右拖动即可随意摆放位置！',
   bookHeading: '生物图鉴',
+  bookOwnedBadge: (count) => `持有 x${count}`,
+  bookCompletion: (pct) => `图鉴完成度：${pct}%`,
+  bookVariantsTitle: '品阶变种图鉴（点击切换预览）',
+  bookSpecimensTitle: (count) => `当前持有个体：x${count}`,
+  bookNoSpecimens: '当前背包中暂无该鱼种个体（可通过繁殖或合成再次获得）。',
+  bookPlaceAction: '放置',
+  bookStoreAction: '收回',
+  bookGoBreedAction: '去繁殖',
+  bookGoMergeAction: '去合成',
+  bookVariantRate: (u, t, pct) => `变种发现率：${pct}% (${u}/${t})`,
   bookLockedMsg: (tierStr) => `该鱼种（${tierStr}）尚未解锁，可通过繁殖或合成发现新品种！`,
   settingsThemeHeading: '画面风格（支持素材替换）',
   settingsThemeNote:
@@ -467,6 +495,16 @@ const EN: Copy = {
   decorNote:
     'New decorations unlock at every aquarium level (Lv.1–Lv.10). Click an unlocked card to place or store it, and drag placed decorations directly along the bottom of the tank canvas!',
   bookHeading: 'Collection',
+  bookOwnedBadge: (count) => `Owned x${count}`,
+  bookCompletion: (pct) => `Catalog Completion: ${pct}%`,
+  bookVariantsTitle: 'Grade Variants (Click to preview)',
+  bookSpecimensTitle: (count) => `Owned Specimens: x${count}`,
+  bookNoSpecimens: 'No specimens currently in inventory.',
+  bookPlaceAction: 'Place',
+  bookStoreAction: 'Store',
+  bookGoBreedAction: 'Breed',
+  bookGoMergeAction: 'Merge',
+  bookVariantRate: (u, t, pct) => `Variant Discovery: ${pct}% (${u}/${t})`,
   bookLockedMsg: (tierStr) => `Undiscovered ${tierStr} species. Breed or merge fish to unlock it!`,
   settingsThemeHeading: 'Art theme',
   settingsThemeNote:

@@ -543,6 +543,153 @@ button.check-row.tier-4 .check-label { color: #c084fc; font-weight: 600; }
   color: var(--text);
 }
 
+.book-count {
+  position: absolute;
+  top: 4px;
+  left: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text);
+  pointer-events: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.book-layout {
+  display: grid;
+  gap: 12px;
+  align-items: start;
+}
+
+.book-layout.with-detail {
+  grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
+}
+
+.book-detail {
+  background: var(--cell-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.book-detail-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.book-detail-name {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+button.book-close-btn {
+  padding: 3px 8px;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.book-preview {
+  display: grid;
+  place-items: center;
+  padding: 6px 0;
+  background: rgba(0, 0, 0, 0.14);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.book-preview-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  text-align: center;
+}
+
+.book-detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+
+.book-detail-actions > button {
+  flex: 1 1 80px;
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+.variant-strip {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 5px;
+}
+
+button.variant-chip {
+  padding: 4px 2px;
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  background: var(--cell-bg);
+}
+
+button.variant-chip canvas {
+  width: 100% !important;
+  height: auto !important;
+  max-width: 56px;
+  pointer-events: none;
+}
+
+button.variant-chip .meta {
+  font-size: 10px;
+  pointer-events: none;
+}
+
+button.variant-chip.locked {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.specimen-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  max-height: 196px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.specimen-grid .cell {
+  padding: 5px 4px;
+}
+
+.specimen-grid .cell-art {
+  width: 72px;
+  height: 40px;
+  margin-top: 6px;
+}
+
+.specimen-grid .cell-art canvas {
+  width: 72px !important;
+  height: 40px !important;
+}
+
+.specimen-grid .cell .name {
+  display: none;
+}
+
+.book-detail-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+}
+
 table.odds { border-collapse: collapse; font-size: 12px; width: 100%; }
 table.odds th, table.odds td { border: 1px solid var(--border); padding: 4px 6px; text-align: right; }
 table.odds th:first-child, table.odds td:first-child { text-align: left; }
@@ -1028,6 +1175,10 @@ button.check-row[aria-checked='true'] .check-dot {
 
   .filter-tiers {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .book-layout.with-detail {
+    grid-template-columns: 1fr;
   }
 
   table.odds {

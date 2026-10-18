@@ -12,6 +12,7 @@ import {
   capacity,
   collectionProgress,
   decorProgress,
+  discoveredGradesFor,
   filterMergeCandidates,
   flipDecor,
   isAdult,
@@ -49,6 +50,7 @@ import type {
   Grade,
   Locale,
   Species,
+  SpeciesId,
   Tier,
 } from '../core/types'
 import type { Renderer } from '../render/renderer'
@@ -126,6 +128,9 @@ export class App {
   private mergePick: string[] = []
   private confirmingReset = false
   private confirmingReleaseUid: string | null = null
+  private bookDetailSpeciesId: SpeciesId | null = null
+  private bookDetailGrade: Grade = 1
+  private bookSelectedUid: string | null = null
   private portraitCache = new Map<string, HTMLCanvasElement>()
   private showcase: ShowcaseState | null = null
   private showcaseCanvas: HTMLCanvasElement | null = null
@@ -171,6 +176,8 @@ export class App {
     this.mergePick = []
     this.confirmingReset = false
     this.confirmingReleaseUid = null
+    this.bookDetailSpeciesId = null
+    this.bookSelectedUid = null
     this.closeShowcase()
   }
 
@@ -424,7 +431,6 @@ export class App {
       grid.append(
         this.fishCell(fish, now, {
           selected: inTank,
-          inTankOverlay: inTank,
           onClick: () => {
             this.confirmingReleaseUid = null
             const res = toggleTankFish(this.state, fish.uid)
@@ -917,31 +923,260 @@ export class App {
 
   private bookPanel(): Node[] {
     const c = this.t
+    const out: Node[] = []
+
+    const totalVariants = SPECIES.length * 5
+    const unlockedVariants = SPECIES.reduce(
+      (sum, sp) => sum + discoveredGradesFor(this.state, sp.id).length,
+      0,
+    )
+    const pctStr = ((unlockedVariants / Math.max(1, totalVariants)) * 100).toFixed(1)
+
+    const headRow = document.createElement('div')
+    headRow.className = 'panel-head'
+    const prog = collectionProgress(this.state)
+    headRow.append(
+      heading(`${c.bookHeading} (${prog.owned} / ${prog.total})`),
+      label(c.bookCompletion(pctStr), 'sort-label'),
+    )
+    out.push(headRow)
+
+    const layout = document.createElement('div')
+    layout.className = `book-layout${this.bookDetailSpeciesId ? ' with-detail' : ''}`
+
+    if (this.bookDetailSpeciesId) {
+      const detailSp = SPECIES.find((s) => s.id === this.bookDetailSpeciesId)
+      if (detailSp && this.state.discovered.includes(detailSp.id)) {
+        layout.append(this.bookDetailView(detailSp))
+      } else {
+        this.bookDetailSpeciesId = null
+      }
+    }
+
     const grid = document.createElement('div')
-    grid.className = 'grid'
+    grid.className = 'grid book-grid'
     for (const sp of SPECIES) {
       const owned = this.state.discovered.includes(sp.id)
+      const ownedCopies = this.state.fish.filter((f) => f.speciesId === sp.id)
+      const bestOwnedGrade = ownedCopies.length
+        ? (Math.max(...ownedCopies.map((f) => f.grade)) as Grade)
+        : (Math.max(1, ...discoveredGradesFor(this.state, sp.id)) as Grade)
+      const isActive = this.bookDetailSpeciesId === sp.id
+
       const cell = document.createElement('div')
       cell.className = `cell${owned ? '' : ' locked'}`
+      cell.setAttribute('aria-pressed', String(isActive))
       cell.onclick = () => {
         if (owned) {
           sound.play('select')
-          this.say(
-            `${speciesName(sp.id, this.locale)} — ${stars(sp.tier)} ${tierName(sp.tier, this.locale)}`,
-          )
+          if (this.bookDetailSpeciesId === sp.id) {
+            this.bookDetailSpeciesId = null
+          } else {
+            this.bookDetailSpeciesId = sp.id
+            this.bookDetailGrade = bestOwnedGrade
+            this.bookSelectedUid = ownedCopies[0]?.uid ?? null
+          }
         } else {
           this.say(c.bookLockedMsg(`${stars(sp.tier)} ${tierName(sp.tier, this.locale)}`), 'bad')
         }
         this.render()
       }
+
+      if (owned) {
+        const countBadge = document.createElement('div')
+        countBadge.className = 'book-count'
+        countBadge.textContent = `x${ownedCopies.length}`
+        cell.append(countBadge)
+      }
+
       cell.append(
-        this.portrait(sp, sp.tier, owned ? 3 : 1, !owned),
+        this.portrait(sp, sp.tier, owned ? bestOwnedGrade : 1, !owned),
         label(owned ? speciesName(sp.id, this.locale) : '???', 'name'),
         this.tierMetaLine(sp.tier),
       )
       grid.append(cell)
     }
-    return [heading(c.bookHeading), grid]
+
+    layout.append(grid)
+    out.push(layout)
+    return out
+  }
+
+  private bookDetailView(sp: Species): HTMLElement {
+    const c = this.t
+    const now = Date.now()
+    const card = document.createElement('aside')
+    card.className = 'book-detail'
+
+    // Header: Species Name + Rarity Tier + Close X
+    const top = document.createElement('div')
+    top.className = 'book-detail-head'
+    const titles = document.createElement('div')
+    const nameEl = document.createElement('div')
+    nameEl.className = 'book-detail-name'
+    nameEl.textContent = speciesName(sp.id, this.locale)
+    const tierEl = this.tierMetaLine(sp.tier)
+    titles.append(nameEl, tierEl)
+
+    const closeBtn = makeButton('✕', () => {
+      sound.play('click')
+      this.bookDetailSpeciesId = null
+      this.render()
+    })
+    closeBtn.className = 'book-close-btn danger-confirm'
+    top.append(titles, closeBtn)
+
+    // Specimens of this species currently in inventory
+    const specimens = sortTankFish(
+      this.state.fish.filter((f) => f.speciesId === sp.id),
+      'grade',
+      new Set(syncTank(this.state)),
+    )
+    if (this.bookSelectedUid && !specimens.some((f) => f.uid === this.bookSelectedUid)) {
+      this.bookSelectedUid = specimens[0]?.uid ?? null
+    }
+    const activeSpecimen =
+      specimens.find((f) => f.uid === this.bookSelectedUid) ?? specimens[0] ?? null
+    const displayGrade = activeSpecimen ? activeSpecimen.grade : this.bookDetailGrade
+
+    // Large preview portrait
+    const previewWrap = document.createElement('div')
+    previewWrap.className = 'book-preview'
+    previewWrap.append(this.largePortrait(sp, sp.tier, displayGrade))
+
+    const previewMeta = document.createElement('div')
+    previewMeta.className = 'book-preview-meta'
+    if (activeSpecimen) {
+      const maxU = activeSpecimen.maxUses ?? USES_BY_TIER[activeSpecimen.tier]
+      const usesStr = activeSpecimen.tier === 0 ? '∞' : `${activeSpecimen.uses}/${maxU}`
+      previewMeta.append(
+        label(c.showcaseUsesLabel(usesStr), 'meta'),
+        this.tierMetaLine(activeSpecimen.tier, activeSpecimen.grade),
+      )
+    } else {
+      previewMeta.append(this.tierMetaLine(sp.tier, displayGrade))
+    }
+
+    // Action bar for the selected specimen (Place/Store + Quick Jump to Breed/Merge)
+    const actionsRow = document.createElement('div')
+    actionsRow.className = 'book-detail-actions'
+    if (activeSpecimen) {
+      const inTank = syncTank(this.state).includes(activeSpecimen.uid)
+      const cap = capacity(this.state)
+      const placeBtn = makeButton(inTank ? c.bookStoreAction : c.bookPlaceAction, () => {
+        const res = toggleTankFish(this.state, activeSpecimen.uid)
+        const name = speciesName(sp.id, this.locale)
+        const placedNow = syncTank(this.state).length
+        if (res === 'placed') {
+          sound.play('place')
+          this.hooks.onSave()
+          this.say(c.placedMsg(name, placedNow, cap), 'good')
+        } else if (res === 'removed') {
+          sound.play('select')
+          this.hooks.onSave()
+          this.say(c.removedFromTankMsg(name, placedNow, cap))
+        } else {
+          this.say(c.tankDisplayFullMsg(cap), 'bad')
+        }
+        this.render()
+      })
+      placeBtn.className = 'btn-primary'
+      actionsRow.append(placeBtn)
+
+      if (activeSpecimen.tier === 0 || activeSpecimen.uses > 0) {
+        const goBreed = makeButton(c.bookGoBreedAction, () => {
+          sound.play('click')
+          this.tab = 'breed'
+          if (isAdult(activeSpecimen, now) && !this.breedPick.includes(activeSpecimen.uid)) {
+            this.breedPick = [...this.breedPick, activeSpecimen.uid].slice(-2)
+          }
+          this.render()
+        })
+        goBreed.className = 'btn-secondary'
+        actionsRow.append(goBreed)
+      }
+
+      if (activeSpecimen.tier > 0 && activeSpecimen.tier < 5) {
+        const goMerge = makeButton(c.bookGoMergeAction, () => {
+          sound.play('click')
+          this.tab = 'merge'
+          this.render()
+        })
+        goMerge.className = 'btn-secondary'
+        actionsRow.append(goMerge)
+      }
+    }
+
+    // 5-Grade Variant Color Swatches (Grades 1..5)
+    const unlockedGrades = new Set(discoveredGradesFor(this.state, sp.id))
+    const varTitle = heading(c.bookVariantsTitle, 'h3')
+    const varRow = document.createElement('div')
+    varRow.className = 'variant-strip'
+    for (const g of [1, 2, 3, 4, 5] as Grade[]) {
+      const isUnlocked = unlockedGrades.has(g)
+      const chip = document.createElement('button')
+      chip.type = 'button'
+      chip.className = `variant-chip${isUnlocked ? '' : ' locked'}`
+      chip.setAttribute('aria-pressed', String(displayGrade === g && isUnlocked))
+      chip.onclick = () => {
+        if (!isUnlocked) return
+        sound.play('select')
+        this.bookDetailGrade = g
+        const matching = specimens.find((f) => f.grade === g)
+        this.bookSelectedUid = matching ? matching.uid : null
+        this.render()
+      }
+      chip.append(
+        this.portrait(sp, sp.tier, g, !isUnlocked),
+        label(isUnlocked ? c.gradeLabel(g) : '🔒', `meta grade-${g}`),
+      )
+      varRow.append(chip)
+    }
+
+    // Owned specimens grid (matching screenshot 2 & 3 left bottom grid)
+    const specTitle = heading(c.bookSpecimensTitle(specimens.length), 'h3')
+    const specGrid = document.createElement('div')
+    specGrid.className = 'specimen-grid'
+    if (specimens.length === 0) {
+      specGrid.append(note(c.bookNoSpecimens))
+    } else {
+      for (const f of specimens) {
+        const selected = activeSpecimen?.uid === f.uid
+        specGrid.append(
+          this.fishCell(f, now, {
+            selected,
+            onClick: () => {
+              sound.play('select')
+              this.bookSelectedUid = f.uid
+              this.bookDetailGrade = f.grade
+              this.render()
+            },
+          }),
+        )
+      }
+    }
+
+    // Footer: Held count & Variant discovery rate
+    const footer = document.createElement('div')
+    footer.className = 'book-detail-foot'
+    const varPct = Math.round((unlockedGrades.size / 5) * 100)
+    footer.append(
+      label(c.bookOwnedBadge(specimens.length), 'meta'),
+      label(c.bookVariantRate(unlockedGrades.size, 5, varPct), 'meta'),
+    )
+
+    card.append(
+      top,
+      previewWrap,
+      previewMeta,
+      actionsRow,
+      varTitle,
+      varRow,
+      specTitle,
+      specGrid,
+      footer,
+    )
+    return card
   }
 
   // ------------------------------------------------------------ settings
@@ -1520,6 +1755,23 @@ export class App {
     return canvas
   }
 
+  private largePortrait(sp: Species, tier: Tier, grade: Grade): HTMLCanvasElement {
+    const dpr = Math.min(2, window.devicePixelRatio || 1)
+    const w = 148
+    const h = 84
+    const canvas = document.createElement('canvas')
+    canvas.width = w * dpr
+    canvas.height = h * dpr
+    canvas.style.width = `${w}px`
+    canvas.style.height = `${h}px`
+    const ctx = canvas.getContext('2d')
+    if (ctx) {
+      ctx.scale(dpr, dpr)
+      this.renderer.portrait(ctx, w, h, { species: sp, tier, grade, dim: false })
+    }
+    return canvas
+  }
+
   private fishCell(
     fish: Fish,
     now: number,
@@ -1527,7 +1779,6 @@ export class App {
       selected?: boolean
       pickOrder?: number
       tagText?: string
-      inTankOverlay?: boolean
       showCooldown?: boolean
       locked?: boolean
       onClick?: () => void
@@ -1544,13 +1795,13 @@ export class App {
     const coolingInBreed = Boolean(opts.showCooldown && !adult && fish.maturesAt !== null)
 
     const cell = document.createElement('div')
-    cell.className = `cell${opts.locked ? ' locked' : ''}${opts.inTankOverlay ? ' in-tank-active' : ''}`
+    cell.className = `cell${opts.locked ? ' locked' : ''}`
     cell.setAttribute('aria-pressed', String(Boolean(opts.selected)))
     if (opts.onClick) cell.onclick = opts.onClick
 
-    // Top-left green arrow badge indicates whether this fish is placed in the tank
+    // Top-left green downward arrow badge indicates this fish is currently placed in the tank
     if (inTank) {
-      cell.append(this.badge(coolingInBreed || opts.inTankOverlay ? 'partial' : 'ready'))
+      cell.append(this.badge(coolingInBreed ? 'partial' : 'ready'))
     }
 
     const maxU = fish.maxUses ?? USES_BY_TIER[fish.tier]
@@ -1558,7 +1809,7 @@ export class App {
 
     const artWrap = document.createElement('div')
     artWrap.className = 'cell-art'
-    artWrap.append(this.portrait(sp, fish.tier, fish.grade, coolingInBreed || Boolean(opts.inTankOverlay)))
+    artWrap.append(this.portrait(sp, fish.tier, fish.grade, coolingInBreed))
 
     if (coolingInBreed && fish.maturesAt !== null) {
       const cdOverlay = document.createElement('div')
@@ -1573,17 +1824,6 @@ export class App {
       timerEl.textContent = formatClock(Math.max(0, fish.maturesAt - now))
       cdOverlay.append(clockIcon, timerEl)
       artWrap.append(cdOverlay)
-    } else if (opts.inTankOverlay) {
-      const useOverlay = document.createElement('div')
-      useOverlay.className = 'cell-overlay in-use'
-      const checkIcon = document.createElement('span')
-      checkIcon.className = 'use-check'
-      checkIcon.textContent = '✓'
-      const useTxt = document.createElement('span')
-      useTxt.className = 'use-text'
-      useTxt.textContent = this.t.inUseLabel
-      useOverlay.append(checkIcon, useTxt)
-      artWrap.append(useOverlay)
     }
 
     cell.append(

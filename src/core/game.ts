@@ -81,8 +81,42 @@ export function makeFish(
   }
 }
 
+export function variantKey(speciesId: SpeciesId, grade: Grade): string {
+  return `${speciesId}:${grade}`
+}
+
+export function recordVariant(state: GameState, speciesId: SpeciesId, grade: Grade): boolean {
+  if (!Array.isArray(state.discoveredVariants)) {
+    state.discoveredVariants = []
+  }
+  const key = variantKey(speciesId, grade)
+  const isNew = !state.discoveredVariants.includes(key)
+  if (isNew) state.discoveredVariants.push(key)
+  if (!state.discovered.includes(speciesId)) state.discovered.push(speciesId)
+  return isNew
+}
+
+export function discoveredGradesFor(state: GameState, speciesId: SpeciesId): Grade[] {
+  const set = new Set<Grade>()
+  for (const f of state.fish) {
+    if (f.speciesId === speciesId) set.add(f.grade)
+  }
+  for (const key of state.discoveredVariants ?? []) {
+    const [sp, gStr] = key.split(':')
+    if (sp === speciesId) {
+      const g = Number(gStr) as Grade
+      if (g >= 1 && g <= 5) set.add(g)
+    }
+  }
+  if (state.discovered.includes(speciesId) && set.size === 0) {
+    set.add(1)
+  }
+  return ([1, 2, 3, 4, 5] as Grade[]).filter((g) => set.has(g))
+}
+
 export function newGame(now = Date.now(), locale: Locale = detectLocale()): GameState {
   const fish = STARTER_SPECIES.map((id, idx) => makeFish(id, 0, 1, now + idx, { adult: true }))
+  const uniqueStarters = [...new Set(STARTER_SPECIES)]
   return {
     version: SAVE_VERSION,
     fish,
@@ -96,7 +130,8 @@ export function newGame(now = Date.now(), locale: Locale = detectLocale()): Game
     nextHeartAt: now + HEART_REGEN_MS,
     exp: 0,
     level: 1,
-    discovered: [...new Set(STARTER_SPECIES)],
+    discovered: uniqueStarters,
+    discoveredVariants: uniqueStarters.map((id) => variantKey(id, 1)),
     theme: 'realistic',
     colorMode: 'auto',
     locale,
@@ -345,7 +380,7 @@ export function breed(
   }
 
   const novel = !state.discovered.includes(speciesId)
-  if (novel) state.discovered.push(speciesId)
+  recordVariant(state, speciesId, grade)
 
   return { child, tier, novel, expGained: immediateExp }
 }
@@ -388,7 +423,7 @@ export function synthesize(
   }
 
   const isNovel = !state.discovered.includes(speciesId)
-  if (isNovel) state.discovered.push(speciesId)
+  recordVariant(state, speciesId, bestGrade)
 
   return { child, tier: outTier, novel: isNovel }
 }

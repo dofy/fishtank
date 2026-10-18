@@ -40,11 +40,22 @@ export interface PlacedDecor {
   flip?: 1 | -1
 }
 
+export type BodyForm =
+  | 'fish'
+  | 'jellyfish'
+  | 'seahorse'
+  | 'eel'
+  | 'seasnake'
+  | 'ray'
+  | 'turtle'
+
 /**
  * Renderer-neutral body description. A theme may either draw this
  * procedurally or ignore it and blit `sprites/<speciesId>.png` instead.
  */
 export interface BodyShape {
+  /** Silhouette form. Defaults to 'fish'. */
+  form?: BodyForm
   /** Body length relative to a 16 px grid cell. */
   length: number
   /** Body height relative to its length, 0..1. */
@@ -124,6 +135,8 @@ export interface GameState {
   level: number
   /** Species ids ever owned, for the collection book. */
   discovered: SpeciesId[]
+  /** Variant keys (`${speciesId}:${grade}`) ever owned, for the 5-grade variant catalog. */
+  discoveredVariants?: string[]
   theme: string
   colorMode?: ColorMode
   locale?: Locale

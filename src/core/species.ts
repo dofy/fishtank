@@ -7,36 +7,44 @@ import type { DecorId, DecorItem, PlacedDecor, Species, SpeciesId, Tier } from '
  */
 export const SPECIES: Species[] = [
   // Tier 0 — starter stock, handed out at level 1.
-  { id: 'goldfin', name: 'Goldfin Starter', tier: 0, body: { length: 12, depth: 0.5, tail: 0.35, dorsal: 0.3, pattern: 'plain', hue: 32, sat: 0.8, light: 0.55 } },
-  { id: 'greyminnow', name: 'Grey Minnow', tier: 0, body: { length: 11, depth: 0.4, tail: 0.3, dorsal: 0.25, pattern: 'plain', hue: 210, sat: 0.1, light: 0.6 } },
+  { id: 'goldfin', name: 'Goldfin Starter', tier: 0, body: { form: 'fish', length: 12, depth: 0.5, tail: 0.35, dorsal: 0.3, pattern: 'plain', hue: 32, sat: 0.8, light: 0.55 } },
+  { id: 'greyminnow', name: 'Grey Minnow', tier: 0, body: { form: 'fish', length: 11, depth: 0.4, tail: 0.3, dorsal: 0.25, pattern: 'plain', hue: 210, sat: 0.1, light: 0.6 } },
 
   // Tier 1 — Common.
-  { id: 'copperband', name: 'Copperband Butterflyfish', tier: 1, body: { length: 14, depth: 0.85, tail: 0.3, dorsal: 0.6, pattern: 'stripes', hue: 38, sat: 0.75, light: 0.6 } },
-  { id: 'moonhorn', name: 'Moonhorn Tang', tier: 1, body: { length: 15, depth: 0.8, tail: 0.35, dorsal: 0.5, pattern: 'bands', hue: 48, sat: 0.6, light: 0.62 } },
-  { id: 'neoncleaner', name: 'Neon Cleaner Wrasse', tier: 1, body: { length: 13, depth: 0.35, tail: 0.3, dorsal: 0.2, pattern: 'stripes', hue: 196, sat: 0.7, light: 0.55 } },
-  { id: 'mossback', name: 'Mossback Otocinclus', tier: 1, body: { length: 12, depth: 0.38, tail: 0.28, dorsal: 0.35, pattern: 'spots', hue: 96, sat: 0.35, light: 0.4 } },
-  { id: 'sapphiredamsel', name: 'Sapphire Damselfish', tier: 1, body: { length: 13, depth: 0.55, tail: 0.32, dorsal: 0.4, pattern: 'gradient', hue: 214, sat: 0.8, light: 0.5 } },
-  { id: 'banggai', name: 'Banggai Starfin', tier: 1, body: { length: 14, depth: 0.7, tail: 0.5, dorsal: 0.7, pattern: 'spots', hue: 220, sat: 0.2, light: 0.55 } },
+  { id: 'copperband', name: 'Copperband Butterflyfish', tier: 1, body: { form: 'fish', length: 14, depth: 0.85, tail: 0.3, dorsal: 0.6, pattern: 'stripes', hue: 38, sat: 0.75, light: 0.6 } },
+  { id: 'moonhorn', name: 'Moonhorn Tang', tier: 1, body: { form: 'fish', length: 15, depth: 0.8, tail: 0.35, dorsal: 0.5, pattern: 'bands', hue: 48, sat: 0.6, light: 0.62 } },
+  { id: 'neoncleaner', name: 'Neon Cleaner Wrasse', tier: 1, body: { form: 'fish', length: 13, depth: 0.35, tail: 0.3, dorsal: 0.2, pattern: 'stripes', hue: 196, sat: 0.7, light: 0.55 } },
+  { id: 'mossback', name: 'Mossback Otocinclus', tier: 1, body: { form: 'fish', length: 12, depth: 0.38, tail: 0.28, dorsal: 0.35, pattern: 'spots', hue: 96, sat: 0.35, light: 0.4 } },
+  { id: 'sapphiredamsel', name: 'Sapphire Damselfish', tier: 1, body: { form: 'fish', length: 13, depth: 0.55, tail: 0.32, dorsal: 0.4, pattern: 'gradient', hue: 214, sat: 0.8, light: 0.5 } },
+  { id: 'banggai', name: 'Banggai Starfin', tier: 1, body: { form: 'fish', length: 14, depth: 0.7, tail: 0.5, dorsal: 0.7, pattern: 'spots', hue: 220, sat: 0.2, light: 0.55 } },
+  { id: 'moonjelly', name: 'Moon Jellyfish', tier: 1, body: { form: 'jellyfish', length: 14, depth: 0.85, tail: 0.45, dorsal: 0.2, pattern: 'spots', hue: 195, sat: 0.75, light: 0.68 } },
 
   // Tier 2 — Uncommon.
-  { id: 'goldbutterfly', name: 'Golden Butterflyfish', tier: 2, body: { length: 16, depth: 0.85, tail: 0.3, dorsal: 0.6, pattern: 'bands', hue: 44, sat: 0.9, light: 0.6 } },
-  { id: 'neonstreak', name: 'Neon Streak Tetra', tier: 2, body: { length: 12, depth: 0.42, tail: 0.3, dorsal: 0.2, pattern: 'stripes', hue: 178, sat: 0.85, light: 0.52 } },
-  { id: 'blushingfire', name: 'Blushing Firefish', tier: 2, body: { length: 15, depth: 0.4, tail: 0.4, dorsal: 0.8, pattern: 'gradient', hue: 8, sat: 0.8, light: 0.58 } },
-  { id: 'creampuff', name: 'Cream Puff Puffer', tier: 2, body: { length: 13, depth: 0.95, tail: 0.25, dorsal: 0.2, pattern: 'spots', hue: 36, sat: 0.3, light: 0.75 } },
+  { id: 'goldbutterfly', name: 'Golden Butterflyfish', tier: 2, body: { form: 'fish', length: 16, depth: 0.85, tail: 0.3, dorsal: 0.6, pattern: 'bands', hue: 44, sat: 0.9, light: 0.6 } },
+  { id: 'neonstreak', name: 'Neon Streak Tetra', tier: 2, body: { form: 'fish', length: 12, depth: 0.42, tail: 0.3, dorsal: 0.2, pattern: 'stripes', hue: 178, sat: 0.85, light: 0.52 } },
+  { id: 'blushingfire', name: 'Blushing Firefish', tier: 2, body: { form: 'fish', length: 15, depth: 0.4, tail: 0.4, dorsal: 0.8, pattern: 'gradient', hue: 8, sat: 0.8, light: 0.58 } },
+  { id: 'creampuff', name: 'Cream Puff Puffer', tier: 2, body: { form: 'fish', length: 13, depth: 0.95, tail: 0.25, dorsal: 0.2, pattern: 'spots', hue: 36, sat: 0.3, light: 0.75 } },
+  { id: 'coralseahorse', name: 'Coral Seahorse', tier: 2, body: { form: 'seahorse', length: 14, depth: 0.92, tail: 0.3, dorsal: 0.5, pattern: 'bands', hue: 342, sat: 0.78, light: 0.62 } },
+  { id: 'bandedkrait', name: 'Banded Sea Snake', tier: 2, body: { form: 'seasnake', length: 19, depth: 0.36, tail: 0.2, dorsal: 0.1, pattern: 'bands', hue: 190, sat: 0.55, light: 0.58 } },
 
   // Tier 3 — Rare.
-  { id: 'royalgoldtail', name: 'Royal Goldtail', tier: 3, body: { length: 17, depth: 0.6, tail: 0.55, dorsal: 0.45, pattern: 'gradient', hue: 268, sat: 0.6, light: 0.5 } },
-  { id: 'skywing', name: 'Skywing Flying Fish', tier: 3, body: { length: 18, depth: 0.4, tail: 0.45, dorsal: 0.9, pattern: 'plain', hue: 200, sat: 0.5, light: 0.65 } },
-  { id: 'emberbarb', name: 'Ember Barb', tier: 3, body: { length: 15, depth: 0.55, tail: 0.4, dorsal: 0.35, pattern: 'bands', hue: 16, sat: 0.85, light: 0.5 } },
+  { id: 'royalgoldtail', name: 'Royal Goldtail', tier: 3, body: { form: 'fish', length: 17, depth: 0.6, tail: 0.55, dorsal: 0.45, pattern: 'gradient', hue: 268, sat: 0.6, light: 0.5 } },
+  { id: 'skywing', name: 'Skywing Flying Fish', tier: 3, body: { form: 'fish', length: 18, depth: 0.4, tail: 0.45, dorsal: 0.9, pattern: 'plain', hue: 200, sat: 0.5, light: 0.65 } },
+  { id: 'emberbarb', name: 'Ember Barb', tier: 3, body: { form: 'fish', length: 15, depth: 0.55, tail: 0.4, dorsal: 0.35, pattern: 'bands', hue: 16, sat: 0.85, light: 0.5 } },
+  { id: 'volteel', name: 'Volt Electric Eel', tier: 3, body: { form: 'eel', length: 21, depth: 0.34, tail: 0.2, dorsal: 0.5, pattern: 'stripes', hue: 202, sat: 0.9, light: 0.56 } },
+  { id: 'crystaljelly', name: 'Sakura Jellyfish', tier: 3, body: { form: 'jellyfish', length: 16, depth: 0.9, tail: 0.5, dorsal: 0.3, pattern: 'gradient', hue: 318, sat: 0.82, light: 0.65 } },
 
   // Tier 4 — Legendary.
-  { id: 'goldenmoorish', name: 'Golden Moorish Idol', tier: 4, body: { length: 18, depth: 0.9, tail: 0.35, dorsal: 1, pattern: 'bands', hue: 50, sat: 0.85, light: 0.6 } },
-  { id: 'voidray', name: 'Void Ray', tier: 4, body: { length: 20, depth: 0.75, tail: 0.6, dorsal: 0.3, pattern: 'gradient', hue: 280, sat: 0.4, light: 0.3 } },
-  { id: 'auroraeel', name: 'Aurora Eel', tier: 4, body: { length: 22, depth: 0.25, tail: 0.2, dorsal: 0.5, pattern: 'stripes', hue: 150, sat: 0.6, light: 0.5 } },
+  { id: 'goldenmoorish', name: 'Golden Moorish Idol', tier: 4, body: { form: 'fish', length: 18, depth: 0.9, tail: 0.35, dorsal: 1, pattern: 'bands', hue: 50, sat: 0.85, light: 0.6 } },
+  { id: 'voidray', name: 'Void Manta Ray', tier: 4, body: { form: 'ray', length: 20, depth: 0.82, tail: 0.45, dorsal: 0.3, pattern: 'spots', hue: 268, sat: 0.58, light: 0.38 } },
+  { id: 'auroraeel', name: 'Aurora Ribbon Eel', tier: 4, body: { form: 'eel', length: 22, depth: 0.32, tail: 0.2, dorsal: 0.6, pattern: 'stripes', hue: 155, sat: 0.78, light: 0.52 } },
+  { id: 'goldenseahorse', name: 'Golden Seahorse', tier: 4, body: { form: 'seahorse', length: 16, depth: 0.95, tail: 0.35, dorsal: 0.65, pattern: 'spots', hue: 45, sat: 0.92, light: 0.6 } },
+  { id: 'jadeturtle', name: 'Jade Sea Turtle', tier: 4, body: { form: 'turtle', length: 19, depth: 0.78, tail: 0.2, dorsal: 0.25, pattern: 'spots', hue: 138, sat: 0.62, light: 0.46 } },
 
   // Tier 5 — Mythic.
-  { id: 'prismkoi', name: 'Prism Koi', tier: 5, body: { length: 22, depth: 0.6, tail: 0.65, dorsal: 0.4, pattern: 'gradient', hue: 320, sat: 0.7, light: 0.6 } },
-  { id: 'leviathanfry', name: 'Leviathan Fry', tier: 5, body: { length: 24, depth: 0.7, tail: 0.5, dorsal: 0.8, pattern: 'spots', hue: 190, sat: 0.55, light: 0.35 } },
+  { id: 'prismkoi', name: 'Prism Koi', tier: 5, body: { form: 'fish', length: 22, depth: 0.6, tail: 0.65, dorsal: 0.4, pattern: 'gradient', hue: 320, sat: 0.7, light: 0.6 } },
+  { id: 'leviathanfry', name: 'Leviathan Sea Serpent', tier: 5, body: { form: 'seasnake', length: 24, depth: 0.42, tail: 0.3, dorsal: 0.8, pattern: 'spots', hue: 188, sat: 0.75, light: 0.44 } },
+  { id: 'astraljelly', name: 'Astral Crown Jelly', tier: 5, body: { form: 'jellyfish', length: 19, depth: 0.95, tail: 0.55, dorsal: 0.5, pattern: 'spots', hue: 276, sat: 0.85, light: 0.62 } },
 ]
 
 const BY_ID = new Map<SpeciesId, Species>(SPECIES.map((s) => [s.id, s]))

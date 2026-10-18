@@ -1,6 +1,15 @@
 import { syncAudioConfig } from './audio'
 import { USES_BY_TIER } from './balance'
-import { SAVE_VERSION, makeFish, newGame, syncDecor, syncMergeFilter, syncTank, tick } from './game'
+import {
+  SAVE_VERSION,
+  makeFish,
+  newGame,
+  recordVariant,
+  syncDecor,
+  syncMergeFilter,
+  syncTank,
+  tick,
+} from './game'
 import { detectLocale } from './i18n'
 import { STARTER_DECOR, STARTER_SPECIES, hasSpecies } from './species'
 import type { GameState } from './types'
@@ -63,6 +72,10 @@ export function load(now = Date.now()): GameState {
       if (!f.maxUses || f.maxUses < f.uses) {
         f.maxUses = Math.max(f.uses, USES_BY_TIER[f.tier])
       }
+      recordVariant(parsed, f.speciesId, f.grade)
+    }
+    for (const spId of parsed.discovered) {
+      recordVariant(parsed, spId, 1)
     }
 
     if (!Array.isArray(parsed.tankUids) || parsed.tankUids.length === 0) {

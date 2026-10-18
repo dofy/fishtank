@@ -321,10 +321,12 @@ export class RealisticRenderer implements Renderer {
     }
 
     const { path } = fishPath(bodyShape, len)
+    const hueOffset = [0, 0, 18, -22, 42, 135][grade] ?? 0
+    const hue = (bodyShape.hue + hueOffset + 360) % 360
     const sat = Math.min(1, bodyShape.sat + grade * 0.04)
     const light = Math.min(0.85, bodyShape.light + tier * 0.015)
-    const main = `hsl(${bodyShape.hue} ${sat * 100}% ${light * 100}%)`
-    const belly = `hsl(${bodyShape.hue} ${sat * 70}% ${Math.min(95, light * 135)}%)`
+    const main = `hsl(${hue} ${sat * 100}% ${light * 100}%)`
+    const belly = `hsl(${hue} ${sat * 70}% ${Math.min(95, light * 135)}%)`
 
     ctx.save()
     ctx.shadowColor = 'rgba(0,0,0,0.3)'
@@ -339,7 +341,7 @@ export class RealisticRenderer implements Renderer {
 
     ctx.save()
     ctx.clip(path)
-    ctx.fillStyle = `hsl(${bodyShape.hue} ${sat * 100}% ${Math.max(12, light * 55)}%)`
+    ctx.fillStyle = `hsl(${hue} ${sat * 100}% ${Math.max(12, light * 55)}%)`
     for (const band of patternBands(bodyShape, len)) {
       ctx.fillRect(band.x - band.w / 2, -height / 2, band.w, height)
     }
@@ -357,14 +359,16 @@ export class RealisticRenderer implements Renderer {
     }
     ctx.restore()
 
-    const eye = eyeAt(bodyShape, len)
-    ctx.fillStyle = '#f8f8f8'
-    ctx.beginPath()
-    ctx.arc(eye.x, eye.y, eye.r, 0, Math.PI * 2)
-    ctx.fill()
-    ctx.fillStyle = this.manifest.scene.ink
-    ctx.beginPath()
-    ctx.arc(eye.x + eye.r * 0.2, eye.y, eye.r * 0.55, 0, Math.PI * 2)
-    ctx.fill()
+    if (bodyShape.form !== 'jellyfish') {
+      const eye = eyeAt(bodyShape, len)
+      ctx.fillStyle = '#f8f8f8'
+      ctx.beginPath()
+      ctx.arc(eye.x, eye.y, eye.r, 0, Math.PI * 2)
+      ctx.fill()
+      ctx.fillStyle = this.manifest.scene.ink
+      ctx.beginPath()
+      ctx.arc(eye.x + eye.r * 0.2, eye.y, eye.r * 0.55, 0, Math.PI * 2)
+      ctx.fill()
+    }
   }
 }
