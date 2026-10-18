@@ -16,6 +16,7 @@ import {
   levelForExp,
   matrixKey,
 } from './balance'
+import { defaultAudioConfig } from './audio'
 import { detectLocale } from './i18n'
 import { Rng, rng as defaultRng } from './rng'
 import {
@@ -89,6 +90,7 @@ export function newGame(now = Date.now(), locale: Locale = detectLocale()): Game
     placedDecor: STARTER_DECOR.map((d) => ({ ...d })),
     mergeFilter: defaultMergeFilter(),
     breedSort: 'tier',
+    audio: defaultAudioConfig(),
     hearts: HEART_MAX,
     nextHeartAt: now + HEART_REGEN_MS,
     exp: 0,
@@ -355,7 +357,7 @@ export function synthesize(
   uids: string[],
   now = Date.now(),
   random: Rng = defaultRng,
-): { child: Fish } | { error: SynthError } {
+): { child: Fish; tier: Tier; novel: boolean } | { error: SynthError } {
   if (uids.length !== SYNTHESIS_INPUT_COUNT) return { error: 'wrong-count' }
   const picked = uids
     .map((uid) => state.fish.find((f) => f.uid === uid))
@@ -384,9 +386,10 @@ export function synthesize(
     state.tankUids = [...currentTank, child.uid]
   }
 
-  if (!state.discovered.includes(speciesId)) state.discovered.push(speciesId)
+  const isNovel = !state.discovered.includes(speciesId)
+  if (isNovel) state.discovered.push(speciesId)
 
-  return { child }
+  return { child, tier: outTier, novel: isNovel }
 }
 
 /** Release a fish. Mirrors selling, minus an economy we do not simulate. */

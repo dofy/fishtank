@@ -1,3 +1,4 @@
+import { sound, syncAudioConfig } from '../core/audio'
 import {
   HEART_MAX,
   SYNTHESIS_INPUT_COUNT,
@@ -36,6 +37,8 @@ import {
 } from '../core/i18n'
 import { DECORATIONS, SPECIES, species } from '../core/species'
 import type {
+  AudioConfig,
+  BgmTrackId,
   BreedOutcome,
   ColorMode,
   DecorItem,
@@ -78,16 +81,33 @@ const MODE_ICONS: Record<ColorMode, string> = {
   dark: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13.2 9.8A5.5 5.5 0 0 1 6.2 2.8a5.5 5.5 0 1 0 7 7Z"/></svg>',
 }
 
+const AUDIO_ICONS = {
+  on: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h2.5L9 3v10L5.5 10H3V6Z"/><path d="M11.5 5.5a3.5 3.5 0 0 1 0 5M13.2 3.8a6 6 0 0 1 0 8.4"/></svg>',
+  off: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h2.5L9 3v10L5.5 10H3V6Z"/><path d="m11 6 4 4m0-4-4 4"/></svg>',
+}
+
 export interface AppHooks {
   onThemeChange(id: string): void
   onColorModeChange(mode: ColorMode): void
+  onAudioChange(audio: AudioConfig): void
   onLocaleChange(locale: Locale): void
   onSave(): void
   onReset(): void
   themes: { id: string; name: string }[]
 }
 
+interface CeremonyData {
+  kind: 'breed' | 'merge'
+  parents: Fish[]
+  outcome: BreedOutcome
+  startedAt: number
+  durationMs: number
+  revealed: boolean
+}
+
 interface ShowcaseState {
+  ceremony?: CeremonyData
+  kind: 'breed' | 'merge'
   outcome: BreedOutcome
   decor: DecorItem
   decorX: number
@@ -97,6 +117,7 @@ interface ShowcaseState {
 
 const MINI_TANK_W = 296
 const MINI_TANK_H = 164
+const CEREMONY_MS = 1350
 
 export class App {
   private tab: Tab = 'tank'
@@ -167,12 +188,12 @@ export class App {
     this.message = text
     this.messageKind = kind
     if (text) {
+      if (kind === 'bad') sound.play('error')
       this.showToast(text, kind)
     }
   }
 
   private showToast(text: string, kind: 'good' | 'bad' | '' = ''): void {
-    // Keep at most 2 older toasts on screen
     while (this.toastHost.children.length >= 3) {
       this.toastHost.firstElementChild?.remove()
     }
@@ -264,10 +285,30 @@ export class App {
     timerChip.textContent = heartWait
     heartStat.append(timerChip)
 
+    const audioCfg = syncAudioConfig(s.audio)
+    const anyAudioOn = audioCfg.sfxEnabled || audioCfg.bgmEnabled
+    const audioBtn = makeIconButton(
+      anyAudioOn ? AUDIO_ICONS.on : AUDIO_ICONS.off,
+      anyAudioOn ? c.audioOn : c.audioOff,
+      () => {
+        const nextOn = !anyAudioOn
+        const updated: AudioConfig = {
+          ...audioCfg,
+          sfxEnabled: nextOn,
+          bgmEnabled: nextOn,
+        }
+        this.hooks.onAudioChange(updated)
+        if (nextOn) sound.play('click')
+      },
+    )
+    audioBtn.className = 'mode-btn'
+    audioBtn.title = `${c.settingsAudioHeading}: ${anyAudioOn ? c.audioOn : c.audioOff}`
+
     const mode: ColorMode = s.colorMode ?? 'auto'
     const modeLabel =
       mode === 'auto' ? c.colorModeAuto : mode === 'light' ? c.colorModeLight : c.colorModeDark
     const modeBtn = makeIconButton(MODE_ICONS[mode], modeLabel, () => {
+      sound.play('click')
       const nextMode: ColorMode = mode === 'auto' ? 'light' : mode === 'light' ? 'dark' : 'auto'
       this.hooks.onColorModeChange(nextMode)
     })
@@ -275,6 +316,7 @@ export class App {
     modeBtn.title = `${c.settingsColorModeHeading}: ${modeLabel}`
 
     const langBtn = makeButton(c.langToggle, () => {
+      sound.play('click')
       const nextLocale: Locale = this.locale === 'zh' ? 'en' : 'zh'
       this.hooks.onLocaleChange(nextLocale)
     })
@@ -286,6 +328,7 @@ export class App {
       stat(STAT_ICONS.bag, c.hudBag, `${s.fish.length}`),
       heartStat,
       stat(STAT_ICONS.book, c.hudSpecies, `${prog.owned}/${prog.total}`),
+      audioBtn,
       modeBtn,
       langBtn,
     )
@@ -296,6 +339,7 @@ export class App {
     this.nav.replaceChildren(
       ...TAB_IDS.map((id) => {
         const b = makeIconButton(TAB_ICONS[id], c.tabs[id], () => {
+          sound.play('click')
           this.tab = id
           this.confirmingReset = false
           this.say('')
@@ -359,9 +403,11 @@ export class App {
             const name = speciesName(fish.speciesId, this.locale)
             const placedNow = syncTank(this.state).length
             if (res === 'placed') {
+              sound.play('place')
               this.hooks.onSave()
               this.say(c.placedMsg(name, placedNow, cap), 'good')
             } else if (res === 'removed') {
+              sound.play('select')
               this.hooks.onSave()
               this.say(c.removedFromTankMsg(name, placedNow, cap))
             } else {
@@ -374,6 +420,7 @@ export class App {
             : () => {
                 const name = speciesName(fish.speciesId, this.locale)
                 if (release(this.state, fish.uid)) {
+                  sound.play('release')
                   this.breedPick = this.breedPick.filter((u) => u !== fish.uid)
                   this.mergePick = this.mergePick.filter((u) => u !== fish.uid)
                   this.hooks.onSave()
@@ -418,6 +465,7 @@ export class App {
     ]
     for (const s of sorts) {
       const b = makeButton(s.label, () => {
+        sound.play('click')
         this.state.breedSort = s.id
         this.hooks.onSave()
         this.render(now)
@@ -453,6 +501,7 @@ export class App {
               const wait = formatClock(Math.max(0, this.state.nextHeartAt - now))
               this.say(c.breedError('no-hearts', wait), 'bad')
             } else {
+              sound.play('select')
               this.say('')
             }
             this.breedPick = picked
@@ -493,6 +542,7 @@ export class App {
         this.render(clickNow)
         return
       }
+      const parentSnapshots = [{ ...a }, { ...b }]
       const result = breed(this.state, a.uid, b.uid, clickNow)
       if ('error' in result) {
         const wait =
@@ -501,6 +551,7 @@ export class App {
             : undefined
         this.say(c.breedError(result.error, wait), 'bad')
       } else {
+        sound.play('breed-start')
         const name = speciesName(result.child.speciesId, this.locale)
         const tName = tierName(result.tier, this.locale)
         this.say(
@@ -516,10 +567,11 @@ export class App {
         )
         this.breedPick = []
         this.hooks.onSave()
-        this.openShowcase(result)
+        this.openShowcase(result, 'breed', parentSnapshots)
       }
       this.render(clickNow)
     })
+    go.className = 'btn-primary'
     go.setAttribute('aria-disabled', String(!canBreed))
     row.append(go)
 
@@ -529,20 +581,24 @@ export class App {
         this.render(now)
         return
       }
+      sound.play('select')
       const best = sortBreedCandidates(eligible, 'tier', now)
       this.breedPick = [best[0]!.uid, best[1]!.uid]
       this.say('')
       this.render(now)
     })
+    bestPairBtn.className = 'btn-secondary'
     bestPairBtn.setAttribute('aria-disabled', String(eligible.length < 2))
     row.append(bestPairBtn)
 
     if (this.breedPick.length > 0) {
       const clear = makeButton(c.clearBtn, () => {
+        sound.play('click')
         this.breedPick = []
         this.say('')
         this.render(now)
       })
+      clear.className = 'btn-secondary'
       row.append(clear)
     }
 
@@ -570,7 +626,6 @@ export class App {
 
     const out: Node[] = [heading(c.mergeHeading(SYNTHESIS_INPUT_COUNT, this.mergePick.length))]
 
-    // Filter box matching PC FISH's filter/auto-select UI
     const filterBox = document.createElement('div')
     filterBox.className = 'filter-box'
 
@@ -582,11 +637,13 @@ export class App {
     condList.className = 'filter-list'
     condList.append(
       checkRow(c.mergeFilterZeroUses, filter.zeroUsesOnly, () => {
+        sound.play('click')
         filter.zeroUsesOnly = !filter.zeroUsesOnly
         this.hooks.onSave()
         this.render(now)
       }),
       checkRow(c.mergeFilterExcludeTank, filter.excludeInTank, () => {
+        sound.play('click')
         filter.excludeInTank = !filter.excludeInTank
         this.hooks.onSave()
         this.render(now)
@@ -612,6 +669,7 @@ export class App {
         `${stars(t)} ${tierName(t, this.locale)} (${countInTier})`,
         checked,
         () => {
+          sound.play('click')
           if (checked) {
             filter.tiers = filter.tiers.filter((x) => x !== t)
           } else {
@@ -648,6 +706,7 @@ export class App {
             } else if (!picked && this.mergePick.length >= SYNTHESIS_INPUT_COUNT) {
               this.say(c.mergeAlreadyFullMsg(SYNTHESIS_INPUT_COUNT), 'bad')
             } else {
+              sound.play('select')
               this.mergePick = picked
                 ? this.mergePick.filter((u) => u !== fish.uid)
                 : [...this.mergePick, fish.uid].slice(0, SYNTHESIS_INPUT_COUNT)
@@ -677,29 +736,45 @@ export class App {
         return
       }
       const clickNow = Date.now()
+      const materialSnapshots = this.mergePick
+        .map((uid) => this.state.fish.find((f) => f.uid === uid))
+        .filter((f): f is Fish => Boolean(f))
+        .map((f) => ({ ...f }))
+
       const result = synthesize(this.state, this.mergePick, clickNow)
       if ('error' in result) {
         this.say(c.synthError(result.error, SYNTHESIS_INPUT_COUNT), 'bad')
       } else {
+        sound.play('merge-start')
         const name = speciesName(result.child.speciesId, this.locale)
         const tName = tierName(result.child.tier, this.locale)
         this.say(c.mergedMsg(name, stars(result.child.tier), tName), 'good')
         this.mergePick = []
         this.hooks.onSave()
+        this.openShowcase(
+          { child: result.child, tier: result.tier, novel: result.novel, expGained: 0 },
+          'merge',
+          materialSnapshots,
+        )
       }
       this.render(clickNow)
     })
+    go.className = 'btn-primary'
     go.setAttribute('aria-disabled', String(!ready))
 
     const autoBtn = makeButton(c.mergeAutoPickBtn, () => {
       const picked = autoPickForMerge(this.state)
       this.mergePick = picked
+      if (picked.length === SYNTHESIS_INPUT_COUNT) {
+        sound.play('select')
+      }
       this.say(
         c.mergeAutoPickedMsg(picked.length, SYNTHESIS_INPUT_COUNT),
         picked.length === SYNTHESIS_INPUT_COUNT ? 'good' : 'bad',
       )
       this.render(now)
     })
+    autoBtn.className = 'btn-secondary'
     autoBtn.setAttribute('aria-disabled', String(mergeCandidates.length === 0))
 
     const clear = makeButton(c.clearBtn, () => {
@@ -708,10 +783,12 @@ export class App {
         this.render(now)
         return
       }
+      sound.play('click')
       this.mergePick = []
       this.say('')
       this.render(now)
     })
+    clear.className = 'btn-secondary'
     clear.setAttribute('aria-disabled', String(this.mergePick.length === 0))
 
     row.append(go, autoBtn, clear)
@@ -744,9 +821,11 @@ export class App {
         if (res === 'locked') {
           this.say(c.decorLockedMsg(name, item.unlockLevel), 'bad')
         } else if (res === 'placed') {
+          sound.play('place')
           this.hooks.onSave()
           this.say(c.decorPlacedMsg(name), 'good')
         } else {
+          sound.play('select')
           this.hooks.onSave()
           this.say(c.decorRemovedMsg(name))
         }
@@ -769,6 +848,7 @@ export class App {
         const flipBtn = makeButton(c.decorFlipBtn, (event) => {
           event.stopPropagation()
           if (flipDecor(this.state, item.id)) {
+            sound.play('click')
             this.hooks.onSave()
             this.say(c.decorFlippedMsg(name))
             this.render()
@@ -796,6 +876,7 @@ export class App {
       cell.className = `cell${owned ? '' : ' locked'}`
       cell.onclick = () => {
         if (owned) {
+          sound.play('select')
           this.say(
             `${speciesName(sp.id, this.locale)} — ${stars(sp.tier)} ${tierName(sp.tier, this.locale)}`,
           )
@@ -823,6 +904,7 @@ export class App {
     themeRow.className = 'row'
     for (const theme of this.hooks.themes) {
       const b = makeButton(themeName(theme.id, theme.name, this.locale), () => {
+        sound.play('click')
         this.hooks.onThemeChange(theme.id)
       })
       b.setAttribute('aria-pressed', String(this.state.theme === theme.id))
@@ -839,6 +921,7 @@ export class App {
     ]
     for (const m of modes) {
       const b = makeIconButton(MODE_ICONS[m.id], m.label, () => {
+        sound.play('click')
         this.hooks.onColorModeChange(m.id)
       })
       b.className = 'icon-btn'
@@ -846,11 +929,111 @@ export class App {
       modeRow.append(b)
     }
 
+    // Audio & BGM controls
+    const audioCfg = syncAudioConfig(this.state.audio)
+    const audioBox = document.createElement('div')
+    audioBox.className = 'audio-box'
+
+    const sfxRow = document.createElement('div')
+    sfxRow.className = 'audio-row'
+    const sfxToggle = makeIconButton(
+      audioCfg.sfxEnabled ? AUDIO_ICONS.on : AUDIO_ICONS.off,
+      `${c.audioSfxLabel}: ${audioCfg.sfxEnabled ? c.audioOn : c.audioOff}`,
+      () => {
+        const next: AudioConfig = { ...audioCfg, sfxEnabled: !audioCfg.sfxEnabled }
+        this.hooks.onAudioChange(next)
+        if (next.sfxEnabled) sound.play('click')
+      },
+    )
+    sfxToggle.className = 'icon-btn'
+    sfxToggle.setAttribute('aria-pressed', String(audioCfg.sfxEnabled))
+
+    const sfxSlider = document.createElement('input')
+    sfxSlider.type = 'range'
+    sfxSlider.className = 'vol-slider'
+    sfxSlider.min = '0'
+    sfxSlider.max = '100'
+    sfxSlider.value = String(Math.round(audioCfg.sfxVolume * 100))
+    const sfxPct = document.createElement('span')
+    sfxPct.className = 'vol-pct'
+    sfxPct.textContent = `${Math.round(audioCfg.sfxVolume * 100)}%`
+    sfxSlider.addEventListener('input', () => {
+      const v = Number(sfxSlider.value) / 100
+      sfxPct.textContent = `${Math.round(v * 100)}%`
+      const next: AudioConfig = { ...audioCfg, sfxVolume: v, sfxEnabled: v > 0 }
+      this.state.audio = next
+      sound.configure(next)
+    })
+    sfxSlider.addEventListener('change', () => {
+      sound.play('click')
+      this.hooks.onAudioChange(syncAudioConfig(this.state.audio))
+    })
+    sfxRow.append(sfxToggle, sfxSlider, sfxPct)
+
+    const bgmRow = document.createElement('div')
+    bgmRow.className = 'audio-row'
+    const bgmToggle = makeIconButton(
+      audioCfg.bgmEnabled ? AUDIO_ICONS.on : AUDIO_ICONS.off,
+      `${c.audioBgmLabel}: ${audioCfg.bgmEnabled ? c.audioOn : c.audioOff}`,
+      () => {
+        sound.play('click')
+        const next: AudioConfig = { ...audioCfg, bgmEnabled: !audioCfg.bgmEnabled }
+        this.hooks.onAudioChange(next)
+      },
+    )
+    bgmToggle.className = 'icon-btn'
+    bgmToggle.setAttribute('aria-pressed', String(audioCfg.bgmEnabled))
+
+    const bgmSlider = document.createElement('input')
+    bgmSlider.type = 'range'
+    bgmSlider.className = 'vol-slider'
+    bgmSlider.min = '0'
+    bgmSlider.max = '100'
+    bgmSlider.value = String(Math.round(audioCfg.bgmVolume * 100))
+    const bgmPct = document.createElement('span')
+    bgmPct.className = 'vol-pct'
+    bgmPct.textContent = `${Math.round(audioCfg.bgmVolume * 100)}%`
+    bgmSlider.addEventListener('input', () => {
+      const v = Number(bgmSlider.value) / 100
+      bgmPct.textContent = `${Math.round(v * 100)}%`
+      const next: AudioConfig = { ...audioCfg, bgmVolume: v, bgmEnabled: v > 0 }
+      this.state.audio = next
+      sound.configure(next)
+    })
+    bgmSlider.addEventListener('change', () => {
+      this.hooks.onAudioChange(syncAudioConfig(this.state.audio))
+    })
+    bgmRow.append(bgmToggle, bgmSlider, bgmPct)
+
+    const trackRow = document.createElement('div')
+    trackRow.className = 'row'
+    const tracks: { id: BgmTrackId; label: string }[] = [
+      { id: 'lofi', label: `♪ ${c.bgmTrackLofi}` },
+      { id: 'tide', label: `♪ ${c.bgmTrackTide}` },
+      { id: 'chiptune', label: `♪ ${c.bgmTrackChiptune}` },
+    ]
+    for (const tr of tracks) {
+      const b = makeButton(tr.label, () => {
+        sound.play('click')
+        this.hooks.onAudioChange({ ...audioCfg, bgmTrack: tr.id, bgmEnabled: true })
+      })
+      b.setAttribute('aria-pressed', String(audioCfg.bgmTrack === tr.id))
+      trackRow.append(b)
+    }
+
+    audioBox.append(sfxRow, bgmRow, heading(c.audioTrackHeading, 'h3'), trackRow)
+
     const langRow = document.createElement('div')
     langRow.className = 'row'
-    const zhBtn = makeButton('简体中文', () => this.hooks.onLocaleChange('zh'))
+    const zhBtn = makeButton('简体中文', () => {
+      sound.play('click')
+      this.hooks.onLocaleChange('zh')
+    })
     zhBtn.setAttribute('aria-pressed', String(this.locale === 'zh'))
-    const enBtn = makeButton('English', () => this.hooks.onLocaleChange('en'))
+    const enBtn = makeButton('English', () => {
+      sound.play('click')
+      this.hooks.onLocaleChange('en')
+    })
     enBtn.setAttribute('aria-pressed', String(this.locale === 'en'))
     langRow.append(zhBtn, enBtn)
 
@@ -860,6 +1043,8 @@ export class App {
       heading(c.settingsColorModeHeading, 'h3'),
       modeRow,
       note(c.settingsColorModeNote),
+      heading(c.settingsAudioHeading, 'h3'),
+      audioBox,
       heading(c.settingsLangHeading, 'h3'),
       langRow,
       heading(c.settingsTradeHeading, 'h3'),
@@ -875,12 +1060,14 @@ export class App {
     danger.className = 'row'
     if (!this.confirmingReset) {
       const reset = makeButton(c.resetBtn, () => {
+        sound.play('click')
         this.confirmingReset = true
         this.render()
       })
       danger.append(reset)
     } else {
       const confirmBtn = makeButton(c.confirmResetBtn, () => {
+        sound.play('release')
         this.confirmingReset = false
         this.hooks.onReset()
         this.say(this.t.resetDoneMsg, 'good')
@@ -888,6 +1075,7 @@ export class App {
       })
       confirmBtn.className = 'danger-confirm'
       const cancelBtn = makeButton(c.cancelBtn, () => {
+        sound.play('click')
         this.confirmingReset = false
         this.render()
       })
@@ -899,12 +1087,28 @@ export class App {
 
   // ------------------------------------------------------------- showcase
 
-  private openShowcase(outcome: BreedOutcome): void {
+  private openShowcase(
+    outcome: BreedOutcome,
+    kind: 'breed' | 'merge' = 'breed',
+    parents: Fish[] = [],
+  ): void {
     const decor = DECORATIONS[Math.floor(Math.random() * DECORATIONS.length)] ?? DECORATIONS[0]!
     const decorX = 0.28 + Math.random() * 0.44
     const decorFlip: 1 | -1 = Math.random() < 0.5 ? 1 : -1
     const sp = species(outcome.child.speciesId)
     this.showcase = {
+      ceremony:
+        parents.length > 0
+          ? {
+              kind,
+              parents,
+              outcome,
+              startedAt: performance.now(),
+              durationMs: CEREMONY_MS,
+              revealed: false,
+            }
+          : undefined,
+      kind,
       outcome,
       decor,
       decorX,
@@ -938,27 +1142,37 @@ export class App {
       this.modal.replaceChildren()
       return
     }
-    const { outcome, decor } = this.showcase
+    const { ceremony, kind, outcome, decor } = this.showcase
     const { child, novel, expGained } = outcome
     const c = this.t
+    const inCeremony = Boolean(ceremony && !ceremony.revealed)
 
     const backdrop = document.createElement('div')
     backdrop.className = 'showcase-backdrop'
     backdrop.addEventListener('click', (e) => {
-      if (e.target === backdrop) this.closeShowcase()
+      if (e.target === backdrop && !inCeremony) {
+        sound.play('click')
+        this.closeShowcase()
+      }
     })
 
     const card = document.createElement('div')
-    card.className = `showcase-card tier-border-${child.tier}`
+    card.className = `showcase-card tier-border-${inCeremony ? 1 : child.tier}`
 
     const header = document.createElement('div')
     header.className = 'showcase-header'
     const title = document.createElement('span')
     title.className = 'showcase-title'
-    title.textContent = c.showcaseTitle
+    title.textContent = inCeremony
+      ? kind === 'merge'
+        ? c.mergingAnimTitle
+        : c.breedingAnimTitle
+      : kind === 'merge'
+        ? c.showcaseMergeTitle
+        : c.showcaseTitle
     header.append(title)
 
-    if (novel) {
+    if (!inCeremony && novel) {
       const newBadge = document.createElement('span')
       newBadge.className = 'new-badge'
       newBadge.textContent = c.showcaseNewBadge
@@ -977,46 +1191,64 @@ export class App {
     this.showcaseCanvas = miniCanvas
     tankWrap.append(miniCanvas)
 
-    if (novel) {
+    if (!inCeremony && novel) {
       const cornerNew = document.createElement('span')
       cornerNew.className = 'mini-tank-new'
       cornerNew.textContent = c.showcaseNewBadge
       tankWrap.append(cornerNew)
     }
 
-    const nameRow = document.createElement('div')
-    nameRow.className = 'showcase-name-row'
-    const fishName = document.createElement('div')
-    fishName.className = 'showcase-name'
-    fishName.textContent = speciesName(child.speciesId, this.locale)
-    nameRow.append(fishName)
+    card.append(header, tankWrap)
 
-    const metaLine = this.tierMetaLine(child.tier, child.grade)
-    metaLine.classList.add('showcase-meta')
+    if (!inCeremony) {
+      const nameRow = document.createElement('div')
+      nameRow.className = 'showcase-name-row'
+      const fishName = document.createElement('div')
+      fishName.className = 'showcase-name'
+      fishName.textContent = speciesName(child.speciesId, this.locale)
+      nameRow.append(fishName)
 
-    const chips = document.createElement('div')
-    chips.className = 'showcase-chips'
-    const maxU = child.maxUses ?? USES_BY_TIER[child.tier]
-    const usesStr = child.tier === 0 ? '∞' : `${child.uses}/${maxU}`
+      const metaLine = this.tierMetaLine(child.tier, child.grade)
+      metaLine.classList.add('showcase-meta')
 
-    const usesChip = document.createElement('span')
-    usesChip.className = 'showcase-chip'
-    usesChip.textContent = c.showcaseUsesLabel(usesStr)
+      const chips = document.createElement('div')
+      chips.className = 'showcase-chips'
+      const maxU = child.maxUses ?? USES_BY_TIER[child.tier]
+      const usesStr = child.tier === 0 ? '∞' : `${child.uses}/${maxU}`
 
-    const expChip = document.createElement('span')
-    expChip.className = 'showcase-chip exp'
-    expChip.textContent = `+${expGained} EXP`
+      const usesChip = document.createElement('span')
+      usesChip.className = 'showcase-chip'
+      usesChip.textContent = c.showcaseUsesLabel(usesStr)
+      chips.append(usesChip)
 
-    const decorChip = document.createElement('span')
-    decorChip.className = 'showcase-chip'
-    decorChip.textContent = c.showcaseDecorLabel(decorName(decor.id, this.locale))
+      if (expGained > 0) {
+        const expChip = document.createElement('span')
+        expChip.className = 'showcase-chip exp'
+        expChip.textContent = `+${expGained} EXP`
+        chips.append(expChip)
+      }
 
-    chips.append(usesChip, expChip, decorChip)
+      const decorChip = document.createElement('span')
+      decorChip.className = 'showcase-chip'
+      decorChip.textContent = c.showcaseDecorLabel(decorName(decor.id, this.locale))
+      chips.append(decorChip)
 
-    const closeBtn = makeButton(c.showcaseCloseBtn, () => this.closeShowcase())
-    closeBtn.className = 'showcase-btn'
+      const closeBtn = makeButton(c.showcaseCloseBtn, () => {
+        sound.play('click')
+        this.closeShowcase()
+      })
+      closeBtn.className = 'showcase-btn btn-primary'
 
-    card.append(header, tankWrap, nameRow, metaLine, chips, closeBtn)
+      card.append(nameRow, metaLine, chips, closeBtn)
+    } else {
+      const progressOuter = document.createElement('div')
+      progressOuter.className = 'ceremony-bar'
+      const progressInner = document.createElement('span')
+      progressInner.dataset.ceremonyBar = '1'
+      progressOuter.append(progressInner)
+      card.append(progressOuter)
+    }
+
     backdrop.append(card)
     this.modal.replaceChildren(backdrop)
 
@@ -1043,7 +1275,121 @@ export class App {
     this.showcaseLastMs = nowMs
     const elapsed = nowMs / 1000
 
-    const { agent, decor, decorX, decorFlip } = this.showcase
+    const { ceremony, agent, decor, decorX, decorFlip } = this.showcase
+    const ctx = this.showcaseCanvas.getContext('2d')
+    if (!ctx) return
+    const dpr = Math.min(2, window.devicePixelRatio || 1)
+    const night = resolveDarkMode(this.state.colorMode ?? 'auto')
+
+    const decorNode: DecorNode = {
+      item: decor,
+      x: decorX * MINI_TANK_W,
+      flip: decorFlip,
+      active: false,
+    }
+
+    // Phase 1: Breeding or Merging process animation
+    if (ceremony && !ceremony.revealed) {
+      const p = Math.min(1, Math.max(0, (nowMs - ceremony.startedAt) / ceremony.durationMs))
+      const barEl = this.modal.querySelector<HTMLElement>('[data-ceremony-bar]')
+      if (barEl) barEl.style.width = `${Math.round(p * 100)}%`
+
+      const tempAgents: Agent[] = []
+      const cx = MINI_TANK_W * 0.5
+      const cy = MINI_TANK_H * 0.44
+
+      if (ceremony.kind === 'breed' && ceremony.parents.length >= 2) {
+        const pA = ceremony.parents[0]!
+        const pB = ceremony.parents[1]!
+        const dist = (1 - p * 0.85) * (MINI_TANK_W * 0.34)
+        const bob = Math.sin(p * Math.PI * 4) * 8
+        tempAgents.push(
+          {
+            fish: pA,
+            species: species(pA.speciesId),
+            x: cx - dist,
+            y: cy + bob,
+            dir: 1,
+            speed: 0,
+            phase: 0,
+            scale: 0.72 * (1 - p * 0.25),
+          },
+          {
+            fish: pB,
+            species: species(pB.speciesId),
+            x: cx + dist,
+            y: cy - bob,
+            dir: -1,
+            speed: 0,
+            phase: Math.PI,
+            scale: 0.72 * (1 - p * 0.25),
+          },
+        )
+      } else {
+        // Merge vortex: up to 10 fish spiraling inward
+        const n = ceremony.parents.length
+        const radius = (1 - p * 0.92) * (MINI_TANK_W * 0.38)
+        for (let i = 0; i < n; i++) {
+          const f = ceremony.parents[i]!
+          const angle = (i / n) * Math.PI * 2 + p * Math.PI * 3.2
+          const px = cx + Math.cos(angle) * radius
+          const py = cy + Math.sin(angle) * (radius * 0.55)
+          tempAgents.push({
+            fish: f,
+            species: species(f.speciesId),
+            x: px,
+            y: py,
+            dir: Math.sin(angle) >= 0 ? -1 : 1,
+            speed: 0,
+            phase: i,
+            scale: 0.58 * (1 - p * 0.45),
+          })
+        }
+      }
+
+      ctx.save()
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+      this.renderer.scene(ctx, {
+        width: MINI_TANK_W,
+        height: MINI_TANK_H,
+        agents: tempAgents,
+        decors: [decorNode],
+        time: elapsed,
+        night,
+      })
+
+      // Draw glowing convergence core / heart rings
+      const glowRadius = 10 + p * 56
+      const grad = ctx.createRadialGradient(cx, cy, 2, cx, cy, glowRadius)
+      grad.addColorStop(0, `rgba(255, 255, 255, ${0.25 + p * 0.7})`)
+      grad.addColorStop(
+        0.5,
+        ceremony.kind === 'breed'
+          ? `rgba(244, 114, 182, ${0.2 + p * 0.5})`
+          : `rgba(56, 189, 248, ${0.2 + p * 0.5})`,
+      )
+      grad.addColorStop(1, 'rgba(255, 255, 255, 0)')
+      ctx.fillStyle = grad
+      ctx.beginPath()
+      ctx.arc(cx, cy, glowRadius, 0, Math.PI * 2)
+      ctx.fill()
+
+      if (p > 0.78) {
+        const flash = (p - 0.78) / 0.22
+        ctx.fillStyle = `rgba(255, 255, 255, ${flash * 0.85})`
+        ctx.fillRect(0, 0, MINI_TANK_W, MINI_TANK_H)
+      }
+      ctx.restore()
+
+      if (p >= 1) {
+        ceremony.revealed = true
+        sound.play('reveal', this.showcase.outcome.tier)
+        this.renderShowcase()
+      }
+      return
+    }
+
+    // Phase 2: Revealed child fish swimming freely in the mini-tank
     agent.x += agent.dir * agent.speed * dt
     agent.y = MINI_TANK_H * 0.42 + Math.sin(elapsed * 1.8) * 6
 
@@ -1057,17 +1403,6 @@ export class App {
       agent.dir = -1
     }
 
-    const decorNode: DecorNode = {
-      item: decor,
-      x: decorX * MINI_TANK_W,
-      flip: decorFlip,
-      active: false,
-    }
-
-    const ctx = this.showcaseCanvas.getContext('2d')
-    if (!ctx) return
-    const dpr = Math.min(2, window.devicePixelRatio || 1)
-    const night = resolveDarkMode(this.state.colorMode ?? 'auto')
     ctx.save()
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
     this.renderer.scene(ctx, {

@@ -142,6 +142,9 @@ export interface Copy {
     novel: boolean,
   ) => string
   showcaseTitle: string
+  showcaseMergeTitle: string
+  breedingAnimTitle: string
+  mergingAnimTitle: string
   showcaseNewBadge: string
   showcaseUsesLabel: (usesStr: string) => string
   showcaseDecorLabel: (decorName: string) => string
@@ -178,6 +181,15 @@ export interface Copy {
   colorModeLight: string
   colorModeDark: string
   settingsColorModeNote: string
+  settingsAudioHeading: string
+  audioSfxLabel: string
+  audioBgmLabel: string
+  audioTrackHeading: string
+  bgmTrackLofi: string
+  bgmTrackTide: string
+  bgmTrackChiptune: string
+  audioOn: string
+  audioOff: string
   settingsLangHeading: string
   settingsTradeHeading: string
   settingsTradeUnlocked: string
@@ -251,6 +263,9 @@ const ZH: Copy = {
   hatchedMsg: (name, starsStr, tierStr, grade, expGained, novel) =>
     `孵化出 ${name}（${starsStr} ${tierStr} · 品阶 ${grade}），获得 +${expGained} EXP！${novel ? ' 解锁新图鉴！' : ''}`,
   showcaseTitle: '繁殖成功',
+  showcaseMergeTitle: '合成成功',
+  breedingAnimTitle: '亲代配对孵化中…',
+  mergingAnimTitle: '10 合 1 聚变合成中…',
   showcaseNewBadge: 'NEW',
   showcaseUsesLabel: (usesStr) => `可繁殖次数 ${usesStr}`,
   showcaseDecorLabel: (dName) => `造景：${dName}`,
@@ -296,6 +311,15 @@ const ZH: Copy = {
   colorModeLight: '日间（浅色）',
   colorModeDark: '黑夜（深色）',
   settingsColorModeNote: '默认“自动”跟随系统深浅色模式。处于黑夜模式时，鱼缸顶部的装饰灯会自动点亮并投射氛围光束。',
+  settingsAudioHeading: '音效与背景音乐（Lo-Fi BGM）',
+  audioSfxLabel: '操作音效',
+  audioBgmLabel: '背景音乐',
+  audioTrackHeading: '选择背景音乐曲目',
+  bgmTrackLofi: '珊瑚礁 Lo-Fi',
+  bgmTrackTide: '深海潮汐',
+  bgmTrackChiptune: '液晶八音盒',
+  audioOn: '开启',
+  audioOff: '静音',
   settingsLangHeading: '界面语言 / Language',
   settingsTradeHeading: '交易中心',
   settingsTradeUnlocked: '已解锁（当前单机版不包含联网交易与经济市场）。',
@@ -394,6 +418,9 @@ const EN: Copy = {
   hatchedMsg: (name, starsStr, tierStr, grade, expGained, novel) =>
     `${name} hatched at ${starsStr} ${tierStr}, grade ${grade} (+${expGained} EXP).${novel ? ' New species for the book!' : ''}`,
   showcaseTitle: 'Hatching Complete!',
+  showcaseMergeTitle: 'Synthesis Complete!',
+  breedingAnimTitle: 'Pairing & Hatching…',
+  mergingAnimTitle: 'Synthesizing 10 into 1…',
   showcaseNewBadge: 'NEW',
   showcaseUsesLabel: (usesStr) => `Breeding uses ${usesStr}`,
   showcaseDecorLabel: (dName) => `Decor: ${dName}`,
@@ -440,6 +467,15 @@ const EN: Copy = {
   colorModeLight: 'Day (Light)',
   colorModeDark: 'Night (Dark)',
   settingsColorModeNote: 'Defaults to Auto (follows system appearance). In Night mode, the aquarium decorative lamps automatically light up.',
+  settingsAudioHeading: 'Sound Effects & Lo-Fi BGM',
+  audioSfxLabel: 'Sound Effects',
+  audioBgmLabel: 'Background Music',
+  audioTrackHeading: 'BGM Track Selection',
+  bgmTrackLofi: 'Coral Lo-Fi',
+  bgmTrackTide: 'Deep Sea Tide',
+  bgmTrackChiptune: 'Pixel Chiptune',
+  audioOn: 'ON',
+  audioOff: 'MUTE',
   settingsLangHeading: 'Language / 界面语言',
   settingsTradeHeading: 'Trade hub',
   settingsTradeUnlocked:

@@ -83,6 +83,15 @@ export interface Fish {
 export type Locale = 'zh' | 'en'
 export type ColorMode = 'auto' | 'light' | 'dark'
 export type FishSort = 'tier' | 'grade' | 'uses' | 'acquired'
+export type BgmTrackId = 'lofi' | 'tide' | 'chiptune'
+
+export interface AudioConfig {
+  sfxEnabled: boolean
+  sfxVolume: number
+  bgmEnabled: boolean
+  bgmVolume: number
+  bgmTrack: BgmTrackId
+}
 
 export interface MergeFilter {
   /** Only include fish with 0 remaining breeding attempts. */
@@ -104,6 +113,8 @@ export interface GameState {
   mergeFilter?: MergeFilter
   /** Preferred sort order on the Breed tab. */
   breedSort?: FishSort
+  /** Audio settings (SFX & Lo-Fi BGM). */
+  audio?: AudioConfig
   hearts: number
   /** Epoch ms the next heart finishes regenerating. */
   nextHeartAt: number

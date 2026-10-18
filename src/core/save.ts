@@ -1,3 +1,4 @@
+import { syncAudioConfig } from './audio'
 import { USES_BY_TIER } from './balance'
 import { SAVE_VERSION, makeFish, newGame, syncDecor, syncMergeFilter, syncTank, tick } from './game'
 import { detectLocale } from './i18n'
@@ -64,6 +65,7 @@ export function load(now = Date.now()): GameState {
     syncTank(parsed)
     syncDecor(parsed)
     syncMergeFilter(parsed)
+    parsed.audio = syncAudioConfig(parsed.audio)
 
     // Offline progress: one catch-up tick covers however long the tab was shut.
     tick(parsed, now)

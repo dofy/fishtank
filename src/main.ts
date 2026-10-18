@@ -1,7 +1,8 @@
+import { sound, syncAudioConfig } from './core/audio'
 import { moveDecor, newGame, tick } from './core/game'
 import { load, save, wipe } from './core/save'
 import { species } from './core/species'
-import type { ColorMode, DecorId, Locale } from './core/types'
+import type { AudioConfig, ColorMode, DecorId, Locale } from './core/types'
 import { LcdRenderer } from './render/lcd'
 import { RealisticRenderer } from './render/realistic'
 import type { Renderer } from './render/renderer'
@@ -42,6 +43,7 @@ async function main(): Promise<void> {
   if (!root) throw new Error('#app container missing')
 
   let state = load(Date.now())
+  sound.configure(syncAudioConfig(state.audio))
   let manifest = await safeLoadTheme(state.theme)
   state.theme = manifest.id
   let night = resolveDarkMode(state.colorMode ?? 'auto')
@@ -69,6 +71,12 @@ async function main(): Promise<void> {
       app.invalidatePortraits()
       save(state)
     },
+    onAudioChange: (audio: AudioConfig) => {
+      state.audio = syncAudioConfig(audio)
+      sound.configure(state.audio)
+      app.render(Date.now())
+      save(state)
+    },
     onLocaleChange: (locale: Locale) => {
       state.locale = locale
       app.render(Date.now())
@@ -80,10 +88,13 @@ async function main(): Promise<void> {
     onReset: () => {
       const currentLocale = state.locale
       const currentColorMode = state.colorMode ?? 'auto'
+      const currentAudio = syncAudioConfig(state.audio)
       wipe()
       state = newGame(Date.now(), currentLocale)
       state.theme = manifest.id
       state.colorMode = currentColorMode
+      state.audio = currentAudio
+      sound.configure(currentAudio)
       night = resolveDarkMode(currentColorMode)
       applyTheme(manifest, night)
       app.setState(state)
