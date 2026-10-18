@@ -978,7 +978,10 @@ export class App {
           } else {
             this.bookDetailSpeciesId = sp.id
             this.bookDetailGrade = bestOwnedGrade
-            this.bookSelectedUid = ownedCopies[0]?.uid ?? null
+            this.bookSelectedUid =
+              ownedCopies.find((f) => f.grade === bestOwnedGrade)?.uid ??
+              ownedCopies[0]?.uid ??
+              null
             if (window.innerWidth <= 720) {
               this.body.scrollTo({ top: 0, behavior: 'smooth' })
             }
@@ -1040,10 +1043,12 @@ export class App {
       new Set(syncTank(this.state)),
     )
     if (this.bookSelectedUid && !specimens.some((f) => f.uid === this.bookSelectedUid)) {
-      this.bookSelectedUid = specimens[0]?.uid ?? null
+      this.bookSelectedUid =
+        specimens.find((f) => f.grade === this.bookDetailGrade)?.uid ?? null
     }
-    const activeSpecimen =
-      specimens.find((f) => f.uid === this.bookSelectedUid) ?? specimens[0] ?? null
+    const activeSpecimen = this.bookSelectedUid
+      ? (specimens.find((f) => f.uid === this.bookSelectedUid) ?? null)
+      : null
     const displayGrade = activeSpecimen ? activeSpecimen.grade : this.bookDetailGrade
 
     // Large preview portrait
