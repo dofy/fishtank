@@ -82,6 +82,7 @@ export interface Fish {
 
 export type Locale = 'zh' | 'en'
 export type ColorMode = 'auto' | 'light' | 'dark'
+export type FishSort = 'tier' | 'grade' | 'uses' | 'acquired'
 
 export interface MergeFilter {
   /** Only include fish with 0 remaining breeding attempts. */
@@ -101,6 +102,8 @@ export interface GameState {
   placedDecor?: PlacedDecor[]
   /** Filter and auto-select settings on the Merge tab. */
   mergeFilter?: MergeFilter
+  /** Preferred sort order on the Breed tab. */
+  breedSort?: FishSort
   hearts: number
   /** Epoch ms the next heart finishes regenerating. */
   nextHeartAt: number

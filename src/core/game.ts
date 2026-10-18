@@ -32,6 +32,7 @@ import type {
   BreedOutcome,
   DecorId,
   Fish,
+  FishSort,
   GameState,
   Grade,
   Locale,
@@ -87,6 +88,7 @@ export function newGame(now = Date.now(), locale: Locale = detectLocale()): Game
     tankUids: fish.map((f) => f.uid),
     placedDecor: STARTER_DECOR.map((d) => ({ ...d })),
     mergeFilter: defaultMergeFilter(),
+    breedSort: 'tier',
     hearts: HEART_MAX,
     nextHeartAt: now + HEART_REGEN_MS,
     exp: 0,
@@ -425,32 +427,76 @@ export function filterMergeCandidates(state: GameState): Fish[] {
   })
 }
 
+export function sortBreedCandidates(list: Fish[], sort: FishSort, now = Date.now()): Fish[] {
+  return [...list].sort((a, b) => {
+    const aAdult = isAdult(a, now) ? 1 : 0
+    const bAdult = isAdult(b, now) ? 1 : 0
+    if (aAdult !== bAdult) return bAdult - aAdult
+
+    switch (sort) {
+      case 'tier':
+        if (b.tier !== a.tier) return b.tier - a.tier
+        if (b.grade !== a.grade) return b.grade - a.grade
+        if (b.uses !== a.uses) return b.uses - a.uses
+        return a.bornAt - b.bornAt
+      case 'grade':
+        if (b.grade !== a.grade) return b.grade - a.grade
+        if (b.tier !== a.tier) return b.tier - a.tier
+        if (b.uses !== a.uses) return b.uses - a.uses
+        return a.bornAt - b.bornAt
+      case 'uses':
+        if (b.uses !== a.uses) return b.uses - a.uses
+        if (b.tier !== a.tier) return b.tier - a.tier
+        if (b.grade !== a.grade) return b.grade - a.grade
+        return a.bornAt - b.bornAt
+      case 'acquired':
+      default:
+        return a.bornAt - b.bornAt
+    }
+  })
+}
+
 /**
- * Pick up to 10 same-tier fish from the filtered candidates.
- * Prefers a tier that already has >= 10 matching fish (lowest tier first, 0-uses and lowest grade first).
+ * Pick up to 10 same-tier fish from the filtered candidates using the optimal "1 + 9" strategy:
+ * 1 highest-grade fish (so the merged output inherits that grade) + 9 lowest-grade fish (saving other high-grade copies).
  */
 export function autoPickForMerge(state: GameState): string[] {
   const filter = syncMergeFilter(state)
   const candidates = filterMergeCandidates(state)
   const tiers = [...filter.tiers].sort((a, b) => a - b)
 
-  const sortPriority = (a: Fish, b: Fish) => {
-    if (a.uses !== b.uses) return a.uses - b.uses
-    if (a.grade !== b.grade) return a.grade - b.grade
-    return a.bornAt - b.bornAt
+  const pickFromGroup = (group: Fish[]): string[] => {
+    if (group.length === 0) return []
+    // Pick 1 best-grade fish (preferring 0 uses and older birth among ties)
+    const byHighGrade = [...group].sort((a, b) => {
+      if (b.grade !== a.grade) return b.grade - a.grade
+      if (a.uses !== b.uses) return a.uses - b.uses
+      return a.bornAt - b.bornAt
+    })
+    const lead = byHighGrade[0]!
+    // Fill remaining 9 slots with lowest-grade, lowest-uses fish
+    const rest = group
+      .filter((f) => f.uid !== lead.uid)
+      .sort((a, b) => {
+        if (a.uses !== b.uses) return a.uses - b.uses
+        if (a.grade !== b.grade) return a.grade - b.grade
+        return a.bornAt - b.bornAt
+      })
+      .slice(0, SYNTHESIS_INPUT_COUNT - 1)
+    return [lead.uid, ...rest.map((f) => f.uid)]
   }
 
   let bestGroup: Fish[] = []
   for (const t of tiers) {
-    const group = candidates.filter((f) => f.tier === t).sort(sortPriority)
+    const group = candidates.filter((f) => f.tier === t)
     if (group.length >= SYNTHESIS_INPUT_COUNT) {
-      return group.slice(0, SYNTHESIS_INPUT_COUNT).map((f) => f.uid)
+      return pickFromGroup(group)
     }
     if (group.length > bestGroup.length) {
       bestGroup = group
     }
   }
-  return bestGroup.slice(0, SYNTHESIS_INPUT_COUNT).map((f) => f.uid)
+  return pickFromGroup(bestGroup)
 }
 
 export function collectionProgress(state: GameState): { owned: number; total: number } {

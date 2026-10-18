@@ -16,6 +16,7 @@ import {
   isAdult,
   isDecorUnlocked,
   release,
+  sortBreedCandidates,
   syncDecor,
   syncMergeFilter,
   syncTank,
@@ -39,6 +40,7 @@ import type {
   ColorMode,
   DecorItem,
   Fish,
+  FishSort,
   GameState,
   Grade,
   Locale,
@@ -354,12 +356,43 @@ export class App {
 
   private breedPanel(now: number): Node[] {
     const c = this.t
-    const candidates = this.state.fish.filter((f) => f.tier === 0 || f.uses > 0)
+    const currentSort: FishSort = this.state.breedSort ?? 'tier'
+    const rawCandidates = this.state.fish.filter((f) => f.tier === 0 || f.uses > 0)
+    const candidates = sortBreedCandidates(rawCandidates, currentSort, now)
     const eligible = candidates.filter((f) => isAdult(f, now))
     const eligibleIds = new Set(eligible.map((f) => f.uid))
     this.breedPick = this.breedPick.filter((uid) => eligibleIds.has(uid)).slice(-2)
 
-    const out: Node[] = [heading(c.breedHeading(this.breedPick.length))]
+    const headRow = document.createElement('div')
+    headRow.className = 'panel-head'
+    headRow.append(heading(c.breedHeading(this.breedPick.length)))
+
+    const sortBar = document.createElement('div')
+    sortBar.className = 'sort-bar'
+    const sortLbl = document.createElement('span')
+    sortLbl.className = 'sort-label'
+    sortLbl.textContent = c.sortLabel
+    sortBar.append(sortLbl)
+
+    const sorts: { id: FishSort; label: string }[] = [
+      { id: 'tier', label: c.sortTier },
+      { id: 'grade', label: c.sortGrade },
+      { id: 'uses', label: c.sortUses },
+      { id: 'acquired', label: c.sortAcquired },
+    ]
+    for (const s of sorts) {
+      const b = makeButton(s.label, () => {
+        this.state.breedSort = s.id
+        this.hooks.onSave()
+        this.render(now)
+      })
+      b.className = 'sort-btn'
+      b.setAttribute('aria-pressed', String(currentSort === s.id))
+      sortBar.append(b)
+    }
+    headRow.append(sortBar)
+
+    const out: Node[] = [headRow]
 
     const grid = document.createElement('div')
     grid.className = 'grid'
@@ -436,6 +469,20 @@ export class App {
     })
     go.setAttribute('aria-disabled', String(!canBreed))
     row.append(go)
+
+    const bestPairBtn = makeButton(c.breedAutoPickBtn, () => {
+      if (eligible.length < 2) {
+        this.say(c.breedNotEnoughAdults, 'bad')
+        this.render(now)
+        return
+      }
+      const best = sortBreedCandidates(eligible, 'tier', now)
+      this.breedPick = [best[0]!.uid, best[1]!.uid]
+      this.say('')
+      this.render(now)
+    })
+    bestPairBtn.setAttribute('aria-disabled', String(eligible.length < 2))
+    row.append(bestPairBtn)
 
     if (this.breedPick.length > 0) {
       const clear = makeButton(c.clearBtn, () => {

@@ -23,6 +23,14 @@ export function load(now = Date.now()): GameState {
     ) {
       parsed.colorMode = 'auto'
     }
+    if (
+      parsed.breedSort !== 'tier' &&
+      parsed.breedSort !== 'grade' &&
+      parsed.breedSort !== 'uses' &&
+      parsed.breedSort !== 'acquired'
+    ) {
+      parsed.breedSort = 'tier'
+    }
 
     parsed.fish = parsed.fish.filter((f) => f && hasSpecies(f.speciesId))
     parsed.discovered = Array.isArray(parsed.discovered)
