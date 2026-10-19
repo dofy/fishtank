@@ -276,8 +276,12 @@ export interface Copy {
   breedError: (code: string, extra?: string) => string
   synthError: (code: string, count: number, picked?: number) => string
   helpModalTitle: string
+  helpTabs: Record<'guide' | 'matrix' | 'levels' | 'tiers' | 'grades' | 'shortcuts', string>
+  helpParentTierPicker: string
+  helpMatrixNote: string
   helpIntroTitle: string
-  helpIntroItems: string[]
+  helpIntroLead: string
+  helpIntroItems: { title: string; text: string }[]
   helpMatrixTitle: string
   helpLevelTitle: string
   helpLevelColLv: string
@@ -289,6 +293,8 @@ export interface Copy {
   helpTierColGrowth: string
   helpTierColExp: string
   helpTierColUses: string
+  helpTierAverage: string
+  helpGradeTitle: string
   helpGradeNote: string
 }
 
@@ -492,24 +498,31 @@ const ZH: Copy = {
     }
   },
   helpModalTitle: '游戏帮助与数据说明',
-  helpIntroTitle: '1. 核心玩法指南',
+  helpTabs: { guide: '游戏说明', matrix: '繁育概率', levels: '等级解锁', tiers: '星级属性', grades: '品阶经验', shortcuts: '快捷键' },
+  helpParentTierPicker: '选择双亲中较低的星级',
+  helpMatrixNote: '先选双亲中较低的星级，再查看配对概率。0★ 表示初始鱼；双亲顺序不影响结果。',
+  helpIntroTitle: '从第一缸小鱼开始',
+  helpIntroLead: '不用赶进度。和三条初始鱼打个招呼，认识新伙伴，再把鱼缸慢慢布置成自己喜欢的样子。',
   helpIntroItems: [
-    '【鱼缸与互动】开局赠送 3 条无限繁育次数（∞）的初始鱼。点击鱼缸空白水域可一颗颗投放鱼食（附近的鱼会游过去抢食，每条鱼每 9 秒最多吃 1 颗并游开，落底自动消失）；点击正在游动的鱼会让它受惊远距离逃跑。',
-    '【繁育系统】每次繁育消耗 1 颗爱心（每 7 分钟自动恢复 1 颗，上限 5 颗）。选择两条成年鱼即可配对产出 1★–5★ 后代，子代星级概率由双亲星级组合决定，双亲品阶越高越容易生出高品阶后代。',
-    '【10 合 1 合成】消耗 10 条 1★–4★ 的鱼可合成 1 条高一星级的新鱼，并 100% 继承 10 条材料中的最高品阶（“1 拖 9”策略最优）。建议优先消耗繁育次数用尽（0/n）的鱼。',
-    '【装饰与昼夜】鱼缸升级（Lv.1–Lv.10）会自动解锁 18 件非对称海底造景与顶挂彩灯，同时可摆放的装饰槽位从 3 件提升至 12 件；放入后可直接在鱼缸中按住拖拽位置（最后拖动的装饰自动置顶），黑夜模式下顶灯与彩灯会自动点亮。',
+    { title: '🐠 先和小鱼玩一会儿', text: '开局有 3 条可无限繁育（∞）的初始鱼。点空白水域投喂，点一下游动的小鱼，看看它会往哪儿跑。' },
+    { title: '💕 用爱心认识新伙伴', text: '选两条已成年、冷却结束且还有繁育次数的鱼配对，每次消耗 1 颗爱心。爱心每 7 分钟恢复 1 颗，最多存 5 颗；挑高品阶亲代，更容易得到高品阶小鱼。' },
+    { title: '📖 慢慢点亮你的图鉴', text: '繁育能得到 1★–5★ 小鱼，星级概率受双亲星级影响；抽中星级后，每个鱼种的机会相同。收集过的品阶外观会留在图鉴里，放生或合成也不会抹掉记录。' },
+    { title: '✨ 重复的小鱼，也能往上走', text: '10 条同星级（1★–4★）的小鱼能稳稳升一星，并继承材料中的最高品阶。优先用繁育次数耗尽的鱼，搭配 1 条高品阶和 9 条低品阶更划算。' },
+    { title: '🪸 布置一片喜欢的小海底', text: '升级会解锁 18 件造景和灯饰，装饰槽位从 3 个增加到 12 个。放入鱼缸后按住就能左右拖动；到了夜晚，顶灯和彩灯会自动亮起。' },
   ],
-  helpMatrixTitle: '2. 亲代星级繁育概率表（产出 1★–5★ 概率）',
-  helpLevelTitle: '3. 鱼缸等级、经验与容量解锁表',
+  helpMatrixTitle: '亲代星级与子代概率',
+  helpLevelTitle: '鱼缸等级、经验与容量解锁',
   helpLevelColLv: '等级',
   helpLevelColExp: '累计经验 (EXP)',
   helpLevelColCap: '鱼 / 装饰上限',
   helpLevelColDecor: '解锁装饰',
-  helpTierTitle: '4. 稀有度星级基础属性表',
+  helpTierTitle: '稀有度星级基础属性',
   helpTierColTier: '稀有度星级',
   helpTierColGrowth: '成长/冷却时间',
   helpTierColExp: '基础总经验',
   helpTierColUses: '可繁育次数',
+  helpTierAverage: '均值',
+  helpGradeTitle: '品阶与经验结算',
   helpGradeNote:
     '品阶经验倍率：品阶 1 (1.0x) · 品阶 2 (1.25x) · 品阶 3 (1.5x) · 品阶 4 (1.75x) · 品阶 5 (2.0x)。每次繁育立即结算一半经验，鱼苗成年时结算另一半。',
 }
@@ -715,25 +728,32 @@ const EN: Copy = {
           : `Select ${count} material fish from the grid above first.`
     }
   },
-  helpModalTitle: 'Game Guide & Balance Data',
-  helpIntroTitle: '1. Core Gameplay Guide',
+  helpModalTitle: 'Game help & data',
+  helpTabs: { guide: 'Game guide', matrix: 'Breeding', levels: 'Levels', tiers: 'Tier stats', grades: 'Grade EXP', shortcuts: 'Shortcuts' },
+  helpParentTierPicker: 'Choose the lower parent tier',
+  helpMatrixNote: 'Choose the lower parent tier to see its pairings. 0★ means a starter fish; parent order does not affect the odds.',
+  helpIntroTitle: 'Start with your first fish',
+  helpIntroLead: 'Take your time. Meet your three starter fish, discover new companions, and make this little aquarium your own.',
   helpIntroItems: [
-    '[Tank & Interactions] Start with 3 infinite-use (∞) starter fish. Click empty water to drop food pellets one by one (nearby fish chase and eat 1 pellet per 9s cooldown then swim away; uneaten pellets vanish on the sand). Click a swimming fish to make it dart across the tank.',
-    '[Breeding] Each attempt costs 1 Heart (regenerates 1 every 7 minutes, cap 5). Pair two adults to hatch 1★–5★ offspring based on the parent star matrix. Higher parent grades boost high-grade offspring odds.',
-    '[10-to-1 Merge] Combine 10 fish (1★–4★) into 1 higher-tier fish that inherits the best grade among all 10 inputs ("1 high-grade + 9 low-grade" is optimal). Spend 0-use duplicates here.',
-    '[Decor & Night Mode] Leveling the aquarium (Lv.1–Lv.10) unlocks 18 asymmetric floor ornaments and top-hanging lights while expanding placement slots from 3 up to 12. Drag placed items directly inside the tank; overhead & hanging lights illuminate automatically in Night mode.',
+    { title: '🐠 Spend a moment with your fish', text: 'Your 3 starter fish have unlimited breeding uses (∞). Click empty water to feed them, or tap a swimming fish and watch it dart away.' },
+    { title: '💕 Meet new companions', text: 'Pair two adults with breeding uses left and no active cooldown. Each attempt costs 1 Heart; one returns every 7 minutes, up to 5. Higher-grade parents improve the odds of higher-grade offspring.' },
+    { title: '📖 Fill your collection, little by little', text: 'Breeding can produce 1★–5★ fish. Parent tiers set the tier odds; every species within the rolled tier has the same chance. Discovered grade appearances stay in your Book, even after a fish is released or merged.' },
+    { title: '✨ Give duplicates a new purpose', text: 'Merge 10 fish of the same tier (1★–4★) to guarantee a fish one tier higher, keeping the best material grade. Start with fish that have no uses left; one high-grade fish plus nine low-grade fish makes the most of your collection.' },
+    { title: '🪸 Make a little reef of your own', text: 'Level up to unlock 18 decorations and lights, with placement slots growing from 3 to 12. Hold a placed ornament to drag it sideways. Overhead and decorative lights turn on at night.' },
   ],
-  helpMatrixTitle: '2. Breeding Offspring Probability Matrix (1★–5★ Odds)',
-  helpLevelTitle: '3. Aquarium Levels, EXP & Tank Capacity',
+  helpMatrixTitle: 'Parent tiers & offspring odds',
+  helpLevelTitle: 'Aquarium Levels, EXP & Tank Capacity',
   helpLevelColLv: 'Level',
-  helpLevelColExp: 'Cumulative EXP',
-  helpLevelColCap: 'Fish / Decor Cap',
+  helpLevelColExp: 'Total EXP',
+  helpLevelColCap: 'Fish / decor',
   helpLevelColDecor: 'Unlocked Decorations',
-  helpTierTitle: '4. Rarity Tier Stats (Growth, EXP & Uses)',
+  helpTierTitle: 'Rarity Tier Stats (Growth, EXP & Uses)',
   helpTierColTier: 'Rarity Tier',
   helpTierColGrowth: 'Growth / Cooldown',
   helpTierColExp: 'Base EXP',
-  helpTierColUses: 'Breeding Uses',
+  helpTierColUses: 'Breed uses',
+  helpTierAverage: 'avg',
+  helpGradeTitle: 'Grades & EXP awards',
   helpGradeNote:
     'Grade EXP Multiplier: Grade 1 (1.0x) · Grade 2 (1.25x) · Grade 3 (1.5x) · Grade 4 (1.75x) · Grade 5 (2.0x). Half EXP is awarded immediately on breeding, and the other half upon maturation.',
 }

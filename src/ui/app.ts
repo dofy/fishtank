@@ -1637,7 +1637,7 @@ export class App {
   private renderHelpModal(): HTMLElement {
     const c = this.t
     const backdrop = document.createElement('div')
-    backdrop.className = 'showcase-backdrop'
+    backdrop.className = 'showcase-backdrop help-backdrop'
     backdrop.addEventListener('click', (e) => {
       if (e.target === backdrop) {
         sound.play('click')
@@ -1671,10 +1671,56 @@ export class App {
     }
     top.append(title, closeBtn)
 
-    const content = document.createElement('div')
-    content.className = 'help-body'
-    content.tabIndex = 0
-    content.setAttribute('aria-label', c.shortcutsHelpContents)
+    const tabs = document.createElement('div')
+    tabs.className = 'help-tabs'
+    tabs.setAttribute('role', 'tablist')
+    tabs.setAttribute('aria-label', c.shortcutsHelpContents)
+    const sections = ['guide', 'matrix', 'levels', 'tiers', 'grades', 'shortcuts'] as const
+    const panels = new Map<string, HTMLElement>()
+    const buttons = new Map<string, HTMLButtonElement>()
+    const activate = (id: string): void => {
+      for (const [key, panel] of panels) {
+        panel.hidden = key !== id
+        const button = buttons.get(key)!
+        button.setAttribute('aria-selected', String(key === id))
+        button.tabIndex = key === id ? 0 : -1
+      }
+    }
+    for (const [index, id] of sections.entries()) {
+      const panel = document.createElement('div')
+      panel.className = 'help-body help-panel'
+      panel.id = `help-panel-${id}`
+      panel.tabIndex = 0
+      panel.setAttribute('role', 'tabpanel')
+      panel.setAttribute('aria-labelledby', `help-tab-${id}`)
+      const button = makeButton(c.helpTabs[id], () => activate(id))
+      button.id = `help-tab-${id}`
+      button.setAttribute('role', 'tab')
+      button.setAttribute('aria-controls', panel.id)
+      button.addEventListener('keydown', event => {
+        let next: number
+        if (event.key === 'ArrowRight') next = (index + 1) % sections.length
+        else if (event.key === 'ArrowLeft') next = (index + sections.length - 1) % sections.length
+        else if (event.key === 'Home') next = 0
+        else if (event.key === 'End') next = sections.length - 1
+        else return
+        if (event.ctrlKey || event.metaKey || event.altKey) return
+        event.preventDefault()
+        const target = sections[next]!
+        activate(target)
+        buttons.get(target)!.focus()
+      })
+      panels.set(id, panel)
+      buttons.set(id, button)
+      tabs.append(button)
+    }
+    activate('guide')
+    const content = panels.get('shortcuts')!
+    const guideContent = panels.get('guide')!
+    const matrixContent = panels.get('matrix')!
+    const levelContent = panels.get('levels')!
+    const tierContent = panels.get('tiers')!
+    const gradeContent = panels.get('grades')!
 
     content.append(heading(c.shortcutsTitle, 'h3'))
     const shortcutGuide = document.createElement('section')
@@ -1714,42 +1760,50 @@ export class App {
     content.append(shortcutGuide, note(c.shortcutsNote))
 
     // Section 1: Core Guide
-    content.append(heading(c.helpIntroTitle, 'h3'))
+    guideContent.append(heading(c.helpIntroTitle, 'h3'))
+    const lead = document.createElement('p')
+    lead.className = 'help-intro-lead'
+    lead.textContent = c.helpIntroLead
+    guideContent.append(lead)
     const ul = document.createElement('ul')
     ul.className = 'help-list'
     for (const item of c.helpIntroItems) {
       const li = document.createElement('li')
-      li.textContent = item
+      const title = document.createElement('h4')
+      title.textContent = item.title
+      const text = document.createElement('p')
+      text.textContent = item.text
+      li.append(title, text)
       ul.append(li)
     }
-    content.append(ul)
+    guideContent.append(ul)
 
     // Section 2: Breeding Probability Matrix
-    content.append(heading(c.helpMatrixTitle, 'h3'))
+    matrixContent.append(heading(c.helpMatrixTitle, 'h3'))
+    const matrixNote = document.createElement('p')
+    matrixNote.className = 'help-table-note'
+    matrixNote.textContent = c.helpMatrixNote
+    matrixContent.append(matrixNote)
     const matrixTable = document.createElement('table')
-    matrixTable.className = 'odds'
+    matrixTable.className = 'odds help-table help-matrix'
     const mHead = document.createElement('tr')
     mHead.append(
       th(c.pairingCol),
       ...([1, 2, 3, 4, 5] as Tier[]).map((t) => {
         const cell = document.createElement('th')
         cell.className = `tier-${t}`
-        const sSpan = document.createElement('span')
-        sSpan.className = 'odds-th-stars'
-        sSpan.textContent = stars(t)
-        const nSpan = document.createElement('span')
-        nSpan.className = 'odds-th-name'
-        nSpan.textContent = tierName(t, this.locale)
-        cell.append(sSpan, nSpan)
+        cell.textContent = `${t}★`
+        cell.setAttribute('aria-label', `${t}★ ${tierName(t, this.locale)}`)
         return cell
       }),
     )
     matrixTable.append(mHead)
+    const matrixRows: { lower: Tier; row: HTMLTableRowElement }[] = []
     for (const [key, odds] of Object.entries(BREEDING_MATRIX)) {
       const [lo, hi] = key.split('+').map(Number) as [Tier, Tier]
       const tr = document.createElement('tr')
       tr.append(
-        td(`${stars(lo)} + ${stars(hi)}`),
+        td(`${lo}★ + ${hi}★`),
         ...odds.map((v, idx) => {
           const cell = td(`${v}%`)
           if (v > 0) cell.className = `tier-${idx + 1}`
@@ -1757,22 +1811,36 @@ export class App {
         }),
       )
       matrixTable.append(tr)
+      matrixRows.push({ lower: lo, row: tr })
     }
-    const appendTable = (table: HTMLTableElement, label: string): void => {
-      const scroll = document.createElement('div')
-      scroll.className = 'help-table'
-      scroll.tabIndex = 0
-      scroll.setAttribute('role', 'region')
-      scroll.setAttribute('aria-label', label)
-      scroll.append(table)
-      content.append(scroll)
+    const appendTable = (parent: HTMLElement, table: HTMLTableElement, label: string): void => {
+      table.setAttribute('aria-label', label)
+      for (const cell of table.querySelectorAll('th')) cell.scope = 'col'
+      parent.append(table)
     }
-    appendTable(matrixTable, c.helpMatrixTitle)
+    const parentTiers = document.createElement('div')
+    parentTiers.className = 'help-parent-tiers'
+    parentTiers.setAttribute('role', 'group')
+    parentTiers.setAttribute('aria-label', c.helpParentTierPicker)
+    const parentButtons: HTMLButtonElement[] = []
+    const selectParentTier = (tier: Tier): void => {
+      for (const entry of matrixRows) entry.row.hidden = entry.lower !== tier
+      parentButtons.forEach((button, index) => button.setAttribute('aria-pressed', String(index === tier)))
+    }
+    for (const tier of [0, 1, 2, 3, 4, 5] as Tier[]) {
+      const button = makeButton(`${tier}★`, () => selectParentTier(tier))
+      button.dataset.helpParentTier = String(tier)
+      parentButtons.push(button)
+      parentTiers.append(button)
+    }
+    selectParentTier(0)
+    matrixContent.append(parentTiers)
+    appendTable(matrixContent, matrixTable, c.helpMatrixTitle)
 
     // Section 3: Aquarium Levels & Capacity
-    content.append(heading(c.helpLevelTitle, 'h3'))
+    levelContent.append(heading(c.helpLevelTitle, 'h3'))
     const lvTable = document.createElement('table')
-    lvTable.className = 'odds'
+    lvTable.className = 'odds help-table help-levels'
     const lvHead = document.createElement('tr')
     lvHead.append(
       th(c.helpLevelColLv),
@@ -1781,25 +1849,51 @@ export class App {
       th(c.helpLevelColDecor),
     )
     lvTable.append(lvHead)
+    const levelRows: HTMLTableRowElement[] = []
     for (const row of LEVELS) {
       const tr = document.createElement('tr')
-      const decorsAtLv = DECORATIONS.filter((d) => d.unlockLevel === row.level)
-        .map((d) => decorName(d.id, this.locale))
-        .join(' / ')
+      const decorCell = td('')
+      for (const decor of DECORATIONS.filter(d => d.unlockLevel === row.level)) {
+        const name = document.createElement('span')
+        name.className = 'help-decor-name'
+        name.textContent = decorName(decor.id, this.locale)
+        decorCell.append(name)
+      }
+      if (!decorCell.childElementCount) decorCell.textContent = '—'
       tr.append(
         td(`Lv.${row.level}`),
         td(`${row.totalExp}`),
         td(`${row.capacity} / ${row.decorCapacity}`),
-        td(decorsAtLv || '—'),
+        decorCell,
       )
       lvTable.append(tr)
+      levelRows.push(tr)
     }
-    appendTable(lvTable, c.helpLevelTitle)
+    const levelPages = document.createElement('div')
+    levelPages.className = 'help-level-pages'
+    levelPages.setAttribute('role', 'group')
+    levelPages.setAttribute('aria-label', c.helpTabs.levels)
+    const levelButtons: HTMLButtonElement[] = []
+    const selectLevelPage = (page: number): void => {
+      levelRows.forEach((row, index) => { row.hidden = Math.floor(index / 3) !== page })
+      levelButtons.forEach((button, index) => button.setAttribute('aria-pressed', String(index === page)))
+    }
+    for (let page = 0; page < Math.ceil(LEVELS.length / 3); page++) {
+      const first = LEVELS[page * 3]!.level
+      const last = LEVELS[Math.min(page * 3 + 2, LEVELS.length - 1)]!.level
+      const button = makeButton(first === last ? `Lv.${first}` : `Lv.${first}–${last}`, () => selectLevelPage(page))
+      button.dataset.helpLevelPage = String(page)
+      levelButtons.push(button)
+      levelPages.append(button)
+    }
+    selectLevelPage(0)
+    levelContent.append(levelPages)
+    appendTable(levelContent, lvTable, c.helpLevelTitle)
 
     // Section 4: Rarity Tiers & Grade Multipliers
-    content.append(heading(c.helpTierTitle, 'h3'))
+    tierContent.append(heading(c.helpTierTitle, 'h3'))
     const tierTable = document.createElement('table')
-    tierTable.className = 'odds'
+    tierTable.className = 'odds help-table help-tiers'
     const tHead = document.createElement('tr')
     tHead.append(
       th(c.helpTierColTier),
@@ -1810,17 +1904,23 @@ export class App {
     tierTable.append(tHead)
     for (const t of [0, 1, 2, 3, 4, 5] as Tier[]) {
       const tr = document.createElement('tr')
-      const tierCell = td(`${stars(t)} ${tierName(t, this.locale)}`)
+      const tierCell = td(`${t}★ ${tierName(t, this.locale)}`)
       tierCell.className = `tier-${t}`
       const mins = Math.round(GROWTH_MS_BY_TIER[t] / 60_000)
-      const usesStr = t === 0 ? '∞' : `1–5 (avg ${USES_BY_TIER[t]})`
-      tr.append(tierCell, td(`${mins} min`), td(`${EXP_BY_TIER[t]} EXP`), td(usesStr))
+      const usesCell = td(t === 0 ? '∞' : '1–5')
+      if (t !== 0) {
+        const average = document.createElement('span')
+        average.className = 'help-average'
+        average.textContent = `${c.helpTierAverage} ${USES_BY_TIER[t]}`
+        usesCell.append(average)
+      }
+      tr.append(tierCell, td(`${mins} min`), td(`${EXP_BY_TIER[t]} EXP`), usesCell)
       tierTable.append(tr)
     }
-    appendTable(tierTable, c.helpTierTitle)
-    content.append(note(c.helpGradeNote))
+    appendTable(tierContent, tierTable, c.helpTierTitle)
+    gradeContent.append(heading(c.helpGradeTitle, 'h3'), note(c.helpGradeNote))
 
-    card.append(top, content)
+    card.append(top, tabs, ...panels.values())
     backdrop.append(card)
     return backdrop
   }

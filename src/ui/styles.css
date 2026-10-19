@@ -625,7 +625,7 @@ button.check-row[aria-checked='true'] .check-dot {
 footer.app-footer {
   @apply shrink-0 flex items-center justify-between gap-2 px-1 pt-0.5 text-[11px] text-[var(--muted)];
 }
-.footer-meta { @apply tabular-nums truncate; }
+.footer-meta { @apply tabular-nums; }
 .footer-links { @apply flex items-center gap-2 shrink-0; }
 button.footer-link,
 a.footer-link {
@@ -645,9 +645,34 @@ a.footer-link {
 }
 :root[data-theme='lcd'] .help-modal { border-color: var(--border); box-shadow: 6px 6px 0 var(--border); }
 .help-body { @apply flex-1 min-h-0 min-w-0 overflow-y-auto pr-1 grid grid-cols-[minmax(0,1fr)] gap-2; }
-.help-table { @apply min-w-0 overflow-x-auto; }
-.help-table:focus-visible { outline: 1px solid var(--accent); outline-offset: -1px; }
-.help-list { @apply m-0 pl-4 list-disc grid gap-1.5 text-xs leading-relaxed text-[var(--text)]; }
+.help-tabs { @apply grid grid-cols-6 gap-1.5 shrink-0 max-[640px]:grid-cols-3; }
+.help-tabs button { @apply px-1 py-1.5 text-xs min-w-0 whitespace-nowrap; box-shadow: none; }
+.help-tabs button[aria-selected='true'], .help-parent-tiers button[aria-pressed='true'], .help-level-pages button[aria-pressed='true'] {
+  @apply border-[var(--accent)] text-[var(--accent)] bg-[var(--cell-bg)];
+  background-image: none;
+}
+.help-panel { @apply content-start; }
+.help-panel[hidden] { display: none; }
+table.help-table { @apply table-fixed w-full; }
+table.help-table th, table.help-table td { @apply whitespace-normal break-words text-center align-middle leading-relaxed; }
+table.help-table th:first-child, table.help-table td:first-child { @apply text-left; }
+.help-matrix th:first-child { width: 24%; }
+table.help-matrix td:not(:first-child) { @apply whitespace-nowrap px-0.5; }
+.help-levels th:nth-child(1) { width: 14%; }
+.help-levels th:nth-child(2) { width: 19%; }
+.help-levels th:nth-child(3) { width: 22%; }
+.help-levels th:nth-child(4) { width: 45%; }
+.help-tiers th:first-child { width: 32%; }
+.help-tiers th:nth-child(2) { width: 25%; }
+.help-decor-name, .help-average { @apply block; }
+.help-table-note { @apply m-0 text-xs leading-relaxed text-[var(--muted)]; }
+.help-parent-tiers { @apply grid grid-cols-6 gap-1.5; }
+.help-parent-tiers button, .help-level-pages button { @apply p-1 text-xs; box-shadow: none; }
+.help-level-pages { @apply grid grid-cols-4 gap-1.5; }
+.help-intro-lead { @apply m-0 text-[13px] leading-relaxed text-[var(--muted)]; }
+.help-list { @apply m-0 p-0 list-none grid gap-3 text-xs leading-relaxed text-[var(--text)]; }
+.help-list h4 { @apply m-0 mb-1 text-[13px] font-semibold; }
+.help-list p { @apply m-0; }
 
 .changelog-dialog { @apply m-auto w-[min(900px,94vw)] gap-4; }
 .changelog-dialog:not([open]) { display: none; }
@@ -686,6 +711,22 @@ a.footer-link {
   .changelog-dialog { animation: none; }
 }
 @media (max-width: 640px) {
+  .help-backdrop { @apply p-0; }
+  footer.app-footer { @apply flex-col items-stretch gap-1.5; }
+  .footer-links { @apply grid grid-cols-3 gap-2; }
+  .footer-links .footer-link { @apply justify-center min-h-8; }
+  .help-modal {
+    width: 100vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    max-width: 100vw;
+    border: 0;
+    border-radius: 0;
+    margin: 0;
+    padding: max(14px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(14px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+    animation: none;
+  }
+  :root[data-theme='lcd'] .help-modal { box-shadow: none; }
   .changelog-layout { @apply grid-cols-1 grid-rows-[auto_minmax(0,1fr)] gap-4; }
   .changelog-nav { @apply flex-row gap-2 overflow-x-auto overflow-y-hidden pr-0 pb-2 border-r-0 border-b; }
   .changelog-nav button { @apply px-2.5 py-1.5 text-xs; }

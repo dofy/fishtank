@@ -4,6 +4,10 @@ Keyboard shortcuts were added in `v1.5.0`; see [Keyboard Shortcuts](../README.md
 
 `v1.5.0` 新增键盘快捷键，完整按键见 [README 快捷键说明](../README.md#keyboard-shortcuts)，也可按 `H` / `?` 打开游戏内帮助。本版玩法与数值规则保持不变。
 
+In-game Help opens on the game guide. Dedicated tabs show breeding, levels, tier stats, grade EXP and shortcuts. Breeding rows are grouped by the lower parent tier (`0★` = starter); level rows use level-range pages. All table columns fit without horizontal scrolling, and small screens use a full-screen dialog.
+
+游戏内帮助默认显示游戏说明，其余规则按 Tab 分页。繁育表按双亲中较低的星级分组（`0★` 为初始鱼），等级表按等级段翻页；表格完整显示当前页的所有列，小屏幕使用满屏弹窗。
+
 This document details the gameplay mechanics, progression curves, and breeding probabilities for **Fishtank**, modeled on [PC FISH: Taskbar Aquarium](https://store.steampowered.com/app/4842670/PC_FISH_Taskbar_Aquarium/).
 
 本文档详细说明 **Fishtank** 的核心玩法机制、升级容量曲线与繁育概率矩阵（数值参考 Steam《[PC FISH: Taskbar Aquarium](https://store.steampowered.com/app/4842670/PC_FISH_Taskbar_Aquarium/?l=tchinese)》）。
