@@ -561,8 +561,11 @@ export function patternSpots(
   return out
 }
 
-export interface DecorLayer {
-  path: Path2D
+/** Geometry commands shared by browser paths and native vector renderers. */
+export type GeometryPath = Pick<Path2D, 'moveTo' | 'lineTo' | 'quadraticCurveTo' | 'bezierCurveTo' | 'closePath' | 'ellipse' | 'arc' | 'rect'>
+
+export interface DecorLayer<T = Path2D> {
+  path: T
   role: 'primary' | 'secondary' | 'detail'
 }
 
@@ -570,10 +573,12 @@ export interface DecorLayer {
  * Procedural decoration geometry in local space:
  * origin (0, 0) is bottom-center on the sand floor, x spans [-w/2, w/2], y spans [-h, 0].
  */
-export function decorLayers(id: DecorId, w: number, h: number, time = 0): DecorLayer[] {
-  const primary = new Path2D()
-  const secondary = new Path2D()
-  const detail = new Path2D()
+export function decorLayers(id: DecorId, w: number, h: number, time?: number): DecorLayer[]
+export function decorLayers<T extends GeometryPath>(id: DecorId, w: number, h: number, time: number, createPath: () => T): DecorLayer<T>[]
+export function decorLayers(id: DecorId, w: number, h: number, time = 0, createPath: () => GeometryPath = () => new Path2D()): DecorLayer<GeometryPath>[] {
+  const primary = createPath()
+  const secondary = createPath()
+  const detail = createPath()
   const sway = Math.sin(time * 1.4) * (w * 0.08)
 
   switch (id) {
@@ -993,7 +998,7 @@ function addBodyPolygon(path: Path2D, points: [number, number][]): void {
 }
 
 function addCapsule(
-  path: Path2D,
+  path: GeometryPath,
   x0: number,
   y0: number,
   x1: number,

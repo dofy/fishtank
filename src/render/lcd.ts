@@ -320,6 +320,11 @@ export class LcdRenderer implements Renderer {
     ctx.restore()
   }
 
+  fishFrame(ctx: CanvasRenderingContext2D, length: number, req: PortraitRequest, phase: number): void {
+    const s = sceneColorsFor(this.manifest, document.documentElement.dataset.mode !== 'light')
+    this.body(ctx, req.species.body, length, req.grade, req.tier, req.species.id, s, phase)
+  }
+
   portrait(ctx: CanvasRenderingContext2D, w: number, h: number, req: PortraitRequest): void {
     const depth = Math.max(0.35, req.species.body.depth)
     const len = Math.min(w * 0.82, (h * 0.76) / depth)

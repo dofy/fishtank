@@ -734,6 +734,10 @@ export class RealisticRenderer implements Renderer {
     ctx.restore()
   }
 
+  fishFrame(ctx: CanvasRenderingContext2D, length: number, req: PortraitRequest, phase: number): void {
+    this.body(ctx, req.species.body, length, req.grade, req.tier, req.species.id, phase)
+  }
+
   portrait(ctx: CanvasRenderingContext2D, w: number, h: number, req: PortraitRequest): void {
     const depth = Math.max(0.35, req.species.body.depth)
     const len = Math.min(w * 0.82, (h * 0.76) / depth)

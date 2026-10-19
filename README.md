@@ -21,13 +21,21 @@
   <img src="docs/screenshots/preview.png" width="920" alt="Fishtank Dark & Light Mode Preview" />
 </div>
 
+### PixiJS 鱼缸与开发对照
+
+从 v1.7.0 起，普通入口默认使用 **PixiJS** 渲染写实与 LCD 鱼缸；保留鱼体游动、原生背景与造景、水下光纹及原有玩法。WebGL 不可用时自动显示 Canvas；也可通过 `?renderer=canvas` 手动使用旧渲染器。两个线上入口均保留：[fishtank.phpz.org](https://fishtank.phpz.org/) 与 [fish.yahaha.net](https://fish.yahaha.net/)。若需要 Canvas，可打开 [原域名回退入口](https://fishtank.phpz.org/?renderer=canvas) 或 [备用域名回退入口](https://fish.yahaha.net/?renderer=canvas)。
+
+运行 `pnpm dev` 后打开 [本地鱼缸对照](http://localhost:5173/?pixiLab=1)。支持 Canvas / PixiJS 切换、滑动分界、写实与 LCD 两种风格，以及水下光纹和鱼体摆动开关。可勾选「观察示例鱼群」比较 12 种鱼形，示例鱼不会加入背包。
+
+实验共用原来的繁育、合成、存档与鱼缸互动。背景、18 件造景、灯光、背景鱼群、气泡、鱼食与水花均已使用 PixiJS 原生图形；LCD 保持单色点阵。对照工具栏仅在开发服务中启用；普通生产构建包含默认 GPU 渲染及 Canvas 回退。点击「运行性能对照」或按 `B`，分别播放同一场景并查看 JS 耗时、帧率和可用的 GPU 时间。操作方法见 [PixiJS 对照说明](docs/PIXI_LAB.md)，最新同场景结果见 [写实优化复测](docs/PIXI_OPTIMIZATION.md)，初次迁移数据见 [历史性能记录](docs/PIXI_PERFORMANCE.md)。
+
 ---
 
 ## 产品简介 / About Fishtank
 
 **Fishtank** 是一款灵感源自 Steam 桌面放置游戏《[PC FISH: Taskbar Aquarium](https://store.steampowered.com/app/4842670/PC_FISH_Taskbar_Aquarium/?l=tchinese)》的网页端放置养成水族箱。无需注册登录、即开即玩，既可以在工作间隙体验配对繁育与全图鉴收集的乐趣，也可以一键切换至**全屏沉浸模式**，伴随轻柔的海洋白噪音与 Lo-Fi 音乐作为桌面生态屏保。
 
-当前版本 **v1.6.0**。版本更新记录见 [CHANGELOG](CHANGELOG.md)，完整玩法与数值见 [游戏帮助](docs/BALANCE.md)。
+当前版本 **v1.7.0**。版本更新记录见 [CHANGELOG](CHANGELOG.md)，完整玩法与数值见 [游戏帮助](docs/BALANCE.md)。
 
 ---
 

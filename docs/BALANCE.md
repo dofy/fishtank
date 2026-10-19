@@ -1,8 +1,8 @@
-# Balance & Game Data Guide / 游戏帮助与数值说明 (`v1.6.0`)
+# Balance & Game Data Guide / 游戏帮助与数值说明 (`v1.7.0`)
 
-Keyboard shortcuts were added in `v1.5.0`; see [Keyboard Shortcuts](../README.md#keyboard-shortcuts) or the in-game Help (`H` / `?`). Tier and grade rules remain unchanged in v1.6.0.
+Keyboard shortcuts were added in `v1.5.0`; see [Keyboard Shortcuts](../README.md#keyboard-shortcuts) or the in-game Help (`H` / `?`). v1.7.0 changes aquarium rendering only; tier and grade rules remain unchanged.
 
-`v1.5.0` 新增键盘快捷键，完整按键见 [README 快捷键说明](../README.md#keyboard-shortcuts)，也可按 `H` / `?` 打开游戏内帮助。v1.6.0 保留原有星级与品阶规则。
+`v1.5.0` 新增键盘快捷键，完整按键见 [README 快捷键说明](../README.md#keyboard-shortcuts)，也可按 `H` / `?` 打开游戏内帮助。v1.7.0 仅调整鱼缸渲染，保留原有星级、品阶与存档规则。
 
 In-game Help opens on the game guide. Dedicated tabs show breeding, levels, tier stats, grade EXP and shortcuts. Breeding rows are grouped by the lower parent tier (`0★` = starter); level rows use level-range pages. All table columns fit without horizontal scrolling, and small screens use a full-screen dialog.
 
@@ -11,6 +11,11 @@ In-game Help opens on the game guide. Dedicated tabs show breeding, levels, tier
 This document details the gameplay mechanics, progression curves, and breeding probabilities for **Fishtank**, modeled on [PC FISH: Taskbar Aquarium](https://store.steampowered.com/app/4842670/PC_FISH_Taskbar_Aquarium/).
 
 本文档详细说明 **Fishtank** 的核心玩法机制、升级容量曲线与繁育概率矩阵（数值参考 Steam《[PC FISH: Taskbar Aquarium](https://store.steampowered.com/app/4842670/PC_FISH_Taskbar_Aquarium/?l=tchinese)》）。
+
+### v1.7.0：鱼缸渲染 / Aquarium rendering
+
+- The aquarium defaults to PixiJS in both themes. WebGL failures fall back to Canvas; append `?renderer=canvas` to either production domain to use Canvas directly.
+- 两种主题默认使用 PixiJS，投喂、受惊、电鳗放电与装饰拖动沿用原操作；WebGL 不可用时自动回退 Canvas。两个域名均保留 `?renderer=canvas` 入口，繁育、合成、成长、经验和收集规则不变。
 
 ### v1.6.0：高级电鳗 / Earlier electric eel
 

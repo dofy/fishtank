@@ -51,7 +51,8 @@ async function main(): Promise<void> {
   applyTheme(manifest, night)
 
   let renderer = makeRenderer(manifest)
-  const scene = new Scene()
+  const originalScene = new Scene()
+  let scene = originalScene
 
   const app = new App(state, renderer, {
     themes: THEMES,
@@ -108,6 +109,17 @@ async function main(): Promise<void> {
 
   app.mount(root)
   onSpriteLoad(() => app.invalidatePortraits())
+
+  const params = new URLSearchParams(location.search)
+  // Comparison controls remain dev-only. The normal aquarium now prefers PixiJS.
+  const lab = import.meta.env.DEV && params.has('pixiLab')
+    ? await import('./lab/pixi-lab').then(module => module.mountTankLab(app.canvas))
+    : null
+  const presenter = lab || params.get('renderer') === 'canvas' ? null
+    : await import('./render/pixi-presenter').then(module => module.mountPixiTank(app.canvas)).catch(error => {
+      console.warn('PixiJS could not load; using Canvas', error)
+      return null
+    })
 
   if (typeof window.matchMedia === 'function') {
     const mq = window.matchMedia('(prefers-color-scheme: dark)')
@@ -209,8 +221,9 @@ async function main(): Promise<void> {
       draggingDecorId = hit
       scene.activeDecorId = hit
       if (logicalWidth > 0) {
-        const existing = state.placedDecor?.find((d) => d.id === hit)
-        if (existing) moveDecor(state, hit, existing.x)
+        const decorState = lab?.stateFor(state) ?? state
+        const existing = decorState.placedDecor?.find((d) => d.id === hit)
+        if (existing) moveDecor(decorState, hit, existing.x)
       }
       app.canvas.style.cursor = 'grabbing'
       try {
@@ -229,7 +242,7 @@ async function main(): Promise<void> {
   app.canvas.addEventListener('pointermove', (event) => {
     const pt = canvasCoords(event)
     if (draggingDecorId && logicalWidth > 0) {
-      moveDecor(state, draggingDecorId, pt.x / logicalWidth)
+      moveDecor(lab?.stateFor(state) ?? state, draggingDecorId, pt.x / logicalWidth)
       scene.activeDecorId = draggingDecorId
       app.canvas.style.cursor = 'grabbing'
       return
@@ -248,7 +261,7 @@ async function main(): Promise<void> {
   const endDrag = (event: PointerEvent) => {
     if (!draggingDecorId) return
     draggingDecorId = null
-    save(state)
+    if (!lab?.observing) save(state)
     const pt = canvasCoords(event)
     const hover = scene.hitDecor(pt.x, pt.y, logicalHeight)
     scene.activeDecorId = hover
@@ -281,7 +294,8 @@ async function main(): Promise<void> {
     const wallNow = Date.now()
     night = resolveDarkMode(state.colorMode ?? 'auto')
 
-    scene.sync(state, species, logicalWidth, logicalHeight, wallNow)
+    scene = lab?.sceneFor(originalScene) ?? originalScene
+    scene.sync(lab?.stateFor(state) ?? state, species, logicalWidth, logicalHeight, wallNow)
     scene.update(
       dt,
       logicalWidth,
@@ -292,13 +306,19 @@ async function main(): Promise<void> {
       night,
     )
 
-    ctx.save()
-    ctx.setTransform(dpr * zoom, 0, 0, dpr * zoom, 0, 0)
     const view = scene.view(logicalWidth, logicalHeight, elapsed, night)
     view.railLights = state.railLights
     view.reducedMotion = motionPreference.matches
-    renderer.scene(ctx, view)
-    ctx.restore()
+    if (lab) {
+      lab.draw(renderer, view, ctx, dpr * zoom, zoom)
+    } else if (presenter) {
+      presenter.draw(renderer, view, ctx, dpr * zoom, zoom)
+    } else {
+      ctx.save()
+      ctx.setTransform(dpr * zoom, 0, 0, dpr * zoom, 0, 0)
+      renderer.scene(ctx, view)
+      ctx.restore()
+    }
 
     requestAnimationFrame(frame)
   }

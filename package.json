@@ -1,6 +1,6 @@
 {
   "name": "fishtank",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "private": false,
   "license": "MIT",
   "type": "module",
@@ -41,5 +41,8 @@
     "tailwindcss": "^4.3.3",
     "typescript": "^5.7.2",
     "vite": "^6.0.7"
+  },
+  "dependencies": {
+    "pixi.js": "^8.22.0"
   }
 }

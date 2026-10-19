@@ -15,6 +15,11 @@ let species
 let lighting
 let shortcuts
 let Scene
+let benchmark
+let shape
+let decorations
+let GpuTimer
+let FishDeformation
 
 before(async () => {
   Object.defineProperty(globalThis, 'localStorage', {
@@ -30,6 +35,10 @@ before(async () => {
     configFile: false,
     server: { middlewareMode: true, watch: null },
   })
+  benchmark = await server.ssrLoadModule('/src/lab/benchmark.ts')
+  ;({ FishDeformation } = await server.ssrLoadModule('/src/lab/fish-motion.ts'))
+  shape = await server.ssrLoadModule('/src/render/shape.ts')
+  ;({ GpuTimer } = await server.ssrLoadModule('/src/lab/gpu-timer.ts'))
   game = await server.ssrLoadModule('/src/core/game.ts')
   balance = await server.ssrLoadModule('/src/core/balance.ts')
   save = await server.ssrLoadModule('/src/core/save.ts')
@@ -37,7 +46,7 @@ before(async () => {
   shortcuts = await server.ssrLoadModule('/src/ui/shortcuts.ts')
   ;({ Scene } = await server.ssrLoadModule('/src/render/scene.ts'))
   ;({ Rng } = await server.ssrLoadModule('/src/core/rng.ts'))
-  ;({ SPECIES: species } = await server.ssrLoadModule('/src/core/species.ts'))
+  ;({ SPECIES: species, DECORATIONS: decorations } = await server.ssrLoadModule('/src/core/species.ts'))
 })
 
 beforeEach(() => storage.clear())
@@ -454,4 +463,126 @@ test('synthesis still rejects wrong counts, missing fish, starters and max-tier 
     assert.deepEqual(game.synthesize(state, uids, NOW, new Rng(123)), { error })
     assert.equal(JSON.stringify(state), snapshot)
   }
+})
+
+test('benchmark statistics reject invalid samples and use nearest-rank percentiles', () => {
+  assert.equal(benchmark.statistics([NaN, Infinity, -1]), null)
+  assert.deepEqual(benchmark.statistics([4, 1, 3, 2, NaN, -2]), { count: 4, mean: 2.5, p50: 2, p95: 4, max: 4 })
+})
+
+test('benchmark discards warmup, replays ABBA, and keeps GPU samples separate', () => {
+  const session = new benchmark.Benchmark({ width: 500, height: 230, agents: [], decors: [], time: 80 }, 2, 3)
+  const modes = []
+  while (!session.finished) {
+    modes.push(session.mode)
+    session.record(session.warming ? 1000 : session.mode === 'canvas' ? 3 : 1, modes.length * 16, session.mode === 'pixi' ? [0.5] : [])
+  }
+  assert.deepEqual(session.passes.map(p => p.mode), ['canvas', 'pixi', 'pixi', 'canvas'])
+  const [canvas, pixi] = session.results()
+  assert.equal(canvas.cpu.count, 6)
+  assert.equal(canvas.cpu.mean, 3)
+  assert.equal(canvas.gpu, null)
+  assert.equal(pixi.cpu.mean, 1)
+  assert.equal(pixi.gpu.mean, 0.5)
+  assert.equal(canvas.fps, 62.5)
+})
+
+test('fixed replay is deterministic, bounded and does not mutate live swimming or fish', () => {
+  const base = { width: 500, height: 230, agents: [{ fish: { uid: 'one', grade: 2 }, species: species[0], x: 80, y: 100, scale: 1, speed: 30, dir: -1, phase: 1, scaredTimer: 5 }], decors: [], time: 80 }
+  const before = structuredClone(base)
+  const a = benchmark.replay(base, 150)
+  assert.deepEqual(a, benchmark.replay(base, 150))
+  assert.deepEqual(base, before)
+  assert.ok(a.agents[0].x >= 36 && a.agents[0].x <= 464)
+  assert.equal(a.agents[0].scaredTimer, 0)
+  assert.equal(a.time, 2.5)
+})
+
+test('all 18 decorations can emit finite native commands without creating Path2D', () => {
+  for (const item of decorations) {
+    for (const time of [0, 0.7, 3.9]) {
+      const paths = []
+      const layers = shape.decorLayers(item.id, item.width, item.height, time, () => {
+        const commands = []
+        paths.push(commands)
+        return Object.fromEntries(['moveTo', 'lineTo', 'quadraticCurveTo', 'bezierCurveTo', 'closePath', 'ellipse', 'arc', 'rect'].map(method => [method, (...args) => { assert.ok(args.every(v => typeof v === 'boolean' || Number.isFinite(v)), `${item.id}: ${method}`); commands.push(method) }]))
+      })
+      assert.equal(paths.length, 3)
+      assert.deepEqual(layers.map(layer => layer.role), ['secondary', 'primary', 'detail'])
+      assert.ok(paths.flat().length > 5, item.id)
+    }
+  }
+})
+
+test('GPU timing reports unsupported browsers without inventing measurements', () => {
+  const timer = new GpuTimer({})
+  assert.equal(timer.supported, false)
+  timer.reset(true)
+  timer.begin()
+  timer.end()
+  assert.deepEqual(timer.samples(), [])
+  timer.destroy()
+})
+
+test('column deformation preserves every fish form, phase and scared tempo', () => {
+  const cols = 19, rows = 9
+  for (const sp of species) {
+    const length = sp.body.length * 4.2, pad = 18
+    const width = Math.ceil(length + pad * 2), height = Math.ceil(Math.max(length * 1.65, 76) + pad * 2)
+    const base = Float32Array.from({ length: cols * rows * 2 }, (_, i) => i % 2
+      ? Math.floor(i / 2 / cols) / (rows - 1) * height - height / 2
+      : Math.floor(i / 2) % cols / (cols - 1) * width - width / 2)
+    const original = base.slice(), vertices = base.slice()
+    const deformation = new FishDeformation(sp.body, length, width, height, pad, base, cols)
+    for (const t of [0, 0.7, 1.6, 3.9]) for (const tempo of [4.5, 9]) {
+      assert.equal(deformation.update(vertices, t, tempo, true), true)
+      const form = sp.body.form ?? 'fish'
+      const profile = shape.elongatedProfile(sp.body, length, t)
+      const rest = shape.elongatedProfile(sp.body, length, 0)
+      for (let i = 0; i < base.length; i += 2) {
+        const x = base[i], y = base[i + 1]
+        const u = Math.min(1, Math.max(0, (x + width / 2 - pad) / length))
+        let dx = 0, dy = 0
+        if (form === 'eel' || form === 'seasnake') dy = profile.center(u) - rest.center(u)
+        else if (form === 'jellyfish') { dx = x / width * Math.sin(t * 2.2) * length * 0.08; dy = Math.max(0, y) * Math.sin(t * 2.2 - 0.8) * 0.08 }
+        else if (form === 'ray' || form === 'turtle') dy = y * Math.sin(t * (form === 'ray' ? 2.6 : 2.8)) * 0.14 * Math.sin(u * Math.PI)
+        else if (form === 'seahorse') dx = Math.max(0, y / height) * Math.sin(t * 3) * 3
+        else dy = Math.sin(t * tempo - u * 2.1) * (1 - u) ** 2 * length * 0.065
+        assert.ok(Math.abs(vertices[i] - (x + dx)) < 0.00002, `${sp.id} x @ ${t}`)
+        assert.ok(Math.abs(vertices[i + 1] - (y + dy)) < 0.00002, `${sp.id} y @ ${t}`)
+      }
+    }
+    assert.deepEqual(base, original, 'rest geometry stays immutable')
+    assert.equal(deformation.update(vertices, 8, 9, false), true, 'freeze restores the resting pose once')
+    assert.deepEqual(vertices, original)
+    assert.equal(deformation.update(vertices, 9, 9, false), false, 'no repeated frozen mesh uploads')
+    assert.equal(deformation.update(vertices, 10, 4.5, true), true, 'animation resumes')
+  }
+})
+
+test('GPU timing reads ready queries asynchronously and drops disjoint results', () => {
+  const queries = []
+  let disjoint = false
+  const gl = {
+    QUERY_RESULT_AVAILABLE: 1, QUERY_RESULT: 2,
+    getExtension: () => ({ TIME_ELAPSED_EXT: 3, GPU_DISJOINT_EXT: 4 }),
+    isContextLost: () => false,
+    createQuery: () => { const q = { ready: false }; queries.push(q); return q },
+    beginQuery: () => {}, endQuery: () => {}, deleteQuery: q => { q.deleted = true },
+    getParameter: () => disjoint,
+    getQueryParameter: (q, kind) => { if (kind === 1) return q.ready; assert.ok(q.ready); return 1_250_000 },
+    finish: () => assert.fail('timing must not stall the GPU'),
+  }
+  const timer = new GpuTimer(gl)
+  timer.reset(true)
+  timer.begin(); timer.end()
+  assert.deepEqual(timer.samples(), [])
+  queries[0].ready = true
+  timer.begin(); timer.end()
+  assert.deepEqual(timer.samples(), [1.25])
+  disjoint = true
+  timer.begin()
+  assert.deepEqual(timer.samples(), [])
+  assert.ok(queries.every(q => q.deleted))
+  timer.destroy()
 })
