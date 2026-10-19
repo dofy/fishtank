@@ -687,7 +687,6 @@ table.help-matrix td:not(:first-child) { @apply whitespace-nowrap px-0.5; }
 :root[data-theme='lcd'] .changelog-dialog::backdrop { @apply bg-[#20250f]/55 backdrop-blur-none; }
 .changelog-title { @apply m-0 flex items-center gap-2 text-lg font-bold text-[var(--accent)]; }
 .changelog-title .ico { @apply w-5 h-5; }
-.changelog-intro { @apply m-0 text-[13px] leading-6 text-[var(--muted)]; }
 .changelog-layout { @apply grid grid-cols-[124px_minmax(0,1fr)] flex-1 min-h-0 gap-6; }
 .changelog-nav { @apply relative flex flex-col gap-1.5 min-h-0 overflow-y-auto pr-3 border-r border-[var(--border)]; }
 .changelog-nav button { @apply shrink-0 px-3 py-2 text-[13px] text-left tabular-nums; box-shadow: none; }

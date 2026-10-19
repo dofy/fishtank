@@ -122,7 +122,6 @@ export interface Copy {
   helpBtn: string
   changelogBtn: string
   changelogClose: string
-  changelogIntro: string
   changelogVersions: string
   changelogCurrent: string
   changelogUnreleased: string
@@ -312,7 +311,6 @@ const ZH: Copy = {
   helpBtn: '帮助',
   changelogBtn: '更新日志',
   changelogClose: '关闭更新日志',
-  changelogIntro: '新变化、小修补，都记在这里。看看你的小鱼缸又变好了哪些地方 🫧',
   changelogVersions: '翻翻各个版本',
   changelogCurrent: '当前版本',
   changelogUnreleased: '待发布',
@@ -541,7 +539,6 @@ const EN: Copy = {
   helpBtn: 'Help',
   changelogBtn: 'Changelog',
   changelogClose: 'Close changelog',
-  changelogIntro: 'Little additions and thoughtful fixes for your aquarium 🫧 Release notes are in Chinese.',
   changelogVersions: 'Browse versions',
   changelogCurrent: 'Current version',
   changelogUnreleased: 'Unreleased',

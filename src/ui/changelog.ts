@@ -43,7 +43,6 @@ export function renderChangelogDialog(
   dialog.className = 'help-modal changelog-dialog'
   dialog.dataset.locale = locale
   dialog.setAttribute('aria-labelledby', 'changelog-title')
-  dialog.setAttribute('aria-describedby', 'changelog-intro')
 
   const header = document.createElement('div')
   header.className = 'book-detail-head'
@@ -59,11 +58,6 @@ export function renderChangelogDialog(
   close.innerHTML = CLOSE_ICON
   close.onclick = onClose
   header.append(title, close)
-
-  const intro = document.createElement('p')
-  intro.id = 'changelog-intro'
-  intro.className = 'changelog-intro'
-  intro.textContent = c.changelogIntro
 
   const navigation = document.createElement('nav')
   navigation.className = 'changelog-nav'
@@ -197,7 +191,7 @@ export function renderChangelogDialog(
   const layout = document.createElement('div')
   layout.className = 'changelog-layout'
   layout.append(navigation, body)
-  dialog.append(header, intro, layout)
+  dialog.append(header, layout)
   dialog.addEventListener('cancel', (event) => {
     event.preventDefault()
     onClose()
