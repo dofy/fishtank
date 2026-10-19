@@ -35,7 +35,11 @@ Chrome 155 / macOS，Apple M5 / ANGLE Metal，DPR 1，约 75 FPS 上限。三个
 - WebGL 上下文丢失后当帧使用 Canvas，恢复后继续 PixiJS。初始化失败、绘制异常与加载失败均保留 Canvas 路径；`?renderer=canvas` 可手动强制使用旧渲染器。
 - 本地生产预览验证默认 PixiJS、LCD 切换、繁育收鱼、DPR 2 小屏，以及无 WebGL / 手动 Canvas 回退；这些流程没有页面异常。手动 Canvas 没有请求 GPU 模块，生产预览不会显示实验工具栏。开发对照的效果开关、分界滑块与窗口变化取消采样也已复核。
 
-## 本地入口与边界
+## 发布验证与入口
+
+1.7.0 已发布到两个现有域名；54 项回归与构建通过。发布复查补修异步初始化后的 Service Worker 注册，以及 CF 将 `/index.html` 重定向后导致的离线导航兜底。最终缓存为 `fishtank-pwa-v1.7.0-r2`，两域名均验证在线预热刷新后断网启动 PixiJS 与 Canvas。部署版本、流量与资源哈希见 [部署记录](DEPLOYMENTS.md)。
+
+以下为开发服务入口：
 
 - 正常游戏：<http://localhost:5173/>，默认 PixiJS。
 - Canvas 回退：<http://localhost:5173/?renderer=canvas>，不加载 GPU 模块，不修改偏好或存档。

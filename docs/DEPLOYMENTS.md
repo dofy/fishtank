@@ -2,6 +2,46 @@
 
 发布约定：同一天的小修补合并覆盖当前版本，并归入同一条 CHANGELOG；较大的功能或体验更新再升级版本号。同版重新发布可单独递增 Service Worker 缓存修订号，两个自定义域名必须同时保留。
 
+## v1.7.0 — 2026-10-19
+
+### 默认 PixiJS 鱼缸与 Canvas 回退
+
+| 项目 | 记录 |
+| --- | --- |
+| 最终部署时间 | 2026-10-19 19:32:11（Asia/Shanghai） |
+| 生产地址 | https://fishtank.phpz.org/ 、https://fish.yahaha.net/ |
+| Canvas 入口 | https://fishtank.phpz.org/?renderer=canvas 、https://fish.yahaha.net/?renderer=canvas |
+| Cloudflare Worker | `fishtank` |
+| 部署源代码提交 | `af27136736cdb58ebade6a331abf2037b917eb64` |
+| Cloudflare Deployment ID | `679f4bbe-fe6d-4b29-babd-4a2ec40450d0` |
+| Cloudflare Version ID | `f8140848-b68c-4caa-a0e9-f16ae9410078` |
+| 发布时流量 | 最终修订 100% |
+| Service Worker 缓存 | `fishtank-pwa-v1.7.0-r2` |
+
+- 普通入口默认使用 PixiJS，保留写实与 LCD、既有玩法、存档格式和全部鱼缸互动。背景、灯光、18 件造景、鱼食与水花使用原生图形；鱼形复用小纹理，写实网格保留 19×9 顶点和动作公式。网格合批、按列计算与固定可见滤镜范围降低重复开销；同场景原始数据与测量边界见 [优化复测](PIXI_OPTIMIZATION.md)。
+- WebGL 初始化、模块加载或绘制失败时使用 Canvas，上下文恢复后可继续 GPU 渲染。两个域名都保留 `?renderer=canvas` 手动入口，回退不修改存档偏好、不请求 GPU 模块。`?pixiLab=1` 对照工具仅在开发服务启用，生产不显示实验工具栏。
+- 应用、包、日志、README 和数值文档同步为 1.7.0。54 项自动测试、类型检查、生产构建及差异格式检查通过；新回归覆盖全部鱼形动作、固定重放、GPU 异步计时，以及 Service Worker 的延迟注册和重定向缓存兜底。
+- 两域名分别用独立浏览器检查 1280px 中文和 390px/DPR 2 英文，确认默认 PixiJS、LCD 切换、沉浸尺寸、1.7.0 当前日志、繁育收取与刷新保存：鱼数 3→4、爱心 5→4。Canvas 入口保留同一份进度，GPU 画布与 GPU 模块请求数均为 0；没有页面脚本异常。线上另验证 WebGL 丢失回退与恢复。
+- 发布复查发现异步 GPU 初始化可能错过 load 事件，导致首次访问没有注册 SW；改为页面已经加载完成时立即注册，否则使用一次性 load 监听。随后确认 CF 会把 `/index.html` 重定向到 `/`，旧缓存兜底返回 redirected Response 会使离线带参数导航失败；改为优先使用非重定向响应，否则回退缓存首页。
+- 最终 r2 在两个域名各用全新浏览器上下文复测：SW 正常激活，缓存名为 `fishtank-pwa-v1.7.0-r2`；在线刷新预热资源后断网，默认 PixiJS 和首次打开的 `?renderer=canvas` 均能启动，页脚显示 1.7.0，无页面脚本异常。此次验证限定为已预热资源的离线启动，不代表首次未缓存即可离线。
+- CF 发布输出确认两个 custom domain，部署列表确认最终 Version 承接 100% 流量。两个域名通过普通 DNS/HTTPS，最终构建的全部 23 个文件逐字节 SHA-256 一致（合计 46/46）；没有创建或改写历史 tag。
+
+### 同版本发布轨迹
+
+- 19:26:26，`3736007` 发布默认 PixiJS；Deployment `4b9fd070-3033-4736-ad67-ba1e4e22b676`，Version `68dc3b80-ed2d-49b8-9215-07ff92678d66`。
+- 19:30:18，`5703d49` 补修延迟注册，缓存 r1；Deployment `9f002bb9-5775-4b0a-8bcc-3ec8f324d5e5`，Version `29e5590f-5e3c-44fc-b675-4bb4ff1e444f`。
+- 19:32:11，`af27136` 补修离线导航重定向，缓存 r2；最终部署标识见上表，前两次修订不再承接流量。
+
+### 最终线上资源 SHA-256
+
+| 资源 | SHA-256 |
+| --- | --- |
+| `index.html` | `e98bde5a59f5b81a59f8ae86652f825a1d9111e8b552890a20919073f0a047d3` |
+| `sw.js` | `ecd276d63602add10d20240ea0a4dc4f16929e3e319683b72dd7432d0d6c0fd4` |
+| `assets/index-BcGJ-zEs.js` | `93aefd113dc1883801c012189fa66332417535465aff1b8832c750cf5d9c4fde` |
+| `assets/pixi-presenter-D1DLYWur.js` | `b1790eff22f8d5cb3b773aca648033f4815a1a7f3083acea744994b73d7b50ac` |
+| `assets/index-e9QLuTOG.css` | `95ca703c04778bc23a347ce4b2f055348efa1344c10acd26bc2d742db79ca24f` |
+
 ## v1.6.0 — 2026-10-19
 
 ### 高级电鳗与鱼类轮廓重设计
