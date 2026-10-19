@@ -561,7 +561,7 @@ button.check-row[aria-checked='true'] .check-dot {
 .new-badge {
   @apply inline-flex items-center justify-center py-0.5 px-2 text-xs font-extrabold tracking-[0.08em] text-[#1a1102] bg-linear-to-br from-yellow-300 to-amber-500 rounded-full shadow-[0_2px_8px_rgba(245,158,11,0.45)];
 }
-:root[data-theme='lcd'] .new-badge { @apply bg-[var(--text)] text-[var(--panel)] rounded-none shadow-none; }
+:root[data-theme='lcd'] .new-badge { @apply bg-none bg-[var(--text)] text-[var(--panel)] rounded-none shadow-none; }
 .mini-tank-wrap { @apply relative w-full grid place-items-center; }
 .mini-tank {
   @apply w-full h-auto block;

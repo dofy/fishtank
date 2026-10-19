@@ -37,7 +37,7 @@ Chrome 155 / macOS，Apple M5 / ANGLE Metal，DPR 1，约 75 FPS 上限。三个
 
 ## 发布验证与入口
 
-1.7.0 已发布到两个现有域名；54 项回归与构建通过。发布复查补修异步初始化后的 Service Worker 注册，以及 CF 将 `/index.html` 重定向后导致的离线导航兜底。最终缓存为 `fishtank-pwa-v1.7.0-r2`，两域名均验证在线预热刷新后断网启动 PixiJS 与 Canvas。部署版本、流量与资源哈希见 [部署记录](DEPLOYMENTS.md)。
+1.7.0 已发布到两个现有域名；54 项回归与构建通过。发布复查补修异步初始化后的 Service Worker 注册，以及 CF 将 `/index.html` 重定向后导致的离线导航兜底；r2 已在两域名验证在线预热刷新后断网启动 PixiJS 与 Canvas。后续 LCD 新鱼标记修补使用缓存 `fishtank-pwa-v1.7.0-r3`。部署版本、流量与资源哈希见 [部署记录](DEPLOYMENTS.md)。
 
 以下为开发服务入口：
 
