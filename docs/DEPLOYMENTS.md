@@ -1,5 +1,44 @@
 # 部署记录
 
+## v1.4.9 — 2026-10-19
+
+| 项目 | 记录 |
+| --- | --- |
+| 部署时间 | 2026-10-19 12:12:53（Asia/Shanghai） |
+| 生产地址 | https://fishtank.phpz.org/ 、https://fish.yahaha.net/ |
+| Cloudflare Worker | `fishtank` |
+| 部署源代码提交 | `756dc32a017fcf4be30bc4a0961c03b57b06e8fd` |
+| 域名配置修复提交 | `533b9436fcf4fd8cf1b161bf0926b88fdb295268` |
+| Cloudflare Deployment ID | `a852dc03-2a44-44b0-9d51-53f48da45b00` |
+| Cloudflare Version ID | `cd06d9d2-d13c-4468-9688-8cd377c096e5` |
+| 发布时流量 | 新版本 100% |
+
+### 发布内容与验证
+
+- 取消侧边背景的 280px 宽度上限，按视口与主界面之间的实际空间铺开。2560×1440 下原本每侧 510px 的空带缩减为 0；主界面仍为 980px 宽。
+- 光束、远景海床和生物使用独立 SVG 图层，鱼、水母、气泡、海草和珊瑚保持等比缩放；靠近主界面处平滑淡出。
+- 检查 1280×800、1920×1080、2560×1440、3440×1440、3840×2160、5120×1440、1080×1920 和 390×844 八种视口：侧边无覆盖空带，无额外页面溢出，生物图层横纵缩放比例一致。
+- 检查明暗模式、LCD 主题、沉浸模式、正常动画和“减少动态效果”。手机及沉浸模式继续隐藏侧边装饰。
+- `pnpm test`：32 项通过；`pnpm build`、类型检查及差异格式检查通过。
+- 主站 HTML、JS、CSS 和 Service Worker 与本地构建逐字节一致；隔离浏览器确认页脚 `v1.4.9`，两侧背景宽度均为 790px，覆盖空带为 0。
+
+### 域名恢复与验证边界
+
+- 用户截图中的 `fish.yahaha.net` 在部署前可正常访问，但没有记录在仓库的 Wrangler 自定义域名列表中。本次部署覆盖域名列表后，其绑定短暂丢失。
+- 将该既有域名补入 `wrangler.jsonc`，保留 `fishtank.phpz.org`，并使用 `wrangler triggers deploy` 恢复两个域名绑定；未重新上传游戏资源或改变 Version ID。
+- Cloudflare DNS over HTTPS 已返回 `fish.yahaha.net` 的正常 A 记录。验证时本地解析器及 Google DNS 仍缓存此前的 NXDOMAIN，需要等待负缓存到期。
+- 使用 Cloudflare DNS 返回的地址进行独立 HTTPS 验证（保留域名与正常 TLS 证书校验）：该域名首页返回 200、引用新版资源；JS、CSS 和 Service Worker 与本地构建逐字节一致。
+- 独立 Chrome 测试进程使用上述解析地址打开截图域名，确认显示 `v1.4.9`，2560×1440 下背景完整覆盖。该测试仅对独立进程指定解析地址，未更改系统或用户浏览器的 DNS 设置。
+- 域名清单现已纳入版本控制，后续 Wrangler 部署将同时保留两个入口。完整离线启动未在本次验证。
+
+### 线上资源 SHA-256
+
+| 资源 | SHA-256 |
+| --- | --- |
+| `sw.js` | `67e3b287cce6f50e6b9c16da55513124e8da153fe8b076c29397f10def1b9eff` |
+| `assets/index-DlUtGKMk.js` | `822c228f38de39aea1062450f261eb0d55fbea403a7246be3e11891290b6c0ce` |
+| `assets/index-DtydXGg-.css` | `089ba0f3fb81e3414cbc0768209af7f3f9cacbd5127784e772e60ca35a3bd26a` |
+
 ## v1.4.8 — 2026-10-19
 
 | 项目 | 记录 |
