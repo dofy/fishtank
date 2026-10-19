@@ -1,4 +1,4 @@
-# Balance & Game Data Guide / 游戏帮助与数值说明 (`v1.4.11`)
+# Balance & Game Data Guide / 游戏帮助与数值说明 (`v1.4.10`)
 
 This document details the gameplay mechanics, progression curves, and breeding probabilities for **Fishtank**, modeled on [PC FISH: Taskbar Aquarium](https://store.steampowered.com/app/4842670/PC_FISH_Taskbar_Aquarium/).
 
@@ -70,9 +70,9 @@ The five previously unspecified pairings (`0+2`, `0+3`, `0+4`, `0+5`, `1+5`) fol
 
 ### Offspring Species / 子代鱼种
 
-After rolling the offspring tier using the matrix above, select uniformly from **all species in that tier**. A tier with `N` species gives each species a conditional probability of `1/N`, regardless of parent species or discovery history. Repeats remain possible. The former 45% parent-species preference was removed in `v1.4.11`; tier probabilities and grade weights are unchanged.
+After rolling the offspring tier using the matrix above, select uniformly from **all species in that tier**. A tier with `N` species gives each species a conditional probability of `1/N`, regardless of parent species or discovery history. Repeats remain possible. The former 45% parent-species preference was removed in a same-day update to `v1.4.10`; tier probabilities and grade weights are unchanged.
 
-先按上表抽取子代星级，再从该星级的**全部鱼种中等概率抽取**。同星级有 `N` 种鱼时，每种在该星级内的概率均为 `1/N`，与亲代鱼种、是否已收集无关，仍可能重复。`v1.4.11` 移除了原有的 45% 亲代鱼种优先；星级概率和品阶权重保持不变。
+先按上表抽取子代星级，再从该星级的**全部鱼种中等概率抽取**。同星级有 `N` 种鱼时，每种在该星级内的概率均为 `1/N`，与亲代鱼种、是否已收集无关，仍可能重复。`v1.4.10` 的同日更新移除了原有的 45% 亲代鱼种优先；星级概率和品阶权重保持不变。
 
 ---
 
