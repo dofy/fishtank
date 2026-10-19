@@ -60,6 +60,7 @@ import type {
 import type { Renderer } from '../render/renderer'
 import type { Agent, DecorNode } from '../render/scene'
 import { resolveDarkMode } from '../render/theme'
+import { renderChangelogDialog } from './changelog'
 import {
   bar,
   checkRow,
@@ -81,6 +82,7 @@ import {
   BG_SCENERY_LEFT_SVG,
   BG_SCENERY_RIGHT_SVG,
   CLOCK_ICON,
+  CHANGELOG_ICON,
   CLOSE_ICON,
   GITHUB_ICON,
   HEART_SVG,
@@ -95,7 +97,7 @@ import {
 
 export { formatClock, stars } from './dom'
 
-export const APP_VERSION = '1.4.7'
+export const APP_VERSION = '1.4.8'
 export const GITHUB_URL = 'https://github.com/dofy/fishtank'
 
 export interface AppHooks {
@@ -142,6 +144,7 @@ export class App {
   private bookSelectedUid: string | null = null
   private immersive = false
   private helpOpen = false
+  private changelogOpen = false
   private portraitCache = new Map<string, HTMLCanvasElement>()
   private showcase: ShowcaseState | null = null
   private showcaseCanvas: HTMLCanvasElement | null = null
@@ -195,7 +198,10 @@ export class App {
     )
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
-        if (this.helpOpen) {
+        if (this.changelogOpen) {
+          e.preventDefault()
+          this.closeChangelog()
+        } else if (this.helpOpen) {
           this.helpOpen = false
           this.renderShowcase()
         } else if (this.immersive) {
@@ -1486,6 +1492,15 @@ export class App {
       this.renderShowcase()
     }
 
+    const changelogLink = makeIconButton(CHANGELOG_ICON, c.changelogBtn, () => {
+      sound.play('click')
+      this.helpOpen = false
+      this.changelogOpen = true
+      this.renderShowcase()
+    })
+    changelogLink.className = 'footer-link'
+    changelogLink.dataset.changelog = '1'
+
     const ghLink = document.createElement('a')
     ghLink.href = GITHUB_URL
     ghLink.target = '_blank'
@@ -1494,7 +1509,7 @@ export class App {
     ghLink.title = 'GitHub: dofy/fishtank'
     ghLink.innerHTML = `<span class="ico">${GITHUB_ICON}</span><span>GitHub</span>`
 
-    right.append(helpLink, ghLink)
+    right.append(helpLink, changelogLink, ghLink)
     this.footer.replaceChildren(left, right)
   }
 
@@ -1637,6 +1652,14 @@ export class App {
 
   // ------------------------------------------------------------- showcase
 
+  private closeChangelog(): void {
+    sound.play('click')
+    this.modal.querySelector<HTMLDialogElement>('.changelog-dialog')?.close()
+    this.changelogOpen = false
+    this.renderShowcase()
+    this.footer.querySelector<HTMLButtonElement>('[data-changelog]')?.focus()
+  }
+
   private openShowcase(
     outcome: BreedOutcome,
     kind: 'breed' | 'merge' = 'breed',
@@ -1693,6 +1716,14 @@ export class App {
   }
 
   private renderShowcase(): void {
+    if (this.changelogOpen) {
+      const current = this.modal.querySelector<HTMLDialogElement>('.changelog-dialog')
+      if (current?.dataset.locale === this.locale) return
+      const dialog = renderChangelogDialog(this.locale, APP_VERSION, () => this.closeChangelog())
+      this.modal.replaceChildren(dialog)
+      dialog.showModal()
+      return
+    }
     if (!this.showcase) {
       if (this.helpOpen) {
         this.modal.replaceChildren(this.renderHelpModal())

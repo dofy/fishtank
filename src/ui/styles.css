@@ -626,6 +626,34 @@ a.footer-link {
 .help-body { @apply flex-1 min-h-0 overflow-y-auto pr-1 grid gap-2; }
 .help-list { @apply m-0 pl-4 list-disc grid gap-1.5 text-xs leading-relaxed text-[var(--text)]; }
 
+.changelog-dialog { @apply m-auto; }
+.changelog-dialog:not([open]) { display: none; }
+.changelog-dialog::backdrop { @apply bg-black/60 backdrop-blur-sm; }
+:root[data-theme='lcd'] .changelog-dialog::backdrop { @apply bg-[#20250f]/55 backdrop-blur-none; }
+.changelog-title { @apply m-0 flex items-center gap-2 text-base font-bold text-[var(--accent)]; }
+.changelog-title .ico { @apply w-5 h-5; }
+.changelog-intro { @apply m-0 text-xs leading-relaxed text-[var(--muted)]; }
+.changelog-nav { @apply flex shrink-0 flex-wrap gap-1.5; }
+.changelog-nav button { @apply px-2 py-1 text-[11px] tabular-nums; }
+.changelog-body { @apply relative block; }
+.changelog-body:focus-visible { outline: 1px solid var(--accent); outline-offset: 2px; }
+.changelog-release { @apply pb-5 mb-5 border-b border-[var(--border)] last:border-0 last:mb-0 last:pb-0; }
+.changelog-release-head { @apply flex items-center flex-wrap gap-x-3 gap-y-1 mb-3; }
+.changelog-release-head h3 { @apply m-0 text-base font-bold text-[var(--accent)] tabular-nums; }
+.changelog-release-head time { @apply text-[11px] text-[var(--muted)] tabular-nums; }
+.changelog-current { @apply px-1.5 py-0.5 rounded text-[10px] font-medium text-[var(--accent)] bg-[var(--cell-bg)] border border-[var(--border)]; }
+.changelog-release h4 { @apply mt-4 mb-2 text-xs font-semibold text-[var(--text)]; }
+.changelog-release p,
+.changelog-release li { @apply text-xs leading-6 text-[var(--text)] break-words; }
+.changelog-release p { @apply my-2; }
+.changelog-release ul { @apply pl-4 my-2 list-disc space-y-1.5; }
+.changelog-release code { @apply px-1 py-0.5 rounded bg-[var(--cell-bg)] text-[11px]; }
+.changelog-release a { @apply text-[var(--accent)] underline underline-offset-2; }
+@media (max-width: 400px) {
+  .footer-links { @apply gap-1; }
+  .footer-links .footer-link { @apply px-1.5 gap-1; }
+}
+
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes pop-in {
   from { opacity: 0; transform: scale(0.92) translateY(6px); }

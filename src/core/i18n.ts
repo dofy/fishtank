@@ -119,6 +119,12 @@ export interface Copy {
   hudFull: string
   hudSpecies: string
   helpBtn: string
+  changelogBtn: string
+  changelogClose: string
+  changelogIntro: string
+  changelogVersions: string
+  changelogCurrent: string
+  changelogUnreleased: string
   immersiveBtn: string
   exitImmersiveBtn: string
   langToggle: string
@@ -276,6 +282,12 @@ const ZH: Copy = {
   hudFull: '已满',
   hudSpecies: '图鉴',
   helpBtn: '帮助',
+  changelogBtn: '更新日志',
+  changelogClose: '关闭更新日志',
+  changelogIntro: '从最初的一缸小鱼，到每一次新的变化。选择版本可快速跳转。',
+  changelogVersions: '跳转版本',
+  changelogCurrent: '当前版本',
+  changelogUnreleased: '待发布',
   immersiveBtn: '沉浸',
   exitImmersiveBtn: '返回',
   langToggle: 'EN',
@@ -471,6 +483,12 @@ const EN: Copy = {
   hudFull: 'full',
   hudSpecies: 'Species',
   helpBtn: 'Help',
+  changelogBtn: 'Changelog',
+  changelogClose: 'Close changelog',
+  changelogIntro: 'Follow each update to your aquarium. Choose a version to jump to its notes (written in Chinese).',
+  changelogVersions: 'Jump to version',
+  changelogCurrent: 'Current version',
+  changelogUnreleased: 'Unreleased',
   immersiveBtn: 'Immersive',
   exitImmersiveBtn: 'Back',
   langToggle: '中文',
