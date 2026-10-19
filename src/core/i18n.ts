@@ -223,6 +223,11 @@ export interface Copy {
   colorModeLight: string
   colorModeDark: string
   settingsColorModeNote: string
+  settingsRailLightsHeading: string
+  railLightsAnimated: string
+  railLightsFrequency: string
+  railLightsRate: (frequency: number) => string
+  railLightsNote: string
   settingsAudioHeading: string
   audioSfxLabel: string
   audioBgmLabel: string
@@ -397,6 +402,11 @@ const ZH: Copy = {
   colorModeLight: '日间',
   colorModeDark: '黑夜',
   settingsColorModeNote: '默认“自动”跟随系统深浅色模式。处于黑夜模式时，鱼缸顶部的装饰灯会自动点亮并投射氛围光束。',
+  settingsRailLightsHeading: '横梁小彩灯',
+  railLightsAnimated: '滚动闪烁',
+  railLightsFrequency: '闪烁频率',
+  railLightsRate: (frequency) => `${frequency.toFixed(1)} 次/秒`,
+  railLightsNote: '只在夜间点亮，白天自动熄灭。关闭滚动闪烁后保持常亮；跟随系统“减少动态效果”设置时，也会静静亮着。LCD 主题显示单色灯珠。',
   settingsAudioHeading: '音效与背景音乐（Lo-Fi BGM）',
   audioSfxLabel: '操作音效',
   audioBgmLabel: '背景音乐',
@@ -601,6 +611,11 @@ const EN: Copy = {
   colorModeLight: 'Day',
   colorModeDark: 'Night',
   settingsColorModeNote: 'Defaults to Auto (follows system appearance). In Night mode, the aquarium decorative lamps automatically light up.',
+  settingsRailLightsHeading: 'Little rail lights',
+  railLightsAnimated: 'Chasing lights',
+  railLightsFrequency: 'Blink frequency',
+  railLightsRate: (frequency) => `${frequency.toFixed(1)} cycles/s`,
+  railLightsNote: 'Light up only at night and switch off during the day. Turn chasing off for a steady glow. Reduced motion also keeps them steady. The LCD theme uses monochrome beads.',
   settingsAudioHeading: 'Sound Effects & Lo-Fi BGM',
   audioSfxLabel: 'Sound Effects',
   audioBgmLabel: 'Background Music',

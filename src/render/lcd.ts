@@ -3,6 +3,7 @@ import type { DecorPortraitRequest, PortraitRequest, Renderer } from './renderer
 import type { Agent, DecorNode, SceneView, SplashEffect } from './scene'
 import { decorLayers, eyeAt, fishPath, hashString, patternBands, patternSpots } from './shape'
 import { type SceneColors, type ThemeManifest, lampPositions, sceneColorsFor, spriteFor } from './theme'
+import { drawRailBeads } from './rail-lights'
 
 /** Identity-transform scratch context used only for point-in-path tests. */
 const probe = document.createElement('canvas').getContext('2d')!
@@ -51,6 +52,7 @@ export class LcdRenderer implements Renderer {
     }
 
     this.lampsFixture(ctx, w, s, night)
+    drawRailBeads(ctx, view, { cell: this.cell, ink: s.ink })
 
     // Panel border drawn in whole cells, like a bezel.
     ctx.fillStyle = s.ink

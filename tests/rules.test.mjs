@@ -11,6 +11,7 @@ let balance
 let save
 let Rng
 let species
+let lighting
 
 before(async () => {
   Object.defineProperty(globalThis, 'localStorage', {
@@ -29,11 +30,65 @@ before(async () => {
   game = await server.ssrLoadModule('/src/core/game.ts')
   balance = await server.ssrLoadModule('/src/core/balance.ts')
   save = await server.ssrLoadModule('/src/core/save.ts')
+  lighting = await server.ssrLoadModule('/src/core/lighting.ts')
   ;({ Rng } = await server.ssrLoadModule('/src/core/rng.ts'))
   ;({ SPECIES: species } = await server.ssrLoadModule('/src/core/species.ts'))
 })
 
 beforeEach(() => storage.clear())
+
+test('legacy and malformed rail light settings keep the existing game progress', () => {
+  for (const [input, expected] of [
+    [undefined, { animated: true, frequency: 0.5 }],
+    [null, { animated: true, frequency: 0.5 }],
+    ['invalid', { animated: true, frequency: 0.5 }],
+    [{ animated: false, frequency: -1 }, { animated: false, frequency: 0.2 }],
+    [{ animated: 'yes', frequency: 9 }, { animated: true, frequency: 2 }],
+    [{ frequency: 'fast' }, { animated: true, frequency: 0.5 }],
+  ]) {
+    const state = game.newGame(NOW, 'zh')
+    state.exp = 60
+    state.level = 3
+    state.railLights = input
+    save.save(state)
+    const loaded = save.load(NOW)
+    assert.deepEqual(loaded.railLights, expected)
+    assert.deepEqual(loaded.fish, state.fish)
+    assert.deepEqual(loaded.discoveredVariants, state.discoveredVariants)
+    assert.equal(loaded.exp, 60)
+    assert.equal(loaded.level, 3)
+  }
+  assert.equal(lighting.syncRailLightConfig({ frequency: NaN }).frequency, 0.5)
+  assert.equal(lighting.syncRailLightConfig({ frequency: Infinity }).frequency, 0.5)
+})
+
+test('rail light toggle and frequency survive save and reload independently', () => {
+  const state = game.newGame(NOW, 'zh')
+  assert.deepEqual(state.railLights, { animated: true, frequency: 0.5 })
+  state.railLights = { animated: false, frequency: 1.4 }
+  save.save(state)
+  const loaded = save.load(NOW)
+  assert.deepEqual(loaded.railLights, { animated: false, frequency: 1.4 })
+  loaded.railLights.animated = true
+  save.save(loaded)
+  assert.deepEqual(save.load(NOW).railLights, { animated: true, frequency: 1.4 })
+})
+
+test('rail lights travel smoothly at the selected frequency and stay steady when motion is off', () => {
+  const brightness = lighting.railBeadBrightness
+  const config = { animated: true, frequency: 0.5 }
+  assert.notEqual(brightness(0, 0, config), brightness(0, 2, config))
+  assert.notEqual(brightness(0, 0, config), brightness(1, 0, config))
+  for (let i = 0; i < 40; i++) {
+    const time = i * 0.13
+    const value = brightness(time, i, config)
+    assert.ok(value >= 0.25 && value <= 1)
+    assert.ok(Math.abs(value - brightness(time + 2, i, config)) < 1e-12)
+    assert.ok(Math.abs(value - brightness(time / 4, i, { animated: true, frequency: 2 })) < 1e-12)
+    assert.equal(brightness(time, i, { ...config, animated: false }), 1)
+    assert.equal(brightness(time, i, config, true), 1)
+  }
+})
 
 after(async () => {
   await server?.close()

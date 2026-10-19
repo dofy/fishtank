@@ -149,6 +149,12 @@ export interface MergeFilter {
   tiers: Tier[]
 }
 
+export interface RailLightConfig {
+  animated: boolean
+  /** Full brightness cycles per second, from 0.2 to 2. */
+  frequency: number
+}
+
 export interface GameState {
   version: number
   fish: Fish[]
@@ -175,6 +181,7 @@ export interface GameState {
   discoveredVariants?: string[]
   theme: string
   colorMode?: ColorMode
+  railLights?: RailLightConfig
   locale?: Locale
   /** Epoch ms of the last simulation tick. */
   lastTick: number

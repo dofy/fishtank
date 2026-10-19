@@ -1,6 +1,7 @@
 import type { DecorItem, Grade, Tier } from '../core/types'
 import type { DecorPortraitRequest, PortraitRequest, Renderer } from './renderer'
 import type { Agent, DecorNode, FoodPellet, SceneView, SplashEffect } from './scene'
+import { drawRailBeads } from './rail-lights'
 import { decorLayers, eyeAt, fishPath, hashString, patternBands, patternSpots } from './shape'
 import { type SceneColors, type ThemeManifest, lampPositions, sceneColorsFor, spriteFor } from './theme'
 
@@ -149,6 +150,7 @@ export class RealisticRenderer implements Renderer {
 
     this.bubbles(ctx, w, h, view.time)
     this.lampsFixture(ctx, w, night, view.lampColors)
+    drawRailBeads(ctx, view)
 
     // Glass edge, so the tank reads as a container.
     ctx.strokeStyle = night ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.38)'

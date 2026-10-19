@@ -1,6 +1,7 @@
 import { sound, syncAudioConfig } from './core/audio'
 import { moveDecor, newGame, tick } from './core/game'
 import { load, save, wipe } from './core/save'
+import { syncRailLightConfig } from './core/lighting'
 import { species } from './core/species'
 import type { AudioConfig, ColorMode, DecorId, Locale } from './core/types'
 import { LcdRenderer } from './render/lcd'
@@ -89,11 +90,13 @@ async function main(): Promise<void> {
       const currentLocale = state.locale
       const currentColorMode = state.colorMode ?? 'auto'
       const currentAudio = syncAudioConfig(state.audio)
+      const currentRailLights = syncRailLightConfig(state.railLights)
       wipe()
       state = newGame(Date.now(), currentLocale)
       state.theme = manifest.id
       state.colorMode = currentColorMode
       state.audio = currentAudio
+      state.railLights = currentRailLights
       sound.configure(currentAudio)
       night = resolveDarkMode(currentColorMode)
       applyTheme(manifest, night)
@@ -267,6 +270,7 @@ async function main(): Promise<void> {
   })
 
   const startMs = performance.now()
+  const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)')
   let lastMs = startMs
 
   const frame = (nowMs: number) => {
@@ -290,7 +294,10 @@ async function main(): Promise<void> {
 
     ctx.save()
     ctx.setTransform(dpr * zoom, 0, 0, dpr * zoom, 0, 0)
-    renderer.scene(ctx, scene.view(logicalWidth, logicalHeight, elapsed, night))
+    const view = scene.view(logicalWidth, logicalHeight, elapsed, night)
+    view.railLights = state.railLights
+    view.reducedMotion = motionPreference.matches
+    renderer.scene(ctx, view)
     ctx.restore()
 
     requestAnimationFrame(frame)

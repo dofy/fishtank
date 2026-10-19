@@ -1,6 +1,6 @@
 import { isAdult, syncDecor, tankFish } from '../core/game'
 import { decorItem } from '../core/species'
-import type { DecorId, DecorItem, Fish, GameState, Species } from '../core/types'
+import type { DecorId, DecorItem, Fish, GameState, RailLightConfig, Species } from '../core/types'
 import { hashString } from './shape'
 
 export interface Agent {
@@ -81,6 +81,8 @@ export interface SceneView {
   time: number
   /** True in dark/night mode, turning on the aquarium decorative lamps. */
   night?: boolean
+  railLights?: RailLightConfig
+  reducedMotion?: boolean
 }
 
 let nextPelletId = 1

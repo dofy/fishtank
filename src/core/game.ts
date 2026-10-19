@@ -18,6 +18,7 @@ import {
 } from './balance'
 import { defaultAudioConfig } from './audio'
 import { detectLocale } from './i18n'
+import { syncRailLightConfig } from './lighting'
 import { Rng, rng as defaultRng } from './rng'
 import {
   DECORATIONS,
@@ -134,6 +135,7 @@ export function newGame(now = Date.now(), locale: Locale = detectLocale()): Game
     discoveredVariants: uniqueStarters.map((id) => variantKey(id, 1)),
     theme: 'realistic',
     colorMode: 'auto',
+    railLights: syncRailLightConfig(),
     locale,
     lastTick: now,
   }

@@ -1,4 +1,5 @@
 import { sound, syncAudioConfig } from '../core/audio'
+import { syncRailLightConfig } from '../core/lighting'
 import {
   BREEDING_MATRIX,
   EXP_BY_TIER,
@@ -1306,6 +1307,45 @@ export class App {
       modeRow,
       note(c.settingsColorModeNote),
     )
+
+    const railConfig = syncRailLightConfig(this.state.railLights)
+    const railToggle = checkRow(c.railLightsAnimated, railConfig.animated, () => {
+      const current = syncRailLightConfig(this.state.railLights)
+      this.state.railLights = { ...current, animated: !current.animated }
+      this.hooks.onSave()
+      this.render()
+      this.body.querySelector<HTMLButtonElement>('[data-rail-toggle]')?.focus()
+    })
+    railToggle.dataset.railToggle = '1'
+    const frequencyRow = document.createElement('div')
+    frequencyRow.className = 'audio-row'
+    const frequencyLabel = document.createElement('label')
+    frequencyLabel.htmlFor = 'rail-light-frequency'
+    frequencyLabel.textContent = c.railLightsFrequency
+    const frequencySlider = document.createElement('input')
+    frequencySlider.id = 'rail-light-frequency'
+    frequencySlider.type = 'range'
+    frequencySlider.className = 'vol-slider'
+    frequencySlider.min = '0.2'
+    frequencySlider.max = '2'
+    frequencySlider.step = '0.1'
+    frequencySlider.value = String(railConfig.frequency)
+    frequencySlider.disabled = !railConfig.animated
+    frequencySlider.setAttribute('aria-valuetext', c.railLightsRate(railConfig.frequency))
+    const frequencyValue = document.createElement('span')
+    frequencyValue.className = 'vol-pct'
+    frequencyValue.textContent = c.railLightsRate(railConfig.frequency)
+    frequencySlider.addEventListener('input', () => {
+      this.state.railLights = syncRailLightConfig({
+        ...this.state.railLights, frequency: Number(frequencySlider.value),
+      })
+      const text = c.railLightsRate(this.state.railLights.frequency)
+      frequencyValue.textContent = text
+      frequencySlider.setAttribute('aria-valuetext', text)
+    })
+    frequencySlider.addEventListener('change', () => this.hooks.onSave())
+    frequencyRow.append(frequencyLabel, frequencySlider, frequencyValue)
+    modeCard.append(heading(c.settingsRailLightsHeading, 'h3'), railToggle, frequencyRow, note(c.railLightsNote))
 
     // Card 3: Audio & BGM controls
     const audioCfg = syncAudioConfig(this.state.audio)

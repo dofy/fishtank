@@ -11,6 +11,7 @@ import {
   tick,
 } from './game'
 import { detectLocale } from './i18n'
+import { syncRailLightConfig } from './lighting'
 import { STARTER_DECOR, STARTER_SPECIES, hasSpecies } from './species'
 import type { GameState } from './types'
 
@@ -95,6 +96,7 @@ export function load(now = Date.now()): GameState {
     syncDecor(parsed)
     syncMergeFilter(parsed)
     parsed.audio = syncAudioConfig(parsed.audio)
+    parsed.railLights = syncRailLightConfig(parsed.railLights)
 
     // Offline progress: one catch-up tick covers however long the tab was shut.
     tick(parsed, now)
