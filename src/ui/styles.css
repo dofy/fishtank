@@ -592,6 +592,7 @@ button.check-row[aria-checked='true'] .check-dot {
   @apply block h-full w-0 transition-[width] duration-75 ease-linear;
   background: linear-gradient(90deg, var(--accent), var(--accent-2));
 }
+:root[data-theme='lcd'] .ceremony-bar > span { background: var(--text); transition: none; }
 
 .settings-grid {
   @apply grid grid-cols-2 gap-3 items-stretch max-[720px]:grid-cols-1;

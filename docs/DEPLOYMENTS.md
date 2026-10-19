@@ -4,6 +4,22 @@
 
 ## v1.7.0 — 2026-10-19
 
+### 同日修补：LCD 新鱼 NEW 标记
+
+| 项目 | 记录 |
+| --- | --- |
+| 部署时间 | 2026-10-19 19:36:17（Asia/Shanghai） |
+| 部署源代码提交 | `509c038b80c7e2ff0cab4987a15f0b7eeff156a0` |
+| Cloudflare Deployment ID | `c72f0320-601e-447d-9efe-55199a986dd0` |
+| Cloudflare Version ID | `ca046f15-d6c4-4d4f-a7d8-0873637f0ec4` |
+| 发布时流量 | 本次修订 100% |
+| Service Worker 缓存 | `fishtank-pwa-v1.7.0-r3` |
+
+- LCD NEW 标签原先只覆盖背景色，仍被写实主题的金色背景图遮盖；明确清除渐变，保留单色反色、直角、无阴影和等宽字体。繁育与合成共用结果组件，写实标签维持原渐变。
+- 54 项回归、类型检查和生产构建通过。本地检查 LCD 明暗 × 390/1280px，以及写实明暗对照的实际繁育、NEW 样式与收取；另查 LCD 合成结果。无横向溢出或页面脚本异常。
+- 主域名在 390px/PixiJS/黑夜、备用域名在 1280px/Canvas/日间分别实测：NEW 的 `background-image` 为 none，使用对应液晶配色；收取正常，缓存 r3 激活。继续保留两个域名与 Canvas 入口。
+- 两域名全部 23 个部署文件与本地构建 SHA-256 一致，合计 46/46；CF 确认两个 custom domain 和本次 Version 的 100% 流量。
+
 ### 默认 PixiJS 鱼缸与 Canvas 回退
 
 | 项目 | 记录 |

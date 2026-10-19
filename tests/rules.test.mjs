@@ -22,6 +22,7 @@ let decorations
 let GpuTimer
 let FishDeformation
 let pwa
+let drawCeremonyLight
 
 before(async () => {
   Object.defineProperty(globalThis, 'localStorage', {
@@ -39,6 +40,7 @@ before(async () => {
   })
   benchmark = await server.ssrLoadModule('/src/lab/benchmark.ts')
   pwa = await server.ssrLoadModule('/src/pwa.ts')
+  ;({ drawCeremonyLight } = await server.ssrLoadModule('/src/render/ceremony.ts'))
   ;({ FishDeformation } = await server.ssrLoadModule('/src/lab/fish-motion.ts'))
   shape = await server.ssrLoadModule('/src/render/shape.ts')
   ;({ GpuTimer } = await server.ssrLoadModule('/src/lab/gpu-timer.ts'))
@@ -514,6 +516,47 @@ test('all 18 decorations can emit finite native commands without creating Path2D
       assert.deepEqual(layers.map(layer => layer.role), ['secondary', 'primary', 'detail'])
       assert.ok(paths.flat().length > 5, item.id)
     }
+  }
+})
+
+test('LCD breeding and merging light stays on the themed opaque dot grid', async () => {
+  const manifest = JSON.parse(await readFile(new URL('../public/themes/lcd/manifest.json', import.meta.url), 'utf8'))
+  for (const night of [false, true]) for (const kind of ['breed', 'merge']) for (const p of [0, 0.4, 0.79, 0.95, 1]) {
+    const rects = [], styles = []
+    let saves = 0, restores = 0
+    const ctx = {
+      save: () => saves++, restore: () => restores++,
+      set fillStyle(value) { styles.push(value) },
+      fillRect: (...r) => rects.push(r),
+      createRadialGradient: () => assert.fail('LCD must not use a soft gradient'),
+      arc: () => assert.fail('LCD must not use smooth circles'),
+    }
+    drawCeremonyLight(ctx, manifest, night, kind, p, 384, 208)
+    assert.equal(saves, 1); assert.equal(restores, 1)
+    assert.deepEqual(styles, [(night ? manifest.scene : manifest.lightScene).ink])
+    assert.ok(rects.length > 0)
+    for (const [x, y, w, h] of rects) {
+      assert.equal(x % manifest.cell, 0); assert.equal(y % manifest.cell, 0)
+      assert.equal(w, manifest.cell - 1); assert.equal(h, manifest.cell - 1)
+      assert.ok(x >= manifest.cell && x + w <= 384 - manifest.cell)
+      assert.ok(y >= manifest.cell && y + h <= 208 - manifest.cell)
+    }
+  }
+})
+
+test('realistic ceremonies keep their pink or blue soft core and white reveal', async () => {
+  const manifest = JSON.parse(await readFile(new URL('../public/themes/realistic/manifest.json', import.meta.url), 'utf8'))
+  for (const kind of ['breed', 'merge']) {
+    const stops = [], fills = [], rects = []
+    const gradient = { addColorStop: (...s) => stops.push(s) }
+    const ctx = { save() {}, restore() {}, beginPath() {}, arc() {}, fill() {}, createRadialGradient: () => gradient,
+      set fillStyle(v) { fills.push(v) }, fillRect: (...r) => rects.push(r) }
+    drawCeremonyLight(ctx, manifest, true, kind, 1, 384, 208)
+    assert.equal(stops.length, 3)
+    assert.ok(stops[1][1].includes(kind === 'breed' ? '244, 114, 182' : '56, 189, 248'))
+    assert.equal(fills[0], gradient)
+    assert.ok(fills[1].startsWith('rgba(255, 255, 255,'))
+    assert.deepEqual(rects, [[0, 0, 384, 208]])
   }
 })
 

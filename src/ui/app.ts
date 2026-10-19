@@ -61,6 +61,7 @@ import type {
 import type { Renderer } from '../render/renderer'
 import type { Agent, DecorNode } from '../render/scene'
 import { resolveDarkMode } from '../render/theme'
+import { drawCeremonyLight } from '../render/ceremony'
 import { renderChangelogDialog } from './changelog'
 import { bindShortcut, SHORTCUTS, shortcutForKey, shortcutLabels, type ShortcutAction } from './shortcuts'
 import {
@@ -2242,27 +2243,7 @@ export class App {
         night,
       })
 
-      // Draw glowing convergence core / heart rings
-      const glowRadius = 14 + p * 72
-      const grad = ctx.createRadialGradient(cx, cy, 2, cx, cy, glowRadius)
-      grad.addColorStop(0, `rgba(255, 255, 255, ${0.25 + p * 0.7})`)
-      grad.addColorStop(
-        0.5,
-        ceremony.kind === 'breed'
-          ? `rgba(244, 114, 182, ${0.2 + p * 0.5})`
-          : `rgba(56, 189, 248, ${0.2 + p * 0.5})`,
-      )
-      grad.addColorStop(1, 'rgba(255, 255, 255, 0)')
-      ctx.fillStyle = grad
-      ctx.beginPath()
-      ctx.arc(cx, cy, glowRadius, 0, Math.PI * 2)
-      ctx.fill()
-
-      if (p > 0.78) {
-        const flash = (p - 0.78) / 0.22
-        ctx.fillStyle = `rgba(255, 255, 255, ${flash * 0.85})`
-        ctx.fillRect(0, 0, MINI_TANK_W, MINI_TANK_H)
-      }
+      drawCeremonyLight(ctx, this.renderer.manifest, night, ceremony.kind, p, MINI_TANK_W, MINI_TANK_H)
       ctx.restore()
 
       if (p >= 1) {
