@@ -59,63 +59,97 @@ export const CLOSE_ICON =
 export const CLOCK_ICON =
   '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><path d="M8 4.5V8l2.5 1.5"/></svg>'
 
-export const BG_SCENERY_LEFT_SVG = `<svg viewBox="0 0 220 800" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMax slice">
+function sceneryBubbles(points: [number, number, number, boolean][]): string {
+  return points.map(([x, y, size, solid]) =>
+    `<svg x="${x}%" y="${y}%" width="${size}" height="${size}" viewBox="0 0 16 16" class="bg-float-slow">
+      <circle cx="8" cy="8" r="5" fill="${solid ? 'currentColor' : 'none'}" stroke="${solid ? 'none' : 'currentColor'}" stroke-width="1.3" opacity="0.18"/>
+    </svg>`,
+  ).join('')
+}
+
+// Percentage-based layers cover each gutter; individual creatures keep their aspect ratio.
+export const BG_SCENERY_LEFT_SVG = `<svg fill="none" xmlns="http://www.w3.org/2000/svg">
   <!-- Top caustic light rays -->
+  <svg width="100%" height="66%" viewBox="0 0 220 360" preserveAspectRatio="none">
   <path class="bg-ray" d="M0 0L165 0L95 360L0 290Z" fill="currentColor" opacity="0.045"/>
   <path class="bg-ray" d="M35 0L210 0L150 280L20 210Z" fill="currentColor" opacity="0.03"/>
+  </svg>
   <!-- Ambient water rings & bubbles -->
+  <svg x="20%" y="20%" width="12%" height="6%" class="bg-water-ring" viewBox="0 0 60 60">
   <g class="bg-float-slow">
-    <circle cx="82" cy="180" r="26" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 6" opacity="0.16"/>
-    <circle cx="82" cy="180" r="6" fill="currentColor" opacity="0.12"/>
-    <circle cx="136" cy="295" r="5" stroke="currentColor" stroke-width="1.5" opacity="0.22"/>
-    <circle cx="118" cy="335" r="3" fill="currentColor" opacity="0.18"/>
-    <circle cx="144" cy="368" r="3.5" stroke="currentColor" stroke-width="1.2" opacity="0.2"/>
-    <circle cx="64" cy="450" r="6.5" stroke="currentColor" stroke-width="1.5" opacity="0.2"/>
-    <circle cx="78" cy="492" r="3.5" fill="currentColor" opacity="0.16"/>
-    <circle cx="55" cy="535" r="4.5" stroke="currentColor" stroke-width="1.3" opacity="0.18"/>
+    <circle cx="30" cy="30" r="26" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 6" opacity="0.16"/>
+    <circle cx="30" cy="30" r="6" fill="currentColor" opacity="0.12"/>
   </g>
+  </svg>
+  ${sceneryBubbles([[69, 38, 16, false], [46, 44, 11, true], [73, 52, 12, false], [25, 59, 20, false], [58, 66, 12, true], [18, 73, 14, false]])}
   <!-- Distant schooling fish silhouettes -->
+  <svg x="54%" y="30%" width="26%" height="7%" class="bg-fish" viewBox="104 226 62 40">
   <g class="bg-float-mid" fill="currentColor" opacity="0.16">
     <path d="M112 240c12-9 28-9 38 0l11-7-3 14 3 14-11-7c-10 9-26 9-38 0-5-4-5-10 0-14Z"/>
     <circle cx="122" cy="246" r="1.8" fill="var(--bg)"/>
+  </g>
+  </svg>
+  <svg x="32%" y="37%" width="20%" height="5%" class="bg-fish-small" viewBox="56 265 45 30">
+  <g class="bg-float-mid" fill="currentColor" opacity="0.13">
     <path d="M62 276c9-6 20-6 27 0l8-5-2 10 2 10-8-5c-7 6-18 6-27 0-4-3-4-7 0-10Z" opacity="0.8"/>
   </g>
+  </svg>
   <!-- Bottom reef ridge, swaying kelp & coral silhouettes -->
+  <svg y="80%" width="100%" height="20%" viewBox="0 640 220 160" preserveAspectRatio="none">
+    <path d="M0 800V685c38-14 78-6 116 14 34 18 66 48 94 101H0Z" fill="currentColor" opacity="0.09"/>
+  </svg>
+  <svg y="48%" width="58%" height="52%" viewBox="0 480 85 320" preserveAspectRatio="xMidYMax meet">
   <g class="bg-sway" fill="currentColor">
-    <path d="M0 800V685c38-14 78-6 116 14 34 18 66 48 94 101H0Z" opacity="0.09"/>
     <path d="M26 800c-12-62 16-118 4-178-10-48-24-88-6-138 6 44 26 82 22 134-4 54-24 108 4 182H26Z" opacity="0.18"/>
     <path d="M64 800c-14-48 12-94 2-142-8-38-18-68-2-108 8 34 22 64 18 106-4 42-18 86 4 144H64Z" opacity="0.14"/>
+  </g>
+  </svg>
+  <svg x="50%" y="70%" width="42%" height="30%" viewBox="85 650 80 150" preserveAspectRatio="xMidYMax meet">
+  <g class="bg-sway" fill="currentColor">
     <path d="M114 800v-42c0-18-16-28-24-44-6-12-2-26 6-24 8 2 12 16 20 26v-36c0-14 10-26 16-24 6 2 4 18 2 32 10-12 20-20 26-16 6 4-4 18-14 30-8 10-14 20-14 36v62h-18Z" opacity="0.15"/>
   </g>
+  </svg>
 </svg>`
 
-export const BG_SCENERY_RIGHT_SVG = `<svg viewBox="0 0 220 800" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMaxYMax slice">
+export const BG_SCENERY_RIGHT_SVG = `<svg fill="none" xmlns="http://www.w3.org/2000/svg">
   <!-- Top caustic light rays -->
+  <svg width="100%" height="66%" viewBox="0 0 220 360" preserveAspectRatio="none">
   <path class="bg-ray" d="M220 0L55 0L125 360L220 290Z" fill="currentColor" opacity="0.045"/>
   <path class="bg-ray" d="M185 0L10 0L70 280L200 210Z" fill="currentColor" opacity="0.03"/>
+  </svg>
   <!-- Drifting moon jellyfish & bubbles -->
+  <svg x="55%" y="22%" width="28%" height="10%" class="bg-jellyfish" viewBox="110 160 80 100">
   <g class="bg-float-mid" stroke="currentColor" fill="currentColor">
     <path d="M116 196c0-18 15-30 33-30s33 12 33 30c-11-4-22-4-33 0-11-4-22-4-33 0Z" fill="currentColor" stroke="none" opacity="0.15"/>
     <path d="M132 198c-3 18 4 34-2 50M148 199c0 20-5 36 2 54M164 198c4 18-3 34 3 48" fill="none" stroke-width="1.8" stroke-linecap="round" opacity="0.15"/>
   </g>
+  </svg>
+  <svg x="28%" y="49%" width="12%" height="6%" class="bg-water-ring" viewBox="0 0 60 60">
   <g class="bg-float-slow">
-    <circle cx="92" cy="285" r="4.5" stroke="currentColor" stroke-width="1.4" opacity="0.2"/>
-    <circle cx="108" cy="322" r="2.8" fill="currentColor" opacity="0.16"/>
-    <circle cx="152" cy="400" r="22" stroke="currentColor" stroke-width="1.4" stroke-dasharray="3 6" opacity="0.15"/>
-    <circle cx="84" cy="465" r="5.5" stroke="currentColor" stroke-width="1.5" opacity="0.2"/>
-    <circle cx="102" cy="505" r="3.2" fill="currentColor" opacity="0.17"/>
-    <circle cx="136" cy="548" r="4.5" stroke="currentColor" stroke-width="1.3" opacity="0.18"/>
+    <circle cx="30" cy="30" r="22" stroke="currentColor" stroke-width="1.4" stroke-dasharray="3 6" opacity="0.15"/>
   </g>
+  </svg>
+  ${sceneryBubbles([[36, 36, 14, false], [65, 42, 10, true], [71, 57, 18, false], [25, 64, 12, true], [55, 72, 14, false]])}
   <!-- Distant fish silhouette -->
+  <svg x="24%" y="42%" width="20%" height="5%" class="bg-fish-small" viewBox="82 340 52 36">
   <g class="bg-float-slow" fill="currentColor" opacity="0.15">
     <path d="M126 352c-10-7-23-7-31 0l-9-6 2 11-2 11 9-6c8 7 21 7 31 0 4-3 4-7 0-10Z"/>
     <circle cx="118" cy="357" r="1.6" fill="var(--bg)"/>
   </g>
+  </svg>
   <!-- Bottom reef ridge, crystal spires & sea fan silhouettes -->
+  <svg y="80%" width="100%" height="20%" viewBox="0 640 220 160" preserveAspectRatio="none">
+    <path d="M220 800V690c-40-14-82-4-122 18-34 18-64 46-90 92h212Z" fill="currentColor" opacity="0.09"/>
+  </svg>
+  <svg x="45%" y="66%" width="55%" height="34%" viewBox="115 630 120 170" preserveAspectRatio="xMidYMax meet">
   <g class="bg-sway" fill="currentColor">
-    <path d="M220 800V690c-40-14-82-4-122 18-34 18-64 46-90 92h212Z" opacity="0.09"/>
     <path d="M174 800l-18-118 22-38 16 42-6 114h-14Zm-28 0l-22-82 12-28 18 24 8 86h-16Zm52 0l8-74 14-20 8 26-14 68h-16Z" opacity="0.15"/>
+  </g>
+  </svg>
+  <svg x="6%" y="55%" width="45%" height="45%" viewBox="68 560 35 240" preserveAspectRatio="xMidYMax meet">
+  <g class="bg-sway" fill="currentColor">
     <path d="M88 800c10-46-10-88 0-132 6-34 16-62 2-98-8 30-20 58-16 96 4 38 16 78-4 134h18Z" opacity="0.14"/>
   </g>
+  </svg>
 </svg>`
 

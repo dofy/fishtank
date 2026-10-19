@@ -59,16 +59,27 @@ html, body {
 
 .bg-side {
   @apply fixed top-0 bottom-0;
-  width: clamp(90px, calc((100vw - 980px) / 2), 280px);
+  width: max(0px, calc((100vw - 980px) / 2));
 }
-.bg-side.bg-left { left: 0; }
-.bg-side.bg-right { right: 0; }
-.bg-side svg { @apply w-full h-full block; }
+.bg-side.bg-left {
+  left: 0;
+  mask-image: linear-gradient(to right, #000 65%, transparent);
+}
+.bg-side.bg-right {
+  right: 0;
+  mask-image: linear-gradient(to left, #000 65%, transparent);
+}
+.bg-side > svg { @apply w-full h-full block; }
+.bg-water-ring, .bg-fish, .bg-fish-small, .bg-jellyfish { overflow: visible; }
 .bg-float-slow { animation: bg-float 11s ease-in-out infinite alternate; }
 .bg-float-mid { animation: bg-float 7.5s ease-in-out infinite alternate-reverse; }
 .bg-sway {
+  transform-box: fill-box;
   transform-origin: 50% 100%;
   animation: bg-sway 9s ease-in-out infinite alternate;
+}
+@media (prefers-reduced-motion: reduce) {
+  .bg-scenery * { animation: none; }
 }
 
 :root[data-pixelated='on'] canvas { image-rendering: pixelated; }
