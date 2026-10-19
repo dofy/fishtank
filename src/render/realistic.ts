@@ -311,33 +311,66 @@ export class RealisticRenderer implements Renderer {
     const lamps = lampPositions(w)
     ctx.save()
 
-    // Top mounting rail
-    ctx.fillStyle = night ? '#112636' : '#234b61'
-    ctx.fillRect(12, 2, w - 24, 4)
+    // A slim, rounded rail keeps the hardware close to the glass edge.
+    const rail = ctx.createLinearGradient(0, 2, 0, 5)
+    rail.addColorStop(0, night ? '#345568' : '#6a96a5')
+    rail.addColorStop(0.45, night ? '#203d50' : '#477488')
+    rail.addColorStop(1, night ? '#142e40' : '#315b70')
+    ctx.fillStyle = rail
+    ctx.beginPath()
+    ctx.roundRect(12, 2, w - 24, 3, 1.5)
+    ctx.fill()
 
     for (const [idx, lx] of lamps.entries()) {
-      // Lamp hood
-      ctx.fillStyle = night ? '#1b394f' : '#2d5c75'
+      // Shallow curved hoods tuck into the rail without hanging farther into the water.
+      const hood = ctx.createLinearGradient(0, 3, 0, 10)
+      hood.addColorStop(0, night ? '#3b5f73' : '#759ba9')
+      hood.addColorStop(0.4, night ? '#29495e' : '#517d90')
+      hood.addColorStop(1, night ? '#18354a' : '#315a70')
+      ctx.fillStyle = hood
       ctx.beginPath()
-      ctx.moveTo(lx - 18, 3)
-      ctx.lineTo(lx + 18, 3)
-      ctx.lineTo(lx + 13, 10)
-      ctx.lineTo(lx - 13, 10)
+      ctx.moveTo(lx - 14.5, 3.7)
+      ctx.quadraticCurveTo(lx, 2.7, lx + 14.5, 3.7)
+      ctx.quadraticCurveTo(lx + 17, 3.9, lx + 15.3, 5.8)
+      ctx.lineTo(lx + 12, 9.1)
+      ctx.quadraticCurveTo(lx + 11, 10, lx + 9.5, 10)
+      ctx.lineTo(lx - 9.5, 10)
+      ctx.quadraticCurveTo(lx - 11, 10, lx - 12, 9.1)
+      ctx.lineTo(lx - 15.3, 5.8)
+      ctx.quadraticCurveTo(lx - 17, 3.9, lx - 14.5, 3.7)
       ctx.closePath()
       ctx.fill()
 
-      // Bulb LED strip
+      ctx.strokeStyle = night ? 'rgba(163, 205, 222, 0.2)' : 'rgba(225, 245, 249, 0.4)'
+      ctx.lineWidth = 0.6
+      ctx.beginPath()
+      ctx.moveTo(lx - 12, 4.1)
+      ctx.quadraticCurveTo(lx, 3.4, lx + 12, 4.1)
+      ctx.stroke()
+
+      // Recessed frosted diffuser, with the existing lamp colors shining through at night.
+      ctx.fillStyle = night ? '#102b3e' : '#31566a'
+      ctx.beginPath()
+      ctx.roundRect(lx - 11, 7.4, 22, 3.6, 1.8)
+      ctx.fill()
       if (night) {
         const spec = lampSpecAt(lampColors, idx)
         ctx.save()
         ctx.shadowColor = spec.glow
-        ctx.shadowBlur = 12
+        ctx.shadowBlur = 8
         ctx.fillStyle = spec.bulb
-        ctx.fillRect(lx - 10, 8, 20, 3.5)
+        ctx.beginPath()
+        ctx.roundRect(lx - 9, 8, 18, 3.5, 1.75)
+        ctx.fill()
         ctx.restore()
       } else {
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.35)'
-        ctx.fillRect(lx - 10, 8, 20, 2.5)
+        const diffuser = ctx.createLinearGradient(0, 8, 0, 10.5)
+        diffuser.addColorStop(0, '#d5e9ec')
+        diffuser.addColorStop(1, '#94becb')
+        ctx.fillStyle = diffuser
+        ctx.beginPath()
+        ctx.roundRect(lx - 9, 8, 18, 2.5, 1.25)
+        ctx.fill()
       }
     }
 
