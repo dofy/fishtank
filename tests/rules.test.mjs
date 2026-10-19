@@ -89,6 +89,87 @@ function breedAt(tier, grade) {
   return { state, outcome }
 }
 
+test('every species in the rolled tier gets an equal interval regardless of parent species', () => {
+  for (let aTier = 0; aTier <= 5; aTier++) {
+    for (let bTier = aTier; bTier <= 5; bTier++) {
+      for (let tier = 1; tier <= 5; tier++) {
+        if (oddsByTotal[aTier + bTier][tier - 1] === 0) continue
+        const pool = species.filter((sp) => sp.tier === tier)
+        for (const sameSpecies of [true, false]) {
+          for (const [index, expected] of pool.entries()) {
+            const state = game.newGame(NOW, 'zh')
+            const a = fishAt(aTier)
+            const bPool = species.filter((sp) => sp.tier === bTier)
+            const b = game.makeFish(bPool[sameSpecies ? 0 : bPool.length - 1].id, bTier, 1, NOW, { adult: true })
+            state.fish = [a, b]
+            const random = new Rng(123)
+            // Force the star tier, then probe the middle of each equally sized species interval.
+            const rolls = [tier - 1, 0, 0]
+            random.weighted = () => rolls.shift()
+            random.next = () => (index + 0.5) / pool.length
+            const outcome = game.breed(state, a.uid, b.uid, NOW, random)
+            assert.ok(!('error' in outcome))
+            assert.equal(outcome.child.speciesId, expected.id, `${a.speciesId}+${b.speciesId}, tier ${tier}, interval ${index}`)
+          }
+        }
+      }
+    }
+  }
+})
+
+test('parent grade weighting is unchanged for all 25 grade pairings', () => {
+  for (let gradeA = 1; gradeA <= 5; gradeA++) {
+    for (let gradeB = 1; gradeB <= 5; gradeB++) {
+      const state = game.newGame(NOW, 'zh')
+      const a = fishAt(1, gradeA)
+      const b = fishAt(1, gradeB)
+      state.fish = [a, b]
+      const weightsSeen = []
+      const random = new Rng(123)
+      random.weighted = (weights) => { weightsSeen.push(weights); return 0 }
+      const outcome = game.breed(state, a.uid, b.uid, NOW, random)
+      assert.ok(!('error' in outcome))
+      assert.deepEqual(weightsSeen[0], [76, 20, 4, 0, 0])
+      const bias = 0.35 * ((gradeA + gradeB) / 2 - 1)
+      assert.deepEqual(weightsSeen[1], [56, 26 * (1 + bias), 12 * (1 + 2 * bias), 5 * (1 + 3 * bias), 1 + 4 * bias])
+      assert.deepEqual(weightsSeen[2], [1, 1, 2, 4, 6])
+    }
+  }
+})
+
+test('seeded breeding has no parent species surplus while preserving tier and grade distributions', () => {
+  const state = game.newGame(NOW, 'zh')
+  const a = game.makeFish('goldfin', 0, 1, NOW, { adult: true })
+  const b = game.makeFish('neoncleaner', 1, 1, NOW, { adult: true })
+  const random = new Rng(0x12345678)
+  const trials = 70_000
+  const counts = new Map()
+  const grades = [0, 0, 0, 0, 0]
+  let common = 0
+  for (let i = 0; i < trials; i++) {
+    state.fish = [a, b]
+    state.hearts = 5
+    a.maturesAt = null
+    b.uses = 5
+    const outcome = game.breed(state, a.uid, b.uid, NOW, random)
+    assert.ok(!('error' in outcome))
+    if (outcome.tier === 1) common++
+    else assert.equal(outcome.tier, 2)
+    const child = outcome.child
+    counts.set(child.speciesId, (counts.get(child.speciesId) ?? 0) + 1)
+    grades[child.grade - 1]++
+  }
+  assert.ok(Math.abs(common / trials - 0.9) < 0.01)
+  for (const sp of species.filter((sp) => sp.tier > 0 && sp.tier <= 2)) {
+    const tierCount = sp.tier === 1 ? common : trials - common
+    const poolSize = species.filter((s) => s.tier === sp.tier).length
+    assert.ok(Math.abs((counts.get(sp.id) ?? 0) / tierCount - 1 / poolSize) < 0.015, `species bias: ${sp.id}`)
+  }
+  for (const [index, expected] of [0.56, 0.26, 0.12, 0.05, 0.01].entries()) {
+    assert.ok(Math.abs(grades[index] / trials - expected) < 0.01, `grade ${index + 1} distribution`)
+  }
+})
+
 test('birth and maturation together award exactly the rounded total EXP, once', () => {
   for (let tier = 1; tier <= 5; tier++) {
     for (let grade = 1; grade <= 5; grade++) {

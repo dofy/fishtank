@@ -97,7 +97,7 @@ import {
 
 export { formatClock, stars } from './dom'
 
-export const APP_VERSION = '1.4.10'
+export const APP_VERSION = '1.4.11'
 export const GITHUB_URL = 'https://github.com/dofy/fishtank'
 
 export interface AppHooks {

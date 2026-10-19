@@ -324,7 +324,7 @@ const ZH: Copy = {
   breedNotEnoughAdults: '需要至少两条可繁育的成年鱼。冷却或成长中的鱼请等待倒计时结束。',
   breedNoteTitle: '繁育规则与遗传说明',
   breedNote:
-    '【爱心消耗】每次繁育消耗 **1 颗爱心**（每 **7 分钟** 恢复 1 颗，上限 5 颗）。【星级与品阶】双亲星级组合决定子代 **1★–5★** 产出概率，双亲品阶越高越易孵化出高品阶后代（最高 **2.0x EXP**）。【次数与经验】初始鱼拥有 **∞ 无限次数**（冷却 3 分钟），子代鱼拥有 **1–5 次** 繁育次数；孵化与成年时各获得一半经验。',
+    '【爱心消耗】每次繁育消耗 **1 颗爱心**（每 **7 分钟** 恢复 1 颗，上限 5 颗）。【星级与品阶】双亲星级组合决定子代 **1★–5★** 产出概率，双亲品阶越高越易孵化出高品阶后代（最高 **2.0x EXP**）。【鱼种抽取】确定星级后，从该星级的全部鱼种中**等概率抽取**，不偏向亲代鱼种，仍可能遇到老朋友。【次数与经验】初始鱼拥有 **∞ 无限次数**（冷却 3 分钟），子代鱼拥有 **1–5 次** 繁育次数；孵化与成年时各获得一半经验。',
   pairingCol: '亲代组合',
   breedBtn: (picked) => `开始繁育 · 消耗 1 爱心 (${picked}/2)`,
   clearBtn: '清空选择',
@@ -527,7 +527,7 @@ const EN: Copy = {
     'Needs two ready adults with breeding uses left. Wait for fry growth or parent cooldown timers to finish.',
   breedNoteTitle: 'Breeding & Genetics Guide',
   breedNote:
-    '【Heart Cost】Each breeding attempt costs **1 Heart** (regenerates 1 every **7 min**, cap 5). 【Rarity & Grade】Parent star tiers determine **1★–5★** offspring odds, while higher parent grades boost high-grade offspring odds (up to **2.0x EXP**). 【Uses & EXP】Starter fish have **∞ infinite uses** (3m cooldown) and bred fish have **1–5 uses**; half EXP is awarded on hatching and half on maturation.',
+    '【Heart Cost】Each breeding attempt costs **1 Heart** (regenerates 1 every **7 min**, cap 5). 【Rarity & Grade】Parent star tiers determine **1★–5★** offspring odds, while higher parent grades boost high-grade offspring odds (up to **2.0x EXP**). 【Species】Once the tier is rolled, **every species in that tier has an equal chance**, with no parent-species preference. Familiar fish can still appear. 【Uses & EXP】Starter fish have **∞ infinite uses** (3m cooldown) and bred fish have **1–5 uses**; half EXP is awarded on hatching and half on maturation.',
   pairingCol: 'Pairing',
   breedBtn: (picked) => `Breed · 1 heart (${picked}/2)`,
   clearBtn: 'Clear',

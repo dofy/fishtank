@@ -27,7 +27,6 @@ import {
   decorItem,
   hasDecor,
   poolForTier,
-  species,
 } from './species'
 import type {
   BreedOutcome,
@@ -376,10 +375,8 @@ export function breed(
   const odds = tierOdds(a.tier, b.tier)
   const tier = (random.weighted(odds) + 1) as Tier
 
-  const parentOptions = [a.speciesId, b.speciesId].filter((id) => species(id).tier === tier)
-  const pool = poolForTier(tier)
-  const fromParents = parentOptions.length > 0 && random.next() < 0.45
-  const speciesId = fromParents ? random.pick(parentOptions) : random.pick(pool).id
+  // Every species in the rolled tier has the same chance, regardless of the parents.
+  const speciesId = random.pick(poolForTier(tier)).id
 
   const grade = rollGrade((a.grade + b.grade) / 2, random)
   const uses = rollUses(tier, random)
