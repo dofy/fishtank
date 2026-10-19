@@ -121,6 +121,8 @@ export interface Fish {
   maturesAt: number | null
   /** Epoch ms of birth, for the "acquisition order" sort. */
   bornAt: number
+  /** EXP already awarded at birth; 0 for merged fish, absent in legacy saves. */
+  birthExp?: number
   /** True once its maturation EXP has been banked. */
   expBanked: boolean
 }

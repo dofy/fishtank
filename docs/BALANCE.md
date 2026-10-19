@@ -1,4 +1,4 @@
-# Balance & Game Data Guide / 游戏帮助与数值说明 (`v1.4.6`)
+# Balance & Game Data Guide / 游戏帮助与数值说明 (`v1.4.7`)
 
 This document details the gameplay mechanics, progression curves, and breeding probabilities for **Fishtank**, modeled on [PC FISH: Taskbar Aquarium](https://store.steampowered.com/app/4842670/PC_FISH_Taskbar_Aquarium/).
 
@@ -25,6 +25,10 @@ Breeding awards half of the offspring's EXP immediately and the remaining half w
 
 每次成功繁育立即获得子代总经验的一半，鱼苗成年时自动结算另一半经验。
 
+The total is rounded after applying the grade multiplier. Birth awards the rounded total divided by two, rounded down; maturation awards the remainder. Synthesized fish receive no birth EXP and award the full total on maturation. Legacy fish without a recorded birth award retain their existing full maturation award because their breeding/synthesis origin is unknown; already earned EXP is unchanged.
+
+先按品阶倍率计算并四舍五入总经验；出生时领取总经验的一半（向下取整），成年时领取剩余部分。合成鱼出生时不领取经验，成年时领取全额。旧存档中未记录出生经验的鱼无法区分繁育或合成来源，保留原有全额成年结算；已经获得的经验不回退。
+
 | Level / 等级 | Cumulative EXP / 累计经验 | EXP Delta / 升级所需 | Fish Cap / 鱼展示上限 | Decor Cap / 装饰摆放上限 | Unlocked Decorations / 解锁装饰品 |
 | :---: | :---: | :---: | :---: | :---: | :--- |
 | **Lv.1** | `0` | — | `3` | `3` | 翠绿海草 (`kelp`) · 礁石群 (`rocks`) · 珍珠扇贝 (`shell`) · 七彩串灯 (`fairylights`, 顶挂) |
@@ -50,15 +54,19 @@ Percentages for offspring tiers `1★` through `5★` given parent tiers `low + 
 | :---: | :---: | :---: | :---: | :---: | :---: |
 | `初始 + 初始` (`0+0`) | **100%** | 0% | 0% | 0% | 0% |
 | `初始 + 1★` (`0+1`) | **90%** | **10%** | 0% | 0% | 0% |
-| `1★ + 1★` (`1+1`) | **76%** | **20%** | **4%** | 0% | 0% |
-| `1★ + 2★` (`1+2`) | **48.9%** | **41.6%** | **9.5%** | 0% | 0% |
-| `2★ + 2★` / `1★ + 3★` | **37.7%** | **44.3%** | **15%** | **3%** | 0% |
-| `2★ + 3★` / `1★ + 4★` | 0% | **50.5%** | **43%** | **6.5%** | 0% |
-| `3★ + 3★` / `2★ + 4★` | 0% | **40.5%** | **47.5%** | **10%** | **2%** |
+| `1★ + 1★` / `初始 + 2★` | **76%** | **20%** | **4%** | 0% | 0% |
+| `1★ + 2★` / `初始 + 3★` | **48.9%** | **41.6%** | **9.5%** | 0% | 0% |
+| `2★ + 2★` / `1★ + 3★` / `初始 + 4★` | **37.7%** | **44.3%** | **15%** | **3%** | 0% |
+| `2★ + 3★` / `1★ + 4★` / `初始 + 5★` | 0% | **50.5%** | **43%** | **6.5%** | 0% |
+| `3★ + 3★` / `2★ + 4★` / `1★ + 5★` | 0% | **40.5%** | **47.5%** | **10%** | **2%** |
 | `3★ + 4★` / `2★ + 5★` | 0% | 0% | **52.1%** | **44.4%** | **3.5%** |
 | `4★ + 4★` / `3★ + 5★` | 0% | 0% | **43.7%** | **51.3%** | **5%** |
 | `4★ + 5★` (`4+5`) | 0% | 0% | 0% | **70%** | **30%** |
 | `5★ + 5★` (`5+5`) | 0% | 0% | 0% | **45%** | **55%** |
+
+The five previously unspecified pairings (`0+2`, `0+3`, `0+4`, `0+5`, `1+5`) follow this project's existing equal-tier-sum pattern. These are project-defined completions, not verified probabilities from the original game. All previously specified probabilities are unchanged.
+
+原先缺失的五组组合（`0+2`、`0+3`、`0+4`、`0+5`、`1+5`）沿用本项目既有的“亲代星级总和相同，概率相同”规律补齐。这是本项目的规则补全，非已核实的原作概率；原有已配置概率保持不变。
 
 ---
 

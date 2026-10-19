@@ -68,14 +68,21 @@ export function load(now = Date.now()): GameState {
       parsed.fish.unshift(makeFish(spId, 0, 1, now, { adult: true }))
     }
 
+    const hasVariantHistory = Array.isArray(parsed.discoveredVariants)
     for (const f of parsed.fish) {
       if (!f.maxUses || f.maxUses < f.uses) {
         f.maxUses = Math.max(f.uses, USES_BY_TIER[f.tier])
       }
       recordVariant(parsed, f.speciesId, f.grade)
     }
-    for (const spId of parsed.discovered) {
-      recordVariant(parsed, spId, 1)
+    // Only migrate saves predating variant history. Prefer surviving specimens;
+    // use grade 1 solely when the old save has no grade evidence for a species.
+    if (!hasVariantHistory) {
+      for (const spId of parsed.discovered) {
+        if (!parsed.discoveredVariants?.some((key) => key.startsWith(`${spId}:`))) {
+          recordVariant(parsed, spId, 1)
+        }
+      }
     }
 
     if (!Array.isArray(parsed.tankUids) || parsed.tankUids.length === 0) {

@@ -7,7 +7,6 @@ import {
   HEART_COST_PER_BREED,
   HEART_MAX,
   HEART_REGEN_MS,
-  MATRIX_FALLBACK,
   PARENT_COOLDOWN_MS,
   SYNTHESIS_INPUT_COUNT,
   USES_BY_TIER,
@@ -78,6 +77,7 @@ export function makeFish(
     maxUses: uses,
     maturesAt: opts.adult ? null : now + growth,
     bornAt: now,
+    birthExp: 0,
     expBanked: Boolean(opts.adult),
   }
 }
@@ -301,7 +301,9 @@ export function tick(state: GameState, now = Date.now()): TickResult {
     }
     if (!fish.expBanked) {
       fish.expBanked = true
-      const gain = Math.round(EXP_BY_TIER[fish.tier] * gradeExpMultiplier(fish.grade))
+      const totalExp = Math.round(EXP_BY_TIER[fish.tier] * gradeExpMultiplier(fish.grade))
+      // Legacy saves lack the birth award and fish origin; retain their pending award.
+      const gain = totalExp - (fish.birthExp ?? 0)
       state.exp += gain
       result.expGained += gain
     }
@@ -320,7 +322,10 @@ export function tick(state: GameState, now = Date.now()): TickResult {
 }
 
 export function tierOdds(a: Tier, b: Tier): [number, number, number, number, number] {
-  return BREEDING_MATRIX[matrixKey(a, b)] ?? MATRIX_FALLBACK
+  const key = matrixKey(a, b)
+  const odds = BREEDING_MATRIX[key]
+  if (!odds) throw new Error(`missing breeding odds: ${key}`)
+  return odds
 }
 
 function rollGrade(parentGradeAvg: number, random: Rng): Grade {
@@ -382,6 +387,7 @@ export function breed(
 
   const totalExp = Math.round(EXP_BY_TIER[tier] * gradeExpMultiplier(grade))
   const immediateExp = Math.max(2, Math.floor(totalExp / 2))
+  child.birthExp = immediateExp
   state.exp += immediateExp
   const nextLv = levelForExp(state.exp)
   if (nextLv > state.level) state.level = nextLv
@@ -412,7 +418,9 @@ export function synthesize(
   now = Date.now(),
   random: Rng = defaultRng,
 ): { child: Fish; tier: Tier; novel: boolean } | { error: SynthError } {
-  if (uids.length !== SYNTHESIS_INPUT_COUNT) return { error: 'wrong-count' }
+  if (uids.length !== SYNTHESIS_INPUT_COUNT || new Set(uids).size !== SYNTHESIS_INPUT_COUNT) {
+    return { error: 'wrong-count' }
+  }
   const picked = uids
     .map((uid) => state.fish.find((f) => f.uid === uid))
     .filter((f): f is Fish => Boolean(f))

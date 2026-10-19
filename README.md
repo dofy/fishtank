@@ -27,6 +27,8 @@
 
 **Fishtank** 是一款灵感源自 Steam 桌面放置游戏《[PC FISH: Taskbar Aquarium](https://store.steampowered.com/app/4842670/PC_FISH_Taskbar_Aquarium/?l=tchinese)》的网页端放置养成水族箱。无需注册登录、即开即玩，既可以在工作间隙体验配对繁育与全图鉴收集的乐趣，也可以一键切换至**全屏沉浸模式**，伴随轻柔的海洋白噪音与 Lo-Fi 音乐作为桌面生态屏保。
 
+版本更新记录见 [CHANGELOG](CHANGELOG.md)，完整玩法与数值见 [游戏帮助](docs/BALANCE.md)。
+
 ---
 
 ## 玩法与亮点 / Highlights

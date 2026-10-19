@@ -41,12 +41,17 @@ export const LEVELS: { level: number; totalExp: number; capacity: number; decorC
 
 /**
  * SOURCE: offspring tier distribution by combined parent tiers.
+ * TUNED: missing 0+2..5 and 1+5 rows reuse the existing row with the same tier sum.
  * Key is `${lowTier}+${highTier}`. Values are percentages for
  * tiers 1..5 and always sum to 100.
  */
 export const BREEDING_MATRIX: Record<string, [number, number, number, number, number]> = {
   '0+0': [100, 0, 0, 0, 0],
   '0+1': [90, 10, 0, 0, 0],
+  '0+2': [76, 20, 4, 0, 0],
+  '0+3': [48.9, 41.6, 9.5, 0, 0],
+  '0+4': [37.7, 44.3, 15, 3, 0],
+  '0+5': [0, 50.5, 43, 6.5, 0],
   '1+1': [76, 20, 4, 0, 0],
   '1+2': [48.9, 41.6, 9.5, 0, 0],
   '2+2': [37.7, 44.3, 15, 3, 0],
@@ -55,6 +60,7 @@ export const BREEDING_MATRIX: Record<string, [number, number, number, number, nu
   '1+4': [0, 50.5, 43, 6.5, 0],
   '3+3': [0, 40.5, 47.5, 10, 2],
   '2+4': [0, 40.5, 47.5, 10, 2],
+  '1+5': [0, 40.5, 47.5, 10, 2],
   '3+4': [0, 0, 52.1, 44.4, 3.5],
   '2+5': [0, 0, 52.1, 44.4, 3.5],
   '4+4': [0, 0, 43.7, 51.3, 5],
@@ -62,9 +68,6 @@ export const BREEDING_MATRIX: Record<string, [number, number, number, number, nu
   '4+5': [0, 0, 0, 70, 30],
   '5+5': [0, 0, 0, 45, 55],
 }
-
-/** Rows the original matrix leaves undefined, filled by nearest neighbour. */
-export const MATRIX_FALLBACK: [number, number, number, number, number] = [0, 0, 0, 45, 55]
 
 /**
  * SOURCE: starter goldfish have infinite uses (represented as 999);
@@ -82,7 +85,7 @@ export const GROWTH_MS_BY_TIER: Record<Tier, number> = {
   5: 20 * 60_000,
 }
 
-/** TUNED: EXP banked when a fry is bred/matures, by tier. */
+/** TUNED: total EXP per fish; breeding splits it between birth and maturation. */
 export const EXP_BY_TIER: Record<Tier, number> = { 0: 5, 1: 10, 2: 40, 3: 160, 4: 640, 5: 2_560 }
 
 /** TUNED: EXP multiplier contributed by visual grade. */
