@@ -20,6 +20,7 @@ let shape
 let decorations
 let GpuTimer
 let FishDeformation
+let pwa
 
 before(async () => {
   Object.defineProperty(globalThis, 'localStorage', {
@@ -36,6 +37,7 @@ before(async () => {
     server: { middlewareMode: true, watch: null },
   })
   benchmark = await server.ssrLoadModule('/src/lab/benchmark.ts')
+  pwa = await server.ssrLoadModule('/src/pwa.ts')
   ;({ FishDeformation } = await server.ssrLoadModule('/src/lab/fish-motion.ts'))
   shape = await server.ssrLoadModule('/src/render/shape.ts')
   ;({ GpuTimer } = await server.ssrLoadModule('/src/lab/gpu-timer.ts'))
@@ -511,6 +513,41 @@ test('all 18 decorations can emit finite native commands without creating Path2D
       assert.deepEqual(layers.map(layer => layer.role), ['secondary', 'primary', 'detail'])
       assert.ok(paths.flat().length > 5, item.id)
     }
+  }
+})
+
+test('offline registration works before and after load, including slow GPU startup', async () => {
+  const names = ['navigator', 'window', 'document']
+  const originals = names.map(name => Object.getOwnPropertyDescriptor(globalThis, name))
+  try {
+    for (const readyState of ['loading', 'interactive', 'complete']) {
+      for (const protocol of ['https:', 'http:']) {
+        for (const supported of [true, false]) {
+          const calls = [], listeners = []
+          Object.defineProperty(globalThis, 'navigator', { configurable: true, value: supported ? { serviceWorker: { register: url => { calls.push(url); return Promise.reject(new Error('restricted')) } } } : {} })
+          Object.defineProperty(globalThis, 'window', { configurable: true, value: { location: { protocol }, addEventListener: (...args) => listeners.push(args) } })
+          Object.defineProperty(globalThis, 'document', { configurable: true, value: { readyState } })
+          pwa.registerOfflineCache()
+          if (!supported || protocol !== 'https:') {
+            assert.deepEqual(calls, [])
+            assert.deepEqual(listeners, [])
+          } else if (readyState === 'complete') {
+            assert.deepEqual(calls, ['/sw.js'], 'register even when asynchronous startup missed load')
+            assert.deepEqual(listeners, [])
+          } else {
+            assert.deepEqual(calls, [])
+            assert.equal(listeners.length, 1)
+            assert.equal(listeners[0][0], 'load')
+            assert.deepEqual(listeners[0][2], { once: true })
+            listeners[0][1]()
+            assert.deepEqual(calls, ['/sw.js'])
+          }
+          await Promise.resolve() // Rejected registration is handled without blocking gameplay.
+        }
+      }
+    }
+  } finally {
+    names.forEach((name, i) => originals[i] ? Object.defineProperty(globalThis, name, originals[i]) : delete globalThis[name])
   }
 })
 

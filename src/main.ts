@@ -16,6 +16,7 @@ import {
   resolveDarkMode,
 } from './render/theme'
 import { App } from './ui/app'
+import { registerOfflineCache } from './pwa'
 import './ui/styles.css'
 
 const THEMES = [
@@ -341,13 +342,7 @@ async function main(): Promise<void> {
   })
   window.addEventListener('beforeunload', () => save(state))
 
-  if ('serviceWorker' in navigator && window.location.protocol === 'https:') {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js').catch(() => {
-        /* ignore registration failure in restricted environments */
-      })
-    })
-  }
+  registerOfflineCache()
 }
 
 void main()
