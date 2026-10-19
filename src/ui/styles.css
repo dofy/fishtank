@@ -767,8 +767,8 @@ table.help-matrix td:not(:first-child) { @apply whitespace-nowrap px-0.5; }
   .showcase-backdrop { @apply p-0 z-130; }
   .showcase-backdrop, .changelog-dialog::backdrop {
     background: transparent;
-    backdrop-filter: none;
     -webkit-backdrop-filter: none;
+    backdrop-filter: none;
   }
   .footer-meta { @apply flex flex-col leading-tight; }
   .footer-separator, .footer-links .btn-text { display: none; }
@@ -856,8 +856,8 @@ table.help-matrix td:not(:first-child) { @apply whitespace-nowrap px-0.5; }
     :root[data-theme='realistic'] .help-modal,
     :root[data-theme='realistic'] .showcase-card {
       background: color-mix(in srgb, var(--panel) 84%, transparent);
-      backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
+      backdrop-filter: blur(8px);
     }
   }
 }
