@@ -9,7 +9,7 @@ export function drawRailBeads(
 ): void {
   if (!view.night) return
   const config = view.railLights ?? syncRailLightConfig()
-  const count = Math.max(6, Math.min(40, Math.floor((view.width - 32) / 24)))
+  const count = Math.max(4, Math.min(22, Math.floor((view.width - 32) / 42)))
   const lamps = lampPositions(view.width)
   ctx.save()
   for (let i = 0; i < count; i++) {
@@ -20,14 +20,14 @@ export function drawRailBeads(
     ctx.globalAlpha = brightness
     if (pixel) {
       ctx.fillStyle = pixel.ink
-      ctx.fillRect(Math.round(x / pixel.cell) * pixel.cell, pixel.cell, pixel.cell - 1, pixel.cell - 1)
+      ctx.fillRect(Math.round(x / pixel.cell) * pixel.cell, pixel.cell, pixel.cell, pixel.cell)
     } else {
       const color = BEAD_COLORS[i % BEAD_COLORS.length]!
       ctx.fillStyle = color
       ctx.shadowColor = color
       ctx.shadowBlur = brightness * 3
       ctx.beginPath()
-      ctx.arc(x, 3.5, 0.8, 0, Math.PI * 2)
+      ctx.arc(x, 3.5, 1.35, 0, Math.PI * 2)
       ctx.fill()
     }
   }

@@ -121,7 +121,7 @@ export class RealisticRenderer implements Renderer {
     ctx.fillStyle = water
     ctx.fillRect(0, 0, w, h)
 
-    this.distantReef(ctx, w, h, view.time, night)
+    this.distantReef(ctx, w, h, view.reducedMotion ? 0 : view.time, night)
     if (night) {
       this.lampLightCones(ctx, w, h, view.time, view.lampColors)
     }
@@ -211,26 +211,93 @@ export class RealisticRenderer implements Renderer {
       ctx.stroke()
     }
 
-    // Two small ambient background schools of tiny minnows
-    ctx.fillStyle = night ? 'rgba(125, 211, 252, 0.16)' : 'rgba(255, 255, 255, 0.2)'
-    for (let sIdx = 0; sIdx < 2; sIdx++) {
-      const dir = sIdx === 0 ? 1 : -1
-      const cycleW = w + 120
-      const rawX = ((t * 14 + sIdx * 240) % cycleW) - 60
-      const leaderX = dir === 1 ? rawX : w - rawX
-      const leaderY = h * (0.32 + sIdx * 0.22) + Math.sin(t * 0.7 + sIdx * 2) * (h * 0.06)
-      for (let m = 0; m < 6; m++) {
-        const ox = (m % 3) * -11 * dir + Math.sin(t * 2 + m) * 2
-        const oy = ((m / 3) | 0) * 7 - 3.5 + Math.cos(t * 1.7 + m) * 2
-        const mx = leaderX + ox
-        const my = leaderY + oy
-        ctx.beginPath()
-        ctx.ellipse(mx, my, 4.2, 1.7, 0, 0, Math.PI * 2)
-        ctx.fill()
-      }
-    }
+    this.backgroundSchools(ctx, w, h, t, night)
 
     ctx.restore()
+  }
+
+  /** Fast silver minnows travel in a wedge; round reef fish wander in a loose shoal. */
+  private backgroundSchools(ctx: CanvasRenderingContext2D, w: number, h: number, t: number, night: boolean): void {
+    const cycleW = w + 240
+    const leaderX = ((t * 28 + w * 0.25 + 120 + Math.sin(t * 1.4) * 6) % cycleW) - 120
+    const leaderY = h * 0.29 + Math.sin(t * 0.42) * h * 0.025
+    const heading = Math.atan2(Math.cos(t * 0.42) * h * 0.0105, 28 + Math.cos(t * 1.4) * 8.4)
+    ctx.save()
+    ctx.translate(leaderX, leaderY)
+    ctx.rotate(heading)
+    for (let i = 0; i < 7; i++) {
+      const row = Math.ceil(i / 2)
+      const side = i === 0 ? 0 : i % 2 === 0 ? 1 : -1
+      ctx.save()
+      ctx.translate(-row * 15 + Math.sin(t * 2.1 - i * 0.4), side * (3 + row * 2.8))
+      ctx.rotate(Math.sin(t * 1.6 - i * 0.5) * 0.035)
+      this.backgroundFish(ctx, false, Math.sin(t * 8 - i * 0.65), night)
+      ctx.restore()
+    }
+    ctx.restore()
+
+    // A bounded slow arc gives this school visible turns rather than another screen wrap.
+    const turn = t * 0.12 + 0.35
+    const shoalX = w * 0.64 + Math.sin(turn) * Math.min(w * 0.22, 140)
+    const shoalY = h * 0.55 + Math.sin(t * 0.23 + 1) * Math.min(h * 0.04, 18)
+    const offsets = [[-20, -5], [-7, -10], [10, -7], [24, 2], [7, 7], [-12, 8]]
+    ctx.save()
+    ctx.translate(shoalX, shoalY)
+    for (const [i, offset] of offsets.entries()) {
+      ctx.save()
+      ctx.translate(offset[0]! + Math.sin(t * 0.5 + i) * 2, offset[1]! + Math.cos(t * 0.8 + i * 0.9) * 2)
+      // Narrow to a profile as the fish turn, then face the return leg of their arc.
+      ctx.scale(Math.cos(turn), 1)
+      ctx.rotate(Math.sin(t * 0.65 + i) * 0.12)
+      this.backgroundFish(ctx, true, Math.sin(t * 3.5 + i), night)
+      ctx.restore()
+    }
+    ctx.restore()
+  }
+
+  private backgroundFish(ctx: CanvasRenderingContext2D, round: boolean, tailBeat: number, night: boolean): void {
+    ctx.fillStyle = round
+      ? night ? 'rgba(128, 192, 207, 0.24)' : 'rgba(185, 228, 231, 0.35)'
+      : night ? 'rgba(169, 217, 235, 0.26)' : 'rgba(224, 246, 247, 0.38)'
+    const tailX = round ? -7.5 : -9.5
+    const tailY = tailBeat * (round ? 0.65 : 0.9)
+    ctx.beginPath()
+    ctx.moveTo(round ? -3.8 : -5.5, 0)
+    ctx.lineTo(tailX, -2.5 + tailY)
+    ctx.lineTo(tailX + 1.5, tailY * 0.4)
+    ctx.lineTo(tailX, 2.5 + tailY)
+    ctx.closePath()
+    ctx.fill()
+    ctx.beginPath()
+    if (round) {
+      ctx.ellipse(0, 0, 4.6, 3.1, 0, 0, Math.PI * 2)
+    } else {
+      ctx.moveTo(6, 0)
+      ctx.bezierCurveTo(2.5, -2.4, -2, -2.2, -6, 0)
+      ctx.bezierCurveTo(-2, 2.2, 2.5, 2.4, 6, 0)
+    }
+    ctx.fill()
+    // Small dorsal fins and an eye point make the silhouettes readable at aquarium scale.
+    ctx.beginPath()
+    ctx.moveTo(-2, round ? -2.2 : -1.4)
+    ctx.quadraticCurveTo(-0.5, round ? -5.3 : -3.2, 2, round ? -2.3 : -1.5)
+    ctx.closePath()
+    ctx.fill()
+    ctx.strokeStyle = night ? 'rgba(210, 240, 247, 0.22)' : 'rgba(255, 255, 255, 0.3)'
+    ctx.lineWidth = 0.5
+    ctx.beginPath()
+    if (round) {
+      ctx.moveTo(1.2, -1.8)
+      ctx.quadraticCurveTo(0.2, 0, 1.2, 1.8)
+    } else {
+      ctx.moveTo(-3, -0.3)
+      ctx.lineTo(3, -0.3)
+    }
+    ctx.stroke()
+    ctx.fillStyle = night ? 'rgba(5, 28, 43, 0.6)' : 'rgba(20, 72, 87, 0.55)'
+    ctx.beginPath()
+    ctx.arc(round ? 2.6 : 4, -0.55, 0.45, 0, Math.PI * 2)
+    ctx.fill()
   }
 
   /** Floating luminous plankton / water motes drifting through the water column. */
