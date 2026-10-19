@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import { after, before, beforeEach, test } from 'node:test'
 import { createServer } from 'vite'
 import { readFile } from 'node:fs/promises'
+import { runInNewContext } from 'node:vm'
 
 const NOW = 1_800_000_000_000
 const storage = new Map()
@@ -513,6 +514,27 @@ test('all 18 decorations can emit finite native commands without creating Path2D
       assert.deepEqual(layers.map(layer => layer.role), ['secondary', 'primary', 'detail'])
       assert.ok(paths.flat().length > 5, item.id)
     }
+  }
+})
+
+test('offline navigation falls back to canonical home instead of redirected index HTML', async () => {
+  const handlers = new Map()
+  const home = { url: 'https://fishtank.phpz.org/', redirected: false }
+  const redirectedIndex = { ...home, redirected: true }
+  const source = await readFile(new URL('../public/sw.js', import.meta.url), 'utf8')
+  runInNewContext(source, {
+    self: { location: { origin: 'https://fishtank.phpz.org' }, addEventListener: (name, fn) => handlers.set(name, fn) },
+    URL,
+    fetch: () => Promise.reject(new Error('offline')),
+    caches: { match: async key => key === '/' ? home : key === '/index.html' || key?.url?.endsWith('/index.html') ? redirectedIndex : undefined },
+  })
+  for (const path of ['/?renderer=canvas', '/index.html']) {
+    let response
+    handlers.get('fetch')({
+      request: { method: 'GET', mode: 'navigate', url: `https://fishtank.phpz.org${path}` },
+      respondWith: promise => { response = promise },
+    })
+    assert.equal(await response, home)
   }
 })
 

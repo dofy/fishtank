@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fishtank-pwa-v1.7.0-r1'
+const CACHE_NAME = 'fishtank-pwa-v1.7.0-r2'
 const PRECACHE_URLS = [
   '/',
   '/index.html',
@@ -49,7 +49,9 @@ self.addEventListener('fetch', (event) => {
           }
           return response
         })
-        .catch(() => caches.match(request).then((res) => res || caches.match('/index.html'))),
+        // CF redirects /index.html to /. A redirected cached response cannot
+        // satisfy a new offline navigation, including ?renderer=canvas.
+        .catch(() => caches.match(request).then((res) => res && !res.redirected ? res : caches.match('/'))),
     )
     return
   }
