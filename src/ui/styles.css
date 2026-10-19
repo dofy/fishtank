@@ -178,6 +178,17 @@ nav.tabs button {
 }
 nav.tabs .btn-text { @apply max-[720px]:hidden; }
 nav.tabs .ico { @apply max-[720px]:w-[17px] max-[720px]:h-[17px]; }
+.shortcut-hint { @apply ml-1 px-1 rounded border border-current text-[9px] leading-4 opacity-60 max-[720px]:hidden; font-family: inherit; }
+.shortcut-guide { @apply grid gap-2 text-xs leading-relaxed; }
+.shortcut-guide dl { @apply m-0; }
+.shortcut-tabs { @apply grid grid-cols-6 gap-x-3 gap-y-1.5 pb-2 border-b border-[var(--border)] max-[640px]:grid-cols-3; }
+.shortcut-tabs .shortcut-item { @apply flex items-center gap-2 py-1; }
+.shortcut-actions { @apply grid grid-cols-2 gap-x-5 gap-y-0.5 max-[640px]:grid-cols-1; }
+.shortcut-actions .shortcut-item { @apply grid grid-cols-[64px_minmax(0,1fr)] items-start gap-2 py-1; }
+.shortcut-keys { @apply flex items-center gap-1 whitespace-nowrap; }
+.shortcut-guide dd { @apply m-0 min-w-0 text-left; }
+.shortcut-guide kbd { @apply inline-block min-w-6 px-1.5 rounded border border-[var(--border)] bg-[var(--cell-bg)] text-[11px] leading-5 text-center; font-family: inherit; }
+.help-body:focus-visible { outline: 1px solid var(--accent); outline-offset: 2px; }
 
 button {
   @apply font-semibold text-[13px] max-[640px]:text-xs text-[var(--text)] py-1.5 px-3 max-[640px]:py-1.5 max-[640px]:px-2.5 cursor-pointer select-none touch-manipulation;
@@ -634,7 +645,9 @@ a.footer-link {
   border-radius: var(--radius);
 }
 :root[data-theme='lcd'] .help-modal { border-color: var(--border); box-shadow: 6px 6px 0 var(--border); }
-.help-body { @apply flex-1 min-h-0 overflow-y-auto pr-1 grid gap-2; }
+.help-body { @apply flex-1 min-h-0 min-w-0 overflow-y-auto pr-1 grid grid-cols-[minmax(0,1fr)] gap-2; }
+.help-table { @apply min-w-0 overflow-x-auto; }
+.help-table:focus-visible { outline: 1px solid var(--accent); outline-offset: -1px; }
 .help-list { @apply m-0 pl-4 list-disc grid gap-1.5 text-xs leading-relaxed text-[var(--text)]; }
 
 .changelog-dialog { @apply m-auto w-[min(900px,94vw)] gap-4; }

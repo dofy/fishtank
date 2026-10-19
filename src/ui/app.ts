@@ -62,6 +62,7 @@ import type { Renderer } from '../render/renderer'
 import type { Agent, DecorNode } from '../render/scene'
 import { resolveDarkMode } from '../render/theme'
 import { renderChangelogDialog } from './changelog'
+import { bindShortcut, SHORTCUTS, shortcutForKey, shortcutLabels, type ShortcutAction } from './shortcuts'
 import {
   bar,
   checkRow,
@@ -145,6 +146,7 @@ export class App {
   private bookSelectedUid: string | null = null
   private immersive = false
   private helpOpen = false
+  private helpReturnFocus: HTMLElement | null = null
   private changelogOpen = false
   private portraitCache = new Map<string, HTMLCanvasElement>()
   private showcase: ShowcaseState | null = null
@@ -197,20 +199,87 @@ export class App {
       this.modal,
       this.toastHost,
     )
-    window.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        if (this.changelogOpen) {
-          e.preventDefault()
-          this.closeChangelog()
-        } else if (this.helpOpen) {
-          this.helpOpen = false
-          this.renderShowcase()
-        } else if (this.immersive) {
-          this.setImmersive(false)
-        }
-      }
-    })
+    window.addEventListener('keydown', (event) => this.handleShortcut(event))
     this.render()
+  }
+
+  private handleShortcut(event: KeyboardEvent): void {
+    if ((this.helpOpen || this.showcase) && event.key === 'Tab' && !event.ctrlKey && !event.metaKey && !event.altKey) {
+      const focusable = [...this.modal.querySelectorAll<HTMLElement>('button, a[href], input, select, textarea, [tabindex]')]
+        .filter(el => el.tabIndex >= 0 && !el.matches(':disabled') && el.getClientRects().length > 0)
+      const first = focusable[0]
+      const last = focusable.at(-1)
+      if (!first) { event.preventDefault(); return }
+      if (!this.modal.contains(document.activeElement) ||
+        (event.shiftKey && document.activeElement === first) || (!event.shiftKey && document.activeElement === last)) {
+        event.preventDefault()
+        ;(event.shiftKey ? last : first)?.focus()
+      }
+      return
+    }
+    const action = shortcutForKey(event)
+    if (!action) return
+    const target = event.target instanceof HTMLElement ? event.target : null
+    if (action !== 'escape' && target?.closest('input, textarea, select, [contenteditable]:not([contenteditable="false"]), [role="textbox"], [role="slider"]')) return
+    // Native Enter activation of focused controls must remain a single normal click.
+    if (action === 'run' && target?.closest('button, a, summary, [role="button"], [role="checkbox"]')) return
+
+    if (action === 'escape') {
+      if (this.changelogOpen) this.closeChangelog()
+      else if (this.helpOpen) this.closeHelp()
+      else if (this.showcase) this.closeShowcase()
+      else if (this.confirmingReset || this.confirmingReleaseUid) {
+        this.confirmingReset = false
+        this.confirmingReleaseUid = null
+        this.render()
+      } else if (this.immersive) this.setImmersive(false)
+      else if (this.bookDetailSpeciesId && this.tab === 'book') {
+        this.bookDetailSpeciesId = null
+        this.bookDetailGrade = 1
+        this.render()
+      } else return
+      event.preventDefault()
+      return
+    }
+
+    if (this.modal.childElementCount > 0 || this.confirmingReset || this.confirmingReleaseUid) {
+      // A fresh Enter can collect an already revealed result; all background actions stay paused.
+      if (action === 'run' && this.showcase && !this.helpOpen && !this.changelogOpen) {
+        const collect = this.modal.querySelector<HTMLButtonElement>('[data-shortcut="collect"]')
+        if (collect) { event.preventDefault(); collect.click() }
+      }
+      return
+    }
+    if (action.startsWith('tab-') && this.immersive) this.setImmersive(false)
+    if (['autoPick', 'clear', 'run'].includes(action) && this.immersive) return
+    if (action === 'bgm' || action === 'sfx') {
+      const config = syncAudioConfig(this.state.audio)
+      if (action === 'bgm') config.bgmEnabled = !config.bgmEnabled
+      else config.sfxEnabled = !config.sfxEnabled
+      event.preventDefault()
+      this.hooks.onAudioChange(config)
+      return
+    }
+    const button = [this.hud, this.nav, this.body, this.footer]
+      .map(root => root.querySelector<HTMLButtonElement>(`[data-shortcut="${action}"]`))
+      .find((candidate): candidate is HTMLButtonElement => candidate !== null)
+    if (!button || button.disabled || button.getAttribute('aria-disabled') === 'true') return
+    event.preventDefault()
+    button.click()
+  }
+
+  private openHelp(): void {
+    this.helpReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    this.helpOpen = true
+    this.renderShowcase()
+    this.modal.querySelector<HTMLButtonElement>('[data-help-close]')?.focus()
+  }
+
+  private closeHelp(): void {
+    this.helpOpen = false
+    this.renderShowcase()
+    if (this.helpReturnFocus?.isConnected && this.helpReturnFocus !== document.body) this.helpReturnFocus.focus()
+    else this.footer.querySelector<HTMLButtonElement>('[data-shortcut="help"]')?.focus()
   }
 
   isImmersive(): boolean {
@@ -378,6 +447,7 @@ export class App {
     })
     modeBtn.className = 'mode-btn'
     modeBtn.title = `${c.settingsColorModeHeading}: ${modeLabel}`
+    bindShortcut(modeBtn, 'mode')
 
     const langBtn = makeButton(c.langToggle, () => {
       sound.play('click')
@@ -385,6 +455,7 @@ export class App {
       this.hooks.onLocaleChange(nextLocale)
     })
     langBtn.className = 'lang-btn'
+    bindShortcut(langBtn, 'locale')
 
     const immersiveBtn = makeIconButton(
       this.immersive ? IMMERSIVE_ICONS.exit : IMMERSIVE_ICONS.enter,
@@ -396,6 +467,7 @@ export class App {
     )
     immersiveBtn.className = `mode-btn immersive-btn${this.immersive ? ' btn-primary' : ''}`
     immersiveBtn.title = this.immersive ? c.exitImmersiveBtn : c.immersiveBtn
+    bindShortcut(immersiveBtn, 'immersive')
 
     const actions = document.createElement('div')
     actions.className = 'hud-actions'
@@ -426,6 +498,7 @@ export class App {
         })
         b.setAttribute('aria-pressed', String(this.tab === id))
         b.title = c.tabs[id]
+        bindShortcut(b, `tab-${id}`, true)
         return b
       }),
     )
@@ -642,6 +715,7 @@ export class App {
     })
     go.className = 'btn-primary'
     go.setAttribute('aria-disabled', String(!canBreed))
+    bindShortcut(go, 'run')
     row.append(go)
 
     const bestPairBtn = makeButton(c.breedAutoPickBtn, () => {
@@ -658,6 +732,7 @@ export class App {
     })
     bestPairBtn.className = 'btn-secondary'
     bestPairBtn.setAttribute('aria-disabled', String(eligible.length < 2))
+    bindShortcut(bestPairBtn, 'autoPick')
     row.append(bestPairBtn)
 
     if (this.breedPick.length > 0) {
@@ -668,6 +743,7 @@ export class App {
         this.render(now)
       })
       clear.className = 'btn-secondary'
+      bindShortcut(clear, 'clear')
       row.append(clear)
     }
 
@@ -774,6 +850,7 @@ export class App {
     })
     go.className = 'btn-primary'
     go.setAttribute('aria-disabled', String(!ready))
+    bindShortcut(go, 'run')
 
     const autoBtn = makeButton(c.mergeAutoPickBtn, () => {
       const picked = autoPickForMerge(this.state)
@@ -789,6 +866,7 @@ export class App {
     })
     autoBtn.className = 'btn-secondary'
     autoBtn.setAttribute('aria-disabled', String(mergeCandidates.length === 0))
+    bindShortcut(autoBtn, 'autoPick')
 
     const clear = makeButton(c.clearBtn, () => {
       if (this.mergePick.length === 0) {
@@ -803,6 +881,7 @@ export class App {
     })
     clear.className = 'btn-secondary'
     clear.setAttribute('aria-disabled', String(this.mergePick.length === 0))
+    bindShortcut(clear, 'clear')
 
     row.append(go, autoBtn, clear)
 
@@ -1365,6 +1444,7 @@ export class App {
     )
     sfxToggle.className = 'icon-btn'
     sfxToggle.setAttribute('aria-pressed', String(audioCfg.sfxEnabled))
+    bindShortcut(sfxToggle, 'sfx')
 
     const sfxSlider = document.createElement('input')
     sfxSlider.type = 'range'
@@ -1401,6 +1481,7 @@ export class App {
     )
     bgmToggle.className = 'icon-btn'
     bgmToggle.setAttribute('aria-pressed', String(audioCfg.bgmEnabled))
+    bindShortcut(bgmToggle, 'bgm')
 
     const bgmSlider = document.createElement('input')
     bgmSlider.type = 'range'
@@ -1466,8 +1547,7 @@ export class App {
 
     const openHelp = makeIconButton(HELP_ICON, c.openHelpBtn, () => {
       sound.play('click')
-      this.helpOpen = true
-      this.renderShowcase()
+      this.openHelp()
     })
     openHelp.className = 'icon-btn btn-secondary'
     langHelpRow.append(zhBtn, enBtn, openHelp)
@@ -1528,9 +1608,9 @@ export class App {
     helpLink.innerHTML = `<span class="ico">${HELP_ICON}</span><span>${c.helpBtn}</span>`
     helpLink.onclick = () => {
       sound.play('click')
-      this.helpOpen = true
-      this.renderShowcase()
+      this.openHelp()
     }
+    bindShortcut(helpLink, 'help')
 
     const changelogLink = makeIconButton(CHANGELOG_ICON, c.changelogBtn, () => {
       sound.play('click')
@@ -1540,6 +1620,7 @@ export class App {
     })
     changelogLink.className = 'footer-link'
     changelogLink.dataset.changelog = '1'
+    bindShortcut(changelogLink, 'changelog')
 
     const ghLink = document.createElement('a')
     ghLink.href = GITHUB_URL
@@ -1560,33 +1641,77 @@ export class App {
     backdrop.addEventListener('click', (e) => {
       if (e.target === backdrop) {
         sound.play('click')
-        this.helpOpen = false
-        this.renderShowcase()
+        this.closeHelp()
       }
     })
 
     const card = document.createElement('div')
     card.className = 'help-modal'
+    card.dataset.helpDialog = this.locale
+    card.setAttribute('role', 'dialog')
+    card.setAttribute('aria-modal', 'true')
+    card.setAttribute('aria-labelledby', 'help-title')
 
     const top = document.createElement('div')
     top.className = 'book-detail-head'
     const title = document.createElement('h2')
     title.className = 'm-0 text-base font-bold text-[var(--accent)]'
+    title.id = 'help-title'
     title.textContent = `${c.helpModalTitle} (v${APP_VERSION})`
 
     const closeBtn = document.createElement('button')
     closeBtn.type = 'button'
     closeBtn.className = 'book-close-btn'
     closeBtn.innerHTML = CLOSE_ICON
+    closeBtn.dataset.helpClose = '1'
+    closeBtn.setAttribute('aria-label', c.shortcutsCloseHelp)
     closeBtn.onclick = () => {
       sound.play('click')
-      this.helpOpen = false
-      this.renderShowcase()
+      this.closeHelp()
     }
     top.append(title, closeBtn)
 
     const content = document.createElement('div')
     content.className = 'help-body'
+    content.tabIndex = 0
+    content.setAttribute('aria-label', c.shortcutsHelpContents)
+
+    content.append(heading(c.shortcutsTitle, 'h3'))
+    const shortcutGuide = document.createElement('section')
+    shortcutGuide.className = 'shortcut-guide'
+    const shortcutTabs = document.createElement('dl')
+    shortcutTabs.className = 'shortcut-tabs'
+    shortcutTabs.setAttribute('aria-label', c.shortcutsTabsLabel)
+    const shortcutActions = document.createElement('dl')
+    shortcutActions.className = 'shortcut-actions'
+    shortcutActions.setAttribute('aria-label', c.shortcutsActionsLabel)
+    const descriptions: Record<Exclude<ShortcutAction, `tab-${Tab}`>, string> = {
+      immersive: c.shortcutsImmersive, mode: c.shortcutsMode, bgm: c.shortcutsBgm, sfx: c.shortcutsSfx,
+      locale: c.shortcutsLocale, help: c.helpBtn, changelog: c.changelogBtn,
+      autoPick: c.shortcutsAutoPick, clear: c.shortcutsClear, run: c.shortcutsRun, escape: c.shortcutsEscape,
+    }
+    for (const shortcut of SHORTCUTS) {
+      const row = document.createElement('div')
+      row.className = 'shortcut-item'
+      row.dataset.shortcutGuide = shortcut.action
+      const keys = document.createElement('dt')
+      keys.className = 'shortcut-keys'
+      for (const [index, key] of shortcutLabels(shortcut.action).entries()) {
+        if (index) keys.append(' / ')
+        const badge = document.createElement('kbd')
+        badge.textContent = key
+        keys.append(badge)
+      }
+      const description = shortcut.action.startsWith('tab-')
+        ? c.tabs[shortcut.action.slice(4) as Tab]
+        : descriptions[shortcut.action as keyof typeof descriptions]
+      const text = document.createElement('dd')
+      text.textContent = description
+      row.append(keys, text)
+      ;(shortcut.action.startsWith('tab-') ? shortcutTabs : shortcutActions).append(row)
+    }
+    shortcutGuide.append(shortcutTabs, shortcutActions)
+    content.append(shortcutGuide, note(c.shortcutsNote))
 
     // Section 1: Core Guide
     content.append(heading(c.helpIntroTitle, 'h3'))
@@ -1633,7 +1758,16 @@ export class App {
       )
       matrixTable.append(tr)
     }
-    content.append(matrixTable)
+    const appendTable = (table: HTMLTableElement, label: string): void => {
+      const scroll = document.createElement('div')
+      scroll.className = 'help-table'
+      scroll.tabIndex = 0
+      scroll.setAttribute('role', 'region')
+      scroll.setAttribute('aria-label', label)
+      scroll.append(table)
+      content.append(scroll)
+    }
+    appendTable(matrixTable, c.helpMatrixTitle)
 
     // Section 3: Aquarium Levels & Capacity
     content.append(heading(c.helpLevelTitle, 'h3'))
@@ -1660,7 +1794,7 @@ export class App {
       )
       lvTable.append(tr)
     }
-    content.append(lvTable)
+    appendTable(lvTable, c.helpLevelTitle)
 
     // Section 4: Rarity Tiers & Grade Multipliers
     content.append(heading(c.helpTierTitle, 'h3'))
@@ -1683,7 +1817,8 @@ export class App {
       tr.append(tierCell, td(`${mins} min`), td(`${EXP_BY_TIER[t]} EXP`), td(usesStr))
       tierTable.append(tr)
     }
-    content.append(tierTable, note(c.helpGradeNote))
+    appendTable(tierTable, c.helpTierTitle)
+    content.append(note(c.helpGradeNote))
 
     card.append(top, content)
     backdrop.append(card)
@@ -1766,7 +1901,9 @@ export class App {
     }
     if (!this.showcase) {
       if (this.helpOpen) {
-        this.modal.replaceChildren(this.renderHelpModal())
+        if (this.modal.querySelector<HTMLElement>('[data-help-dialog]')?.dataset.helpDialog !== this.locale) {
+          this.modal.replaceChildren(this.renderHelpModal())
+        }
       } else {
         this.modal.replaceChildren()
       }
@@ -1859,6 +1996,8 @@ export class App {
         this.closeShowcase()
       })
       closeBtn.className = 'showcase-btn btn-primary'
+      closeBtn.dataset.shortcut = 'collect'
+      closeBtn.setAttribute('aria-keyshortcuts', 'Enter Escape')
 
       card.append(nameRow, metaLine, chips, closeBtn)
     } else {

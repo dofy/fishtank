@@ -63,6 +63,39 @@
 
 ---
 
+## ⌨️ 快捷键 / Keyboard Shortcuts
+
+直接按单键即可，无需 Ctrl 或 Cmd。游戏内「帮助」也有完整说明，按钮悬停提示会显示对应按键。
+
+Use single keys without Ctrl or Cmd. The in-game Help and button tooltips show the same shortcuts.
+
+| 按键 / Key | 操作 / Action |
+| --- | --- |
+| `1` | 鱼缸 / Tank |
+| `2` | 繁育 / Breed |
+| `3` | 合成 / Merge |
+| `4` | 装饰 / Decor |
+| `5` | 图鉴 / Book |
+| `6` | 设置 / Settings |
+| `F` | 进入或退出沉浸模式 / Toggle immersive mode |
+| `D` | 自动 → 日间 → 黑夜 / Cycle Auto → Day → Night |
+| `M` | 开关背景音乐 / Toggle background music |
+| `S` | 开关操作音效 / Toggle sound effects |
+| `L` | 切换中英文 / Switch Chinese and English |
+| `H` / `?` | 打开帮助 / Open Help |
+| `U` | 打开更新日志 / Open Changelog |
+| `A` | 繁育页推荐配对，或合成页自动选鱼 / Best Pair on Breed, auto-select on Merge |
+| `C` | 清空当前繁育或合成选择 / Clear the current breeding or merge selection |
+| `Enter` | 执行已就绪的繁育或合成；收下已展示的小鱼 / Run a ready action, or collect a revealed result |
+| `Esc` | 关闭弹窗、取消确认、返回图鉴列表或退出沉浸 / Close overlay, cancel confirmation, leave book details, or exit immersive mode |
+
+- 切换 Tab 会自动退出沉浸模式；`A`、`C` 和开始繁育/合成的 `Enter` 只作用于当前操作页，未就绪的操作不会执行。
+- 输入框、滑条、下拉菜单和输入法组字期间暂停快捷键；弹窗打开时暂停后台操作，避免误触。聚焦按钮时，`Enter` 保留按钮原有操作。
+- 长按不会重复触发快捷键，Ctrl / Cmd / Alt 组合键不受影响。放生和重置没有全局执行快捷键。
+- Tab switching leaves immersive mode. Context actions apply only to the current page and require a ready action. Inputs and IME composition pause shortcuts; overlays block background actions. Native button activation and browser modifier shortcuts remain available. Held keys do not repeat shortcuts; release and reset have no global execution shortcut.
+
+---
+
 ## License
 
 [MIT](LICENSE) © 2026 [Seven Yu](https://yahaha.net)

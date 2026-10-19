@@ -217,6 +217,21 @@ export interface Copy {
   bookNoteTitle: string
   bookNote: string
   settingsThemeHeading: string
+  shortcutsTitle: string
+  shortcutsTabsLabel: string
+  shortcutsActionsLabel: string
+  shortcutsImmersive: string
+  shortcutsMode: string
+  shortcutsBgm: string
+  shortcutsSfx: string
+  shortcutsLocale: string
+  shortcutsAutoPick: string
+  shortcutsClear: string
+  shortcutsRun: string
+  shortcutsEscape: string
+  shortcutsNote: string
+  shortcutsCloseHelp: string
+  shortcutsHelpContents: string
   settingsThemeNote: string
   settingsColorModeHeading: string
   colorModeAuto: string
@@ -395,6 +410,21 @@ const ZH: Copy = {
   bookNote:
     '【全图鉴收集】共收录 **28 种海洋生物**（初始鱼 1 种品阶，1★–5★ 鱼种各含 **5 种品阶色相变种**）。【详情与快捷操作】点击任意已解锁的鱼种卡片可展开详情面板，自由切换预览已点亮的品阶外观、查看当前持有个体，或一键放入鱼缸、跳转繁育与合成。',
   settingsThemeHeading: '画面风格（支持素材替换）',
+  shortcutsTitle: '⌨️ 键盘快捷键',
+  shortcutsTabsLabel: '页面切换',
+  shortcutsActionsLabel: '常用操作',
+  shortcutsImmersive: '进入 / 退出沉浸模式',
+  shortcutsMode: '切换自动 → 日间 → 黑夜',
+  shortcutsBgm: '开关背景音乐',
+  shortcutsSfx: '开关操作音效',
+  shortcutsLocale: '切换中英文',
+  shortcutsAutoPick: '推荐配对 / 自动选鱼（当前页）',
+  shortcutsClear: '清空繁育 / 合成选择',
+  shortcutsRun: '确认繁育 / 合成；收下小鱼',
+  shortcutsEscape: '关闭 / 取消 / 返回 / 退出沉浸',
+  shortcutsNote: '直接按单键即可，切换 Tab 会退出沉浸。输入框、滑条、下拉菜单和输入法组字时暂停快捷键，弹窗内暂停后台操作；聚焦按钮时 Enter 保留原有操作。长按不会重复触发快捷键，Ctrl / Cmd / Alt 组合键保留浏览器功能。',
+  shortcutsCloseHelp: '关闭帮助',
+  shortcutsHelpContents: '帮助内容',
   settingsThemeNote:
     '每个主题位于 public/themes/<主题名>/ 目录下，包含配色清单与渲染器配置；将 <speciesId>.png 或 decor-<id>.png 放入对应 sprites/ 目录即可直接替换鱼类或装饰品外观，无需修改代码。',
   settingsColorModeHeading: '颜色模式（昼夜与鱼缸装饰灯）',
@@ -604,6 +634,21 @@ const EN: Copy = {
   bookNote:
     '【Full Collection】Features **28 marine species** (1 grade for starter fish and **5 color-grade variants** for each 1★–5★ species). 【Inspector & Actions】Click any discovered species card to open the detail inspector, preview unlocked grade variants, inspect owned specimens, or jump straight to Breed & Merge.',
   settingsThemeHeading: 'Art theme',
+  shortcutsTitle: '⌨️ Keyboard shortcuts',
+  shortcutsTabsLabel: 'Page navigation',
+  shortcutsActionsLabel: 'Common actions',
+  shortcutsImmersive: 'Enter / leave immersive mode',
+  shortcutsMode: 'Cycle Auto → Day → Night',
+  shortcutsBgm: 'Toggle background music',
+  shortcutsSfx: 'Toggle sound effects',
+  shortcutsLocale: 'Switch Chinese / English',
+  shortcutsAutoPick: 'Best Pair / auto-select (current tab)',
+  shortcutsClear: 'Clear breeding / merge selection',
+  shortcutsRun: 'Run a ready action / collect result',
+  shortcutsEscape: 'Close / cancel / back / exit immersive',
+  shortcutsNote: 'Use single keys. Switching tabs leaves immersive mode. Shortcuts pause in inputs, sliders, selects and during IME composition; overlays block background actions. Enter on a focused button keeps its normal action. Held keys do not repeat shortcuts. Ctrl / Cmd / Alt combinations keep their browser behavior.',
+  shortcutsCloseHelp: 'Close help',
+  shortcutsHelpContents: 'Help contents',
   settingsThemeNote:
     'A theme is a folder under public/themes/. Its manifest supplies the palette, the renderer and an optional sprites/ directory; dropping <speciesId>.png or decor-<id>.png in there replaces that art everywhere with no code change.',
   settingsColorModeHeading: 'Color Mode & Aquarium Lamps',

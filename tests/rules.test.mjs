@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { after, before, beforeEach, test } from 'node:test'
 import { createServer } from 'vite'
+import { readFile } from 'node:fs/promises'
 
 const NOW = 1_800_000_000_000
 const storage = new Map()
@@ -12,6 +13,7 @@ let save
 let Rng
 let species
 let lighting
+let shortcuts
 
 before(async () => {
   Object.defineProperty(globalThis, 'localStorage', {
@@ -31,11 +33,56 @@ before(async () => {
   balance = await server.ssrLoadModule('/src/core/balance.ts')
   save = await server.ssrLoadModule('/src/core/save.ts')
   lighting = await server.ssrLoadModule('/src/core/lighting.ts')
+  shortcuts = await server.ssrLoadModule('/src/ui/shortcuts.ts')
   ;({ Rng } = await server.ssrLoadModule('/src/core/rng.ts'))
   ;({ SPECIES: species } = await server.ssrLoadModule('/src/core/species.ts'))
 })
 
 beforeEach(() => storage.clear())
+
+function keyEvent(key, extra = {}) {
+  return { key, ctrlKey: false, metaKey: false, altKey: false, shiftKey: false,
+    repeat: false, isComposing: false, defaultPrevented: false, ...extra }
+}
+
+test('shortcuts map tabs, aliases and context actions without duplicate keys', () => {
+  const used = new Set()
+  assert.deepEqual(shortcuts.SHORTCUTS.slice(0, 6).map(s => s.action),
+    ['tab-tank', 'tab-breed', 'tab-merge', 'tab-decor', 'tab-book', 'tab-settings'])
+  for (const { action, keys } of shortcuts.SHORTCUTS) {
+    for (const key of keys) {
+      assert.ok(!used.has(key), `duplicate key: ${key}`)
+      used.add(key)
+      assert.equal(shortcuts.shortcutForKey(keyEvent(key)), action)
+    }
+  }
+  assert.equal(shortcuts.shortcutForKey(keyEvent('F')), 'immersive')
+  assert.equal(shortcuts.shortcutForKey(keyEvent('?', { shiftKey: true })), 'help')
+  for (const key of ['Tab', ' ', 'Backspace', 'Delete', 'z']) {
+    assert.equal(shortcuts.shortcutForKey(keyEvent(key)), undefined)
+  }
+})
+
+test('shortcuts ignore browser modifiers, held keys and IME composition', () => {
+  for (const { keys } of shortcuts.SHORTCUTS) {
+    for (const key of keys) {
+      for (const guard of ['ctrlKey', 'metaKey', 'altKey', 'repeat', 'isComposing', 'defaultPrevented']) {
+        assert.equal(shortcuts.shortcutForKey(keyEvent(key, { [guard]: true })), undefined)
+      }
+      assert.equal(shortcuts.shortcutForKey(keyEvent(key, { keyCode: 229 })), undefined)
+      if (key !== '?') assert.equal(shortcuts.shortcutForKey(keyEvent(key, { shiftKey: true })), undefined)
+    }
+  }
+})
+
+test('README lists every supported shortcut key', async () => {
+  const readme = await readFile(new URL('../README.md', import.meta.url), 'utf8')
+  for (const { action } of shortcuts.SHORTCUTS) {
+    for (const label of shortcuts.shortcutLabels(action)) {
+      assert.ok(readme.includes(`\`${label}\``), `README missing ${label}`)
+    }
+  }
+})
 
 test('legacy and malformed rail light settings keep the existing game progress', () => {
   for (const [input, expected] of [
