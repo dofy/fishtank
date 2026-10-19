@@ -2,6 +2,35 @@
 
 发布约定：同一天的小修补合并覆盖当前版本，并归入同一条 CHANGELOG；较大的功能或体验更新再升级版本号。同版重新发布可单独递增 Service Worker 缓存修订号，两个自定义域名必须同时保留。
 
+## v1.5.0 — 2026-10-19
+
+### 键盘快捷键正式版本与简洁 Tab
+
+| 项目 | 记录 |
+| --- | --- |
+| 部署时间 | 2026-10-19 13:08:20（Asia/Shanghai） |
+| 生产地址 | https://fishtank.phpz.org/ 、https://fish.yahaha.net/ |
+| Cloudflare Worker | `fishtank` |
+| 部署源代码提交 | `ba15f55ad52a18f8cd70dedc8f6830b7ce3ba6cc` |
+| Cloudflare Deployment ID | `b4cd5e5c-3499-4d31-beb1-53af7bbb5661` |
+| Cloudflare Version ID | `8e130adf-aa5c-4dd6-9d1c-e562ae616b7d` |
+| 发布时流量 | 本版 100% |
+| Service Worker 缓存 | `fishtank-pwa-v1.5.0` |
+
+- 将快捷键与紧凑帮助布局从 `1.4.10` 日志中单独归入 `1.5.0`，应用、包、README、数值文档和离线缓存同步版本；保留已发布修订的历史部署记录。未创建或改写 Git tag。
+- 去掉 Tab 标签旁的快捷键数字和对应样式，保留 `1–6` 切换、悬停提示和无障碍按键信息。帮助与 README 继续提供完整的 17 项操作说明，README 标明自 `1.5.0` 提供快捷键。
+- 41 项回归测试、TypeScript 类型检查、生产构建及差异格式检查通过。本地生产构建验证六个 Tab 均无数字标注且快捷键正常，页脚与帮助显示 `v1.5.0`，日志当前版本为 `v1.5.0`，`v1.4.10` 条目不再重复记录快捷键更新。
+- 两个域名均经普通 DNS/HTTPS 与独立 Chrome 上下文验证：首页返回 200、六个 Tab 按键切换正常、17 项帮助说明完整；日志正确区分当前与历史版本，1280/390/320px 无页面横向溢出，无脚本异常。
+- CF 发布输出确认保留两个 custom domain，部署列表确认本版承接 100% 流量；两个域名的首页引用、JS、CSS 和 Service Worker 均与最终本地构建一致。玩法、数值和存档格式不变；本次未验证完整离线启动。
+
+### 线上资源 SHA-256
+
+| 资源 | SHA-256 |
+| --- | --- |
+| `sw.js` | `b5b527272fd214e1ad8a2a1b0ef16fbce5bc4548a93f68692231c60b5f9b2f17` |
+| `assets/index-DL1vVWq0.js` | `97200bbf267726dd5dc3e57f464914879c6c71cdef2476c339d7479a9078f730` |
+| `assets/index-Bv5q2kgg.css` | `c9d14a7d9756e5a4b8306ea83c31fd3637a8a180f6d15753a11941824d1bda67` |
+
 ## v1.4.10 — 2026-10-19
 
 ### 同日更新：键盘快捷键与紧凑帮助布局
