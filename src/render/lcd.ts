@@ -4,6 +4,7 @@ import type { Agent, DecorNode, SceneView, SplashEffect } from './scene'
 import { decorLayers, eyeAt, fishPath, hashString, patternBands, patternSpots } from './shape'
 import { type SceneColors, type ThemeManifest, lampPositions, sceneColorsFor, spriteFor } from './theme'
 import { drawRailBeads } from './rail-lights'
+import { clipLcdWithdrawal, lcdWithdrawalDensity } from './withdrawal'
 
 /** Identity-transform scratch context used only for point-in-path tests. */
 const probe = document.createElement('canvas').getContext('2d')!
@@ -299,14 +300,15 @@ export class LcdRenderer implements Renderer {
     const discharging = (a.dischargingTimer ?? 0) > 0
     const jitter = (shocked || discharging) && Math.floor(t * 24) % 2 === 0 ? c : 0
     const x = Math.round((a.x - len / 2) / c) * c + jitter
-    const y = Math.round((a.y + (a.dropping || shocked ? 0 : Math.sin(t * 2 + a.phase) * c)) / c) * c
+    const y = Math.round((a.y + (a.dropping || shocked || a.withdrawal ? 0 : Math.sin(t * 2 + a.phase) * c)) / c) * c
     ctx.save()
     ctx.translate(x, y)
     if (a.dir === -1) {
       ctx.translate(len, 0)
       ctx.scale(-1, 1)
     }
-    this.body(ctx, a.species.body, len, a.fish.grade, a.fish.tier, a.fish.speciesId, s, t + a.phase)
+    if (a.withdrawal) clipLcdWithdrawal(ctx, len, len * a.species.body.depth, c, lcdWithdrawalDensity(a.withdrawal))
+    this.body(ctx, a.species.body, len, a.fish.grade, a.fish.tier, a.fish.speciesId, s, a.withdrawal?.reducedMotion ? 0 : t + a.phase)
     if (shocked || discharging) {
       const h = len * a.species.body.depth
       ctx.fillStyle = s.ink
@@ -322,7 +324,13 @@ export class LcdRenderer implements Renderer {
 
   fishFrame(ctx: CanvasRenderingContext2D, length: number, req: PortraitRequest, phase: number): void {
     const s = sceneColorsFor(this.manifest, document.documentElement.dataset.mode !== 'light')
+    const clipped = (req.visibility ?? 1) < 1
+    if (clipped) {
+      ctx.save()
+      clipLcdWithdrawal(ctx, length, length * req.species.body.depth, this.cell, req.visibility!)
+    }
     this.body(ctx, req.species.body, length, req.grade, req.tier, req.species.id, s, phase)
+    if (clipped) ctx.restore()
   }
 
   portrait(ctx: CanvasRenderingContext2D, w: number, h: number, req: PortraitRequest): void {

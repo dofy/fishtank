@@ -88,6 +88,9 @@ async function main(): Promise<void> {
     onSave: () => {
       save(state)
     },
+    onFishWithdraw: (uid) => {
+      originalScene.withdrawFish(uid, window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+    },
     onReset: () => {
       const currentLocale = state.locale
       const currentColorMode = state.colorMode ?? 'auto'
@@ -305,6 +308,7 @@ async function main(): Promise<void> {
       () => sound.play('eat'),
       () => sound.play('zap'),
       night,
+      motionPreference.matches,
     )
 
     const view = scene.view(logicalWidth, logicalHeight, elapsed, night)

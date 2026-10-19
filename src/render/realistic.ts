@@ -2,6 +2,7 @@ import type { DecorItem, Grade, Tier } from '../core/types'
 import type { DecorPortraitRequest, PortraitRequest, Renderer } from './renderer'
 import type { Agent, DecorNode, FoodPellet, SceneView, SplashEffect } from './scene'
 import { drawRailBeads } from './rail-lights'
+import { withdrawalOpacity, withdrawalScale } from './withdrawal'
 import { decorLayers, elongatedProfile, eyeAt, fishPath, hashString, patternBands, patternSpots } from './shape'
 import { type SceneColors, type ThemeManifest, lampPositions, sceneColorsFor, spriteFor } from './theme'
 
@@ -678,14 +679,16 @@ export class RealisticRenderer implements Renderer {
     const shocked = (a.shockedTimer ?? 0) > 0
     const discharging = (a.dischargingTimer ?? 0) > 0
     const jitterX = shocked || discharging ? Math.sin(t * 68 + a.phase) * 2.4 : 0
-    const bobY = a.dropping || shocked ? 0 : Math.sin(t * 2 + a.phase) * 2.5
+    const bobY = a.dropping || shocked || a.withdrawal ? 0 : Math.sin(t * 2 + a.phase) * 2.5
 
     ctx.save()
+    ctx.globalAlpha *= withdrawalOpacity(a.withdrawal)
     ctx.translate(a.x + jitterX, a.y + bobY)
-    ctx.scale(a.dir, 1)
+    const retreatScale = withdrawalScale(a.withdrawal)
+    ctx.scale(a.dir * retreatScale, retreatScale)
     if (a.tilt) ctx.rotate(a.tilt)
     ctx.translate(-len / 2, 0)
-    this.body(ctx, a.species.body, len, a.fish.grade, a.fish.tier, a.fish.speciesId, t + a.phase)
+    this.body(ctx, a.species.body, len, a.fish.grade, a.fish.tier, a.fish.speciesId, a.withdrawal?.reducedMotion ? 0 : t + a.phase)
     if (discharging || shocked) {
       this.electricArcs(ctx, len, len * a.species.body.depth, t + a.phase, discharging)
     }

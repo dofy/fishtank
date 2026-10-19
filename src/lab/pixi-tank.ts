@@ -4,6 +4,7 @@ import type { Agent, SceneView } from '../render/scene'
 import { FishDeformation } from './fish-motion'
 import { sceneColorsFor } from '../render/theme'
 import { lcdElectricity } from '../render/lcd-electricity'
+import { lcdWithdrawalDensity, withdrawalOpacity, withdrawalScale } from '../render/withdrawal'
 import { NativeEnvironment } from './native-environment'
 import { GpuTimer } from './gpu-timer'
 
@@ -54,6 +55,7 @@ interface FishTexture {
   pad: number
   canvas: HTMLCanvasElement
   lastPose: number
+  visibility: number
 }
 
 interface FishNode {
@@ -162,15 +164,19 @@ export class PixiTank {
     if (this.hadSparks) this.sparks.clear()
     this.hadSparks = false
     for (const agent of view.agents) {
-      const key = `${agent.species.id}:${agent.fish.grade}:${agent.fish.tier}:${agent.scale}`
+      // Each dissolving LCD fish owns one tiny texture. Living copies keep
+      // sharing their normal art, and progress never creates a new cache key.
+      const key = `${agent.species.id}:${agent.fish.grade}:${agent.fish.tier}:${agent.scale}${lcd && agent.withdrawal ? `:withdraw:${agent.fish.uid}` : ''}`
+      const visibility = lcd ? lcdWithdrawalDensity(agent.withdrawal) : 1
       used.add(key)
-      const art = this.textures.get(key) ?? this.bake(renderer, agent, key)
-      if (lcd && motion && !view.reducedMotion && Math.abs(view.time - art.lastPose) >= 1 / 8) {
+      const art = this.textures.get(key) ?? this.bake(renderer, agent, key, visibility)
+      if (lcd && (art.visibility !== visibility || (motion && !view.reducedMotion && Math.abs(view.time - art.lastPose) >= 1 / 8))) {
         const ctx = art.canvas.getContext('2d')!
         ctx.clearRect(-art.pad, -art.height / 2, art.width, art.height)
-        renderer.fishFrame(ctx, art.length, { species: agent.species, grade: agent.fish.grade, tier: agent.fish.tier }, view.time + agent.phase)
+        renderer.fishFrame(ctx, art.length, { species: agent.species, grade: agent.fish.grade, tier: agent.fish.tier, visibility }, view.reducedMotion || agent.withdrawal?.reducedMotion || !motion ? 0 : view.time + agent.phase)
         art.texture.source.update()
         art.lastPose = view.time
+        art.visibility = visibility
       }
       let node = this.nodes.get(agent.fish.uid)
       if (!node || node.textureKey !== key) {
@@ -239,7 +245,7 @@ export class PixiTank {
     return performance.now() - started
   }
 
-  private bake(renderer: Renderer, agent: Agent, key: string): FishTexture {
+  private bake(renderer: Renderer, agent: Agent, key: string, visibility: number): FishTexture {
     const length = agent.species.body.length * 4.2 * agent.scale
     const pad = 18
     const width = Math.ceil(length + pad * 2)
@@ -253,9 +259,9 @@ export class PixiTank {
     const ctx = canvas.getContext('2d')!
     ctx.scale(r, r)
     ctx.translate(pad, height / 2)
-    renderer.fishFrame(ctx, length, { species: agent.species, tier: agent.fish.tier, grade: agent.fish.grade }, 0)
+    renderer.fishFrame(ctx, length, { species: agent.species, tier: agent.fish.tier, grade: agent.fish.grade, visibility }, 0)
     const texture = new Texture({ source: new CanvasSource({ resource: canvas, resolution: r, scaleMode: lcd ? 'nearest' : 'linear' }) })
-    const art = { texture, length, width, height, pad, canvas, lastPose: -Infinity }
+    const art = { texture, length, width, height, pad, canvas, lastPose: -Infinity, visibility }
     this.textures.set(key, art)
     return art
   }
@@ -287,14 +293,15 @@ export class PixiTank {
 
   private animateFish(node: FishNode, a: Agent, view: SceneView, dt: number, lcd: boolean, motion: boolean, cell: number): void {
     const { mesh } = node
-    const reduced = view.reducedMotion || !motion
+    const reduced = view.reducedMotion || !motion || !!a.withdrawal?.reducedMotion
     const shocked = (a.shockedTimer ?? 0) > 0
     const t = reduced ? 0 : view.time + a.phase
     node.facing += (a.dir - node.facing) * Math.min(1, dt * 12)
-    mesh.scale.x = lcd || reduced ? a.dir : node.facing
-    mesh.position.set(lcd ? Math.round(a.x / cell) * cell : a.x, lcd ? Math.round(a.y / cell) * cell : a.y + (a.dropping || shocked || reduced ? 0 : Math.sin(t * 2) * 2.5))
+    const retreatScale = lcd ? 1 : withdrawalScale(a.withdrawal)
+    mesh.scale.set((lcd || reduced ? a.dir : node.facing) * retreatScale, retreatScale)
+    mesh.position.set(lcd ? Math.round(a.x / cell) * cell : a.x, lcd ? Math.round(a.y / cell) * cell : a.y + (a.dropping || shocked || reduced || a.withdrawal ? 0 : Math.sin(t * 2) * 2.5))
     mesh.rotation = lcd ? 0 : (a.tilt ?? 0) * a.dir
-    mesh.alpha = 1
+    mesh.alpha = lcd ? 1 : withdrawalOpacity(a.withdrawal)
     // LCD poses are sampled above. Frozen or shocked meshes upload only on transition.
     if (node.deformation.update(mesh.vertices as Float32Array, t, (a.scaredTimer ?? 0) > 0 ? 9 : 4.5, !reduced && !shocked && !lcd)) {
       mesh.geometry.getBuffer('aPosition').update()

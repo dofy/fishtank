@@ -109,6 +109,7 @@ export interface AppHooks {
   onAudioChange(audio: AudioConfig): void
   onLocaleChange(locale: Locale): void
   onSave(): void
+  onFishWithdraw(uid: string): void
   onReset(): void
   themes: { id: string; name: string }[]
 }
@@ -581,6 +582,7 @@ export class App {
               this.hooks.onSave()
               this.say(c.placedMsg(name, placedNow, cap), 'good')
             } else if (res === 'removed') {
+              this.hooks.onFishWithdraw(fish.uid)
               sound.play('select')
               this.hooks.onSave()
               this.say(c.removedFromTankMsg(name, placedNow, cap))
@@ -1231,6 +1233,7 @@ export class App {
           this.hooks.onSave()
           this.say(c.placedMsg(name, placedNow, cap), 'good')
         } else if (res === 'removed') {
+          this.hooks.onFishWithdraw(activeSpecimen.uid)
           sound.play('select')
           this.hooks.onSave()
           this.say(c.removedFromTankMsg(name, placedNow, cap))

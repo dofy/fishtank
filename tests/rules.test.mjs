@@ -24,6 +24,7 @@ let FishDeformation
 let pwa
 let drawCeremonyLight
 let lcdElectricity
+let withdrawal
 
 before(async () => {
   Object.defineProperty(globalThis, 'localStorage', {
@@ -43,6 +44,7 @@ before(async () => {
   pwa = await server.ssrLoadModule('/src/pwa.ts')
   ;({ drawCeremonyLight } = await server.ssrLoadModule('/src/render/ceremony.ts'))
   ;({ lcdElectricity } = await server.ssrLoadModule('/src/render/lcd-electricity.ts'))
+  withdrawal = await server.ssrLoadModule('/src/render/withdrawal.ts')
   ;({ FishDeformation } = await server.ssrLoadModule('/src/lab/fish-motion.ts'))
   shape = await server.ssrLoadModule('/src/render/shape.ts')
   ;({ GpuTimer } = await server.ssrLoadModule('/src/lab/gpu-timer.ts'))
@@ -57,6 +59,163 @@ before(async () => {
 })
 
 beforeEach(() => storage.clear())
+
+function withdrawalScene() {
+  const state = game.newGame(NOW, 'zh')
+  const scene = new Scene()
+  scene.sync(state, id => species.find(s => s.id === id), 960, 240, NOW)
+  return { state, scene, actor: scene.view(960, 240, 0).agents[0] }
+}
+
+test('backpack return frees its slot and saves immediately while the visual retreats once', () => {
+  const { state, scene, actor } = withdrawalScene()
+  actor.x = 300; actor.y = 100; actor.dir = 1
+  const original = JSON.stringify(state.fish), phase = actor.phase
+  assert.equal(game.toggleTankFish(state, actor.fish.uid), 'removed')
+  assert.equal(scene.withdrawFish(actor.fish.uid), true)
+  scene.sync(state, id => species.find(s => s.id === id), 960, 240, NOW)
+  assert.equal(game.tankFish(state).length, 2)
+  assert.equal(scene.view(960, 240, 0).agents.length, 3)
+  save.save(state)
+  const loaded = save.load(NOW)
+  assert.equal(game.tankFish(loaded).length, 2)
+  assert.equal(JSON.stringify(state.fish), original, 'animation never edits fish, EXP or uses')
+  scene.update(0.2, 960, 240, 0.2)
+  assert.ok(actor.x > 300 && actor.x < 300 + actor.withdrawal.distance)
+  assert.ok(actor.y < 100 && actor.phase > phase)
+  assert.ok(withdrawal.withdrawalOpacity(actor.withdrawal) < 1)
+  assert.ok(withdrawal.withdrawalScale(actor.withdrawal) < 1)
+  assert.equal(scene.withdrawFish(actor.fish.uid), false, 'repeated requests do not restart the timer')
+  scene.update(0.36, 960, 240, 0.56)
+  assert.equal(scene.view(960, 240, 0.56).agents.length, 2)
+})
+
+test('rapid re-placement cancels withdrawal and reuses one scene actor', () => {
+  const { state, scene, actor } = withdrawalScene()
+  for (let i = 0; i < 12; i++) {
+    game.toggleTankFish(state, actor.fish.uid)
+    scene.withdrawFish(actor.fish.uid)
+    scene.sync(state, id => species.find(s => s.id === id), 960, 240, NOW)
+    scene.update(0.08, 960, 240, i)
+    game.toggleTankFish(state, actor.fish.uid)
+    scene.sync(state, id => species.find(s => s.id === id), 960, 240, NOW)
+    const matches = scene.view(960, 240, i).agents.filter(a => a.fish.uid === actor.fish.uid)
+    assert.equal(matches.length, 1)
+    assert.equal(matches[0], actor)
+    assert.equal(actor.withdrawal, undefined)
+    assert.equal(withdrawal.withdrawalOpacity(actor.withdrawal), 1)
+    assert.equal(withdrawal.withdrawalScale(actor.withdrawal), 1)
+  }
+})
+
+test('only explicit backpack returns linger; deletion and reset clear pending visuals', () => {
+  const { state, scene, actor } = withdrawalScene()
+  game.toggleTankFish(state, actor.fish.uid)
+  scene.sync(state, id => species.find(s => s.id === id), 960, 240, NOW)
+  assert.equal(scene.view(960, 240, 0).agents.length, 2, 'no inferred animation for other removal paths')
+  const next = scene.view(960, 240, 0).agents[0]
+  game.toggleTankFish(state, next.fish.uid)
+  scene.withdrawFish(next.fish.uid)
+  state.fish = state.fish.filter(f => f.uid !== next.fish.uid)
+  scene.sync(state, id => species.find(s => s.id === id), 960, 240, NOW)
+  assert.equal(scene.view(960, 240, 0).agents.length, 1)
+  const last = scene.view(960, 240, 0).agents[0]
+  game.toggleTankFish(state, last.fish.uid)
+  scene.withdrawFish(last.fish.uid)
+  const fresh = game.newGame(NOW + 100, 'zh')
+  scene.sync(fresh, id => species.find(s => s.id === id), 960, 240, NOW + 100)
+  assert.equal(scene.view(960, 240, 0).agents.length, 3)
+  assert.ok(scene.view(960, 240, 0).agents.every(a => !a.withdrawal))
+})
+
+test('withdrawing fish cannot eat, be startled, discharge or count as an eel companion', () => {
+  const state = game.newGame(NOW, 'zh'), scene = new Scene()
+  const eel = game.makeFish('ambereel', 2, 1, NOW, { adult: true })
+  state.fish = [eel, state.fish[0]]
+  state.tankUids = state.fish.map(f => f.uid)
+  scene.sync(state, id => species.find(s => s.id === id), 960, 240, NOW)
+  const [live, ghost] = scene.view(960, 240, 0).agents
+  live.x = 600; live.y = 100; live.zapCooldown = 0
+  ghost.x = 200; ghost.y = 100
+  game.toggleTankFish(state, ghost.fish.uid)
+  scene.withdrawFish(ghost.fish.uid)
+  scene.sync(state, id => species.find(s => s.id === id), 960, 240, NOW)
+  assert.equal(scene.hitFish(200, 100), null)
+  assert.equal(scene.scareFish(ghost.fish.uid, 200, 100, 960, 240), false)
+  const random = Math.random
+  let zaps = 0, meals = 0
+  try {
+    Math.random = () => 0
+    scene.update(0.03, 960, 240, 0, undefined, () => zaps++)
+    assert.equal(zaps, 0, 'a visual ghost is not a second fish for spontaneous discharge')
+    for (let i = 0; i < 6; i++) scene.scareFish(eel.uid, 600, 100, 960, 240, NOW + i)
+    assert.equal(ghost.shockedTimer, 0, 'ghosts are not discharge targets')
+    game.toggleTankFish(state, eel.uid)
+    scene.withdrawFish(eel.uid)
+    scene.spawnFood(live.x, live.y, 960, 240)
+    scene.update(0.03, 960, 240, 0.03, () => meals++, () => zaps++)
+    assert.equal(scene.scareFish(eel.uid, live.x, live.y, 960, 240), false)
+    assert.equal(meals, 0)
+    assert.equal(zaps, 0)
+    assert.equal(scene.view(960, 240, 0).foods.length, 1)
+  } finally { Math.random = random }
+})
+
+test('all fish forms retreat a bounded local distance and reduced motion only fades', () => {
+  for (const sp of species) for (const reduced of [false, true]) {
+    const state = game.newGame(NOW, 'zh'), scene = new Scene()
+    const fish = game.makeFish(sp.id, sp.tier, 1, NOW, { adult: true })
+    state.fish = [fish]; state.tankUids = [fish.uid]
+    scene.sync(state, id => species.find(s => s.id === id), 5000, 1800, NOW)
+    const actor = scene.view(5000, 1800, 0).agents[0]
+    actor.x = 2000; actor.y = 800; actor.dir = -1
+    game.toggleTankFish(state, fish.uid); scene.withdrawFish(fish.uid, reduced)
+    const duration = actor.withdrawal.duration
+    scene.update(duration * 0.5, 5000, 1800, 0)
+    if (reduced) {
+      assert.deepEqual([actor.x, actor.y], [2000, 800])
+      assert.equal(duration, 0.12)
+      assert.equal(withdrawal.withdrawalScale(actor.withdrawal), 1)
+    } else {
+      assert.ok(actor.x < 2000 && actor.x >= 2000 - sp.body.length * 4.2)
+      assert.equal(duration, 0.55)
+    }
+    scene.update(duration, 5000, 1800, 1)
+    assert.equal(scene.view(5000, 1800, 1).agents.length, 0)
+  }
+})
+
+test('enabling reduced motion during withdrawal freezes travel and shortens the remaining effect', () => {
+  const { state, scene, actor } = withdrawalScene()
+  game.toggleTankFish(state, actor.fish.uid); scene.withdrawFish(actor.fish.uid)
+  scene.update(0.15, 960, 240, 0)
+  const pos = [actor.x, actor.y], alpha = withdrawal.withdrawalOpacity(actor.withdrawal)
+  scene.update(0.03, 960, 240, 0.1, undefined, undefined, true, true)
+  assert.deepEqual([actor.x, actor.y], pos)
+  assert.ok(withdrawal.withdrawalOpacity(actor.withdrawal) < alpha)
+  scene.update(0.1, 960, 240, 0.2, undefined, undefined, true, true)
+  assert.equal(scene.view(960, 240, 0.2).agents.length, 2)
+})
+
+test('LCD withdrawal removes whole cells monotonically, including negative grid coordinates', () => {
+  for (const cell of [2, 4, 6]) {
+    let previous = null
+    for (let step = 16; step >= 0; step--) {
+      const dots = []
+      let clips = 0
+      withdrawal.clipLcdWithdrawal({ beginPath() {}, rect: (...r) => dots.push(r), clip: () => clips++ }, 79, 67, cell, step / 16)
+      const keys = new Set(dots.map(([x, y, w, h]) => {
+        assert.equal(Math.abs(x % cell), 0); assert.equal(Math.abs(y % cell), 0)
+        assert.equal(w, cell); assert.equal(h, cell)
+        return x + ':' + y
+      }))
+      assert.equal(clips, 1)
+      if (previous) assert.ok([...keys].every(k => previous.has(k)), 'cells cannot reappear as visibility falls')
+      previous = keys
+      if (step === 0) assert.equal(keys.size, 0)
+    }
+  }
+})
 
 test('LCD electricity stays on the cell grid at every phase and freezes with reduced motion', () => {
   for (const sp of species) for (const cell of [2, 4, 6]) {

@@ -2,6 +2,7 @@ import { isAdult, syncDecor, tankFish } from '../core/game'
 import { decorItem } from '../core/species'
 import type { DecorId, DecorItem, Fish, GameState, RailLightConfig, Species } from '../core/types'
 import { hashString } from './shape'
+import { withdrawalEase, type Withdrawal } from './withdrawal'
 
 export interface Agent {
   fish: Fish
@@ -41,6 +42,8 @@ export interface Agent {
   dischargingTimer?: number
   /** Cooldown before this electric eel can discharge again. */
   zapCooldown?: number
+  /** Visual-only retreat after being returned to the backpack. */
+  withdrawal?: Withdrawal
 }
 
 export interface SplashEffect {
@@ -113,6 +116,12 @@ export class Scene {
       if (existing) {
         existing.fish = fish
         existing.scale = adult ? 1 : 0.65
+        if (existing.withdrawal) {
+          delete existing.withdrawal
+          existing.dropping = existing.y < 16
+          existing.vy = existing.dropping ? 260 : 0
+          existing.splashed = !existing.dropping
+        }
         continue
       }
       const seed = hashString(fish.uid)
@@ -137,8 +146,10 @@ export class Scene {
         zapCooldown: 8 + Math.random() * 14,
       })
     }
-    for (const uid of [...this.agents.keys()]) {
-      if (!live.has(uid)) this.agents.delete(uid)
+    for (const [uid, agent] of this.agents) {
+      // Only explicit backpack returns animate. Consumed/released fish and reset
+      // state must clear immediately, including a return that is still in flight.
+      if (!live.has(uid) && (!agent.withdrawal || !state.fish.includes(agent.fish))) this.agents.delete(uid)
     }
     this.initialized = true
 
@@ -148,6 +159,24 @@ export class Scene {
       flip: placed.flip === -1 ? -1 : 1,
       active: this.activeDecorId === placed.id,
     }))
+  }
+
+  withdrawFish(uid: string, reducedMotion = false): boolean {
+    const a = this.agents.get(uid)
+    if (!a || a.withdrawal) return false
+    a.withdrawal = {
+      elapsed: 0, duration: reducedMotion ? 0.12 : 0.55,
+      startX: a.x, startY: a.y,
+      distance: a.species.body.length * 4.2 * a.scale * 0.75,
+      reducedMotion,
+    }
+    a.dropping = false
+    a.shockedTimer = 0
+    a.dischargingTimer = 0
+    a.scaredTimer = 0
+    a.clickTimestamps = []
+    a.tilt = 0
+    return true
   }
 
   /** Hit-test decorations on the tank floor or top ceiling (top-most / last placed first). */
@@ -176,7 +205,7 @@ export class Scene {
     const list = [...this.agents.values()]
     for (let i = list.length - 1; i >= 0; i--) {
       const a = list[i]!
-      if (a.dropping) continue
+      if (a.dropping || a.withdrawal) continue
       const len = a.species.body.length * 4.2 * a.scale
       const h = Math.max(24, len * a.species.body.depth)
       if (Math.abs(px - a.x) <= len * 0.55 && Math.abs(py - a.y) <= h * 0.65) {
@@ -196,7 +225,7 @@ export class Scene {
     now = Date.now(),
   ): 'scared' | 'zapped' | false {
     const a = this.agents.get(uid)
-    if (!a || a.dropping) return false
+    if (!a || a.dropping || a.withdrawal) return false
 
     // Track clicks within a 30s sliding window; 6 clicks on an electric eel triggers immediate discharge
     const recent = (a.clickTimestamps ?? []).filter((ts) => now - ts <= 30_000)
@@ -245,7 +274,7 @@ export class Scene {
     eel.dischargingTimer = 0.85
     eel.zapCooldown = 22 + Math.random() * 18
     for (const other of this.agents.values()) {
-      if (other.fish.uid === eel.fish.uid || other.dropping) continue
+      if (other.fish.uid === eel.fish.uid || other.dropping || other.withdrawal) continue
       other.shockedTimer = 3.0
       other.scaredTimer = 0
     }
@@ -267,6 +296,7 @@ export class Scene {
     onEat?: () => void,
     onZap?: () => void,
     night = true,
+    reducedMotion = false,
   ): void {
     // Update water entry splashes
     for (const s of this.splashes) s.age += dt
@@ -284,7 +314,26 @@ export class Scene {
     const minY = 28
     const maxY = Math.max(minY + 20, height - 44)
 
+    let activeCount = 0
+    for (const a of this.agents.values()) if (!a.withdrawal) activeCount++
     for (const a of this.agents.values()) {
+      if (a.withdrawal) {
+        const exit = a.withdrawal
+        if (reducedMotion && !exit.reducedMotion) {
+          exit.reducedMotion = true
+          exit.duration = Math.min(exit.duration, exit.elapsed + 0.12)
+        }
+        exit.elapsed += dt
+        if (exit.elapsed >= exit.duration) {
+          this.agents.delete(a.fish.uid)
+        } else if (!exit.reducedMotion) {
+          const p = withdrawalEase(exit)
+          a.x = exit.startX + a.dir * exit.distance * p
+          a.y = exit.startY - 6 * p
+          a.phase += dt * 0.75
+        }
+        continue
+      }
       if (a.eatCooldown && a.eatCooldown > 0) {
         a.eatCooldown = Math.max(0, a.eatCooldown - dt)
       }
@@ -301,7 +350,7 @@ export class Scene {
         !a.dropping &&
         (!a.zapCooldown || a.zapCooldown <= 0) &&
         (!a.shockedTimer || a.shockedTimer <= 0) &&
-        this.agents.size > 1 &&
+        activeCount > 1 &&
         Math.random() < dt * 0.04
       ) {
         this.triggerDischarge(a, onZap, night)

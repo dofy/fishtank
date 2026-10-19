@@ -8,6 +8,8 @@ export interface PortraitRequest {
   grade: Grade
   /** Dimmed portraits mark cooling-down or unavailable entries. */
   dim?: boolean
+  /** LCD departure density, used only by transient GPU fish textures. */
+  visibility?: number
 }
 
 export interface DecorPortraitRequest {
