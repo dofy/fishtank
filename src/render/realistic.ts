@@ -2,7 +2,7 @@ import type { DecorItem, Grade, Tier } from '../core/types'
 import type { DecorPortraitRequest, PortraitRequest, Renderer } from './renderer'
 import type { Agent, DecorNode, FoodPellet, SceneView, SplashEffect } from './scene'
 import { drawRailBeads } from './rail-lights'
-import { decorLayers, eyeAt, fishPath, hashString, patternBands, patternSpots } from './shape'
+import { decorLayers, elongatedProfile, eyeAt, fishPath, hashString, patternBands, patternSpots } from './shape'
 import { type SceneColors, type ThemeManifest, lampPositions, sceneColorsFor, spriteFor } from './theme'
 
 /**
@@ -790,6 +790,7 @@ export class RealisticRenderer implements Renderer {
       ctx.arc(spot.x, spot.y, spot.r, 0, Math.PI * 2)
       ctx.fill()
     }
+    this.bodyMarkings(ctx, bodyShape, len, animPhase)
     if (grade >= 4) {
       const sheen = ctx.createLinearGradient(0, -height / 2, 0, 0)
       sheen.addColorStop(0, 'rgba(255,255,255,0.55)')
@@ -810,5 +811,85 @@ export class RealisticRenderer implements Renderer {
       ctx.arc(eye.x + eye.r * 0.2, eye.y, eye.r * 0.55, 0, Math.PI * 2)
       ctx.fill()
     }
+  }
+
+  /** Landmarks stay legible at card size, beyond a fish's base hue. Already clipped to its outline. */
+  private bodyMarkings(ctx: CanvasRenderingContext2D, body: import('../core/types').BodyShape, len: number, phase: number): void {
+    const h = len * body.depth
+    const sil = body.silhouette
+    ctx.save()
+    if (sil === 'wrasse') {
+      ctx.fillStyle = '#142e50'
+      ctx.fillRect(len * 0.16, -h * 0.065, len * 0.81, h * 0.14)
+      ctx.fillStyle = '#b6f4ff'
+      ctx.fillRect(len * 0.28, -h * 0.12, len * 0.63, h * 0.045)
+    } else if (sil === 'tetra') {
+      ctx.fillStyle = '#ed5268'
+      ctx.fillRect(len * 0.2, 0, len * 0.37, h * 0.22)
+      ctx.fillStyle = '#a6fff5'
+      ctx.fillRect(len * 0.27, -h * 0.075, len * 0.62, h * 0.075)
+    } else if (body.form === 'eel') {
+      const profile = elongatedProfile(body, len, phase)
+      ctx.strokeStyle = sil === 'ribbon-eel' ? '#fff1a0' : sil === 'amber-eel' ? '#fff2b0' : '#d0fcff'
+      ctx.lineWidth = Math.max(0.8, len * 0.012)
+      ctx.lineCap = 'round'
+      ctx.beginPath()
+      for (let i = 3; i <= 32; i++) {
+        const u = i / 36
+        const x = len * (0.04 + u * 0.88)
+        const y = profile.center(u) + profile.radius(u) * (sil === 'ribbon-eel' ? -1.25 : 0.35)
+        if (i === 3) ctx.moveTo(x, y)
+        else ctx.lineTo(x, y)
+      }
+      ctx.stroke()
+      if (sil !== 'ribbon-eel') {
+        ctx.fillStyle = '#e7ffff'
+        for (const u of [0.35, 0.52, 0.69]) {
+          ctx.beginPath()
+          ctx.arc(len * (0.04 + u * 0.88), profile.center(u), len * 0.012, 0, Math.PI * 2)
+          ctx.fill()
+        }
+      }
+    } else if (sil === 'sea-turtle') {
+      ctx.strokeStyle = 'rgba(16,75,55,0.65)'
+      ctx.lineWidth = Math.max(0.8, len * 0.014)
+      const cx = len * 0.46, cy = -h * 0.03
+      ctx.beginPath()
+      for (let i = 0; i < 6; i++) {
+        const angle = i * Math.PI / 3
+        const x = cx + Math.cos(angle) * len * 0.15
+        const y = cy + Math.sin(angle) * h * 0.18
+        if (i === 0) ctx.moveTo(x, y)
+        else ctx.lineTo(x, y)
+      }
+      ctx.closePath()
+      ctx.stroke()
+      for (let i = 0; i < 6; i++) {
+        const angle = i * Math.PI / 3
+        ctx.beginPath()
+        ctx.moveTo(cx + Math.cos(angle) * len * 0.15, cy + Math.sin(angle) * h * 0.18)
+        ctx.lineTo(cx + Math.cos(angle) * len * 0.3, cy + Math.sin(angle) * h * 0.32)
+        ctx.stroke()
+      }
+    } else if (sil === 'veil-koi') {
+      ctx.fillStyle = 'rgba(255,250,230,0.8)'
+      ctx.beginPath()
+      ctx.ellipse(len * 0.53, -h * 0.12, len * 0.1, h * 0.16, -0.5, 0, Math.PI * 2)
+      ctx.fill()
+      ctx.beginPath()
+      ctx.ellipse(len * 0.75, h * 0.16, len * 0.11, h * 0.15, 0.4, 0, Math.PI * 2)
+      ctx.fill()
+    } else if (body.form === 'seahorse') {
+      ctx.strokeStyle = 'rgba(255,245,216,0.5)'
+      ctx.lineWidth = Math.max(0.7, len * 0.012)
+      for (let i = 0; i < 4; i++) {
+        const y = h * (-0.06 + i * 0.06)
+        ctx.beginPath()
+        ctx.moveTo(len * 0.48, y)
+        ctx.lineTo(len * 0.65, y + h * 0.015)
+        ctx.stroke()
+      }
+    }
+    ctx.restore()
   }
 }

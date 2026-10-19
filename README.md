@@ -5,7 +5,7 @@
 # Fishtank · 桌面放置水族箱
 
 **在浏览器或桌面上养一缸安静游动的深海小鱼。**  
-*A cozy idle aquarium for your browser and desktop — raise, breed, merge, and collect 28 marine creatures.*
+*A cozy idle aquarium for your browser and desktop — raise, breed, merge, and collect 29 marine creatures.*
 
 [![Live Demo](https://img.shields.io/badge/🌊_立即游玩_/_Play_Now-fishtank.phpz.org-0284c7?style=for-the-badge)](https://fishtank.phpz.org)
 [![PWA Ready](https://img.shields.io/badge/PWA-支持安装到桌面_/_离线游玩-10b981?style=for-the-badge)](https://fishtank.phpz.org)
@@ -27,14 +27,14 @@
 
 **Fishtank** 是一款灵感源自 Steam 桌面放置游戏《[PC FISH: Taskbar Aquarium](https://store.steampowered.com/app/4842670/PC_FISH_Taskbar_Aquarium/?l=tchinese)》的网页端放置养成水族箱。无需注册登录、即开即玩，既可以在工作间隙体验配对繁育与全图鉴收集的乐趣，也可以一键切换至**全屏沉浸模式**，伴随轻柔的海洋白噪音与 Lo-Fi 音乐作为桌面生态屏保。
 
-当前版本 **v1.5.0**。版本更新记录见 [CHANGELOG](CHANGELOG.md)，完整玩法与数值见 [游戏帮助](docs/BALANCE.md)。
+当前版本 **v1.6.0**。版本更新记录见 [CHANGELOG](CHANGELOG.md)，完整玩法与数值见 [游戏帮助](docs/BALANCE.md)。
 
 ---
 
 ## 玩法与亮点 / Highlights
 
-### 🐠 28 种独立海洋生物与 5 阶幻彩变种
-- 收录从初始金鱼、月光水母、黄金海马、蓝弧电鳗、天翼飞鱼到神话级**皇冠冥河水母**、**幻彩叶海龙**、**深海绿海龟**等 **28 种海洋生物**。
+### 🐠 29 种独立海洋生物与 5 阶幻彩变种
+- 收录从初始金鱼、月光水母、黄金海马、琥珀电鳗、蓝弧电鳗、天翼飞鱼到神话级**皇冠冥河水母**、**幻彩叶海龙**、**深海绿海龟**等 **29 种海洋生物**。
 - 每种生物均拥有专属的生理轮廓与游动姿态（鱼群摆尾、水母脉冲舒缩、海马直立点头、海龙拟态漂浮、蝠鲼展翼滑翔）。
 - 除初始鱼外，每种鱼拥有 **品阶 1 至 品阶 5** 五种色相变种，高品阶不仅外观独特，还可提供最高 **2.0x 经验加成**。
 
@@ -47,6 +47,10 @@
 - 随着鱼缸等级从 **Lv.1 提升至 Lv.10**，鱼缸展示容量与装饰摆放槽位同步从 **3 个扩展至 12 个**，逐步解锁翠绿海草、鹿角珊瑚、沉船宝箱、海底城堡、深海神像以及星芒吊灯、霓虹水母灯等 **18 件非对称造景**。
 - **自由拖拽布置**：直接在鱼缸画面中按住任意装饰即可左右拖动调整位置，打造独一无二的海底景观。
 - **自动 / 日间 / 黑夜模式**：黑夜模式下，鱼缸顶部的氛围射灯与顶挂彩灯会自动点亮，向深海水域投射柔和的体积光束。
+
+### ⚡ 更早遇见电鳗
+- 2★「高级」新增 **琥珀电鳗**，与 3★ 蓝弧电鳗共享放电彩蛋；初始鱼搭配 1★ 鱼也有机会繁育出它。同星级鱼种仍等概率抽取，星级与品阶规则不变。
+- 电鳗入缸后，30 秒内点它 6 次即可触发放电；也可能在游动时随机放电，让其他小鱼短暂眩晕，夜晚还会改变一盏顶灯的颜色。极光彩带鳗保持普通鳗鱼，不会触发放电。
 
 ### 🫧 鲜活的鱼缸互动
 - **点水投喂**：点击鱼缸空白水域可一颗颗撒下鱼食，附近的鱼会争相游来抢食，吃饱后欢快游开。

@@ -24,6 +24,7 @@ const SPECIES_ZH: Record<SpeciesId, string> = {
   creampuff: '奶油河豚',
   coralseahorse: '珊瑚海马',
   bandedkrait: '环纹海蛇',
+  ambereel: '琥珀电鳗',
   royalgoldtail: '皇家金尾鲷',
   skywing: '天翼飞鱼',
   emberbarb: '余烬虎皮鱼',
@@ -414,7 +415,7 @@ const ZH: Copy = {
   bookLockedMsg: (tierStr) => `该鱼种（${tierStr}）尚未解锁，可通过繁育或合成发现新品种！`,
   bookNoteTitle: '生物图鉴与品阶变种收集',
   bookNote:
-    '【全图鉴收集】共收录 **28 种海洋生物**（初始鱼 1 种品阶，1★–5★ 鱼种各含 **5 种品阶色相变种**）。【详情与快捷操作】点击任意已解锁的鱼种卡片可展开详情面板，自由切换预览已点亮的品阶外观、查看当前持有个体，或一键放入鱼缸、跳转繁育与合成。',
+    '【全图鉴收集】共收录 **29 种海洋生物**（初始鱼 1 种品阶，1★–5★ 鱼种各含 **5 种品阶色相变种**）。【详情与快捷操作】点击任意已解锁的鱼种卡片可展开详情面板，自由切换预览已点亮的品阶外观、查看当前持有个体，或一键放入鱼缸、跳转繁育与合成。',
   settingsThemeHeading: '画面风格（支持素材替换）',
   shortcutsTitle: '⌨️ 键盘快捷键',
   shortcutsTabsLabel: '页面切换',
@@ -645,7 +646,7 @@ const EN: Copy = {
   bookLockedMsg: (tierStr) => `Undiscovered ${tierStr} species. Breed or merge fish to unlock it!`,
   bookNoteTitle: 'Encyclopedia & Grade Variants',
   bookNote:
-    '【Full Collection】Features **28 marine species** (1 grade for starter fish and **5 color-grade variants** for each 1★–5★ species). 【Inspector & Actions】Click any discovered species card to open the detail inspector, preview unlocked grade variants, inspect owned specimens, or jump straight to Breed & Merge.',
+    '【Full Collection】Features **29 marine species** (1 grade for starter fish and **5 color-grade variants** for each 1★–5★ species). 【Inspector & Actions】Click any discovered species card to open the detail inspector, preview unlocked grade variants, inspect owned specimens, or jump straight to Breed & Merge.',
   settingsThemeHeading: 'Art theme',
   shortcutsTitle: '⌨️ Keyboard shortcuts',
   shortcutsTabsLabel: 'Page navigation',

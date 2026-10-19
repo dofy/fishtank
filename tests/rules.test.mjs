@@ -14,6 +14,7 @@ let Rng
 let species
 let lighting
 let shortcuts
+let Scene
 
 before(async () => {
   Object.defineProperty(globalThis, 'localStorage', {
@@ -34,11 +35,65 @@ before(async () => {
   save = await server.ssrLoadModule('/src/core/save.ts')
   lighting = await server.ssrLoadModule('/src/core/lighting.ts')
   shortcuts = await server.ssrLoadModule('/src/ui/shortcuts.ts')
+  ;({ Scene } = await server.ssrLoadModule('/src/render/scene.ts'))
   ;({ Rng } = await server.ssrLoadModule('/src/core/rng.ts'))
   ;({ SPECIES: species } = await server.ssrLoadModule('/src/core/species.ts'))
 })
 
 beforeEach(() => storage.clear())
+
+test('the new uncommon eel joins the uniform species pool without moving existing fish', () => {
+  const pool = species.filter(s => s.tier === 2)
+  assert.equal(pool.length, 7)
+  assert.equal(species.length, 29)
+  assert.equal(species.find(s => s.id === 'ambereel').electric, true)
+  assert.equal(species.find(s => s.id === 'volteel').tier, 3)
+  assert.equal(species.find(s => s.id === 'volteel').electric, true)
+  assert.equal(species.find(s => s.id === 'auroraeel').electric, undefined)
+  const state = game.newGame(NOW, 'zh')
+  state.fish.push(game.makeFish('volteel', 3, 4, NOW, { adult: true }))
+  state.fish.push(game.makeFish('ambereel', 2, 2, NOW, { adult: true }))
+  state.discovered.push('volteel', 'ambereel')
+  save.save(state)
+  const loaded = save.load(NOW)
+  assert.deepEqual(loaded.fish, state.fish)
+  assert.ok(loaded.discovered.includes('ambereel'))
+})
+
+for (const id of ['ambereel', 'volteel', 'auroraeel']) {
+  test(`${id} follows the shared electric capability for manual and random discharge`, () => {
+    const state = game.newGame(NOW, 'zh')
+    const sp = species.find(s => s.id === id)
+    const eel = game.makeFish(id, sp.tier, 1, NOW, { adult: true })
+    state.fish = [eel, state.fish[0]]
+    state.tankUids = state.fish.map(f => f.uid)
+    const scene = new Scene()
+    scene.sync(state, id => species.find(s => s.id === id), 960, 240, NOW)
+    for (let i = 0; i < 5; i++) assert.equal(scene.scareFish(eel.uid, 300, 100, 960, 240, NOW + i * 100), 'scared')
+    assert.equal(scene.scareFish(eel.uid, 300, 100, 960, 240, NOW + 500), sp.electric ? 'zapped' : 'scared')
+    let view = scene.view(960, 240, 0)
+    assert.equal((view.agents[0].dischargingTimer ?? 0) > 0, Boolean(sp.electric))
+    assert.equal((view.agents[1].shockedTimer ?? 0) > 0, Boolean(sp.electric))
+    const randomScene = new Scene()
+    randomScene.sync(state, id => species.find(s => s.id === id), 960, 240, NOW)
+    randomScene.view(960, 240, 0).agents.forEach(a => { a.zapCooldown = 0 })
+    const originalRandom = Math.random
+    let zaps = 0
+    try {
+      Math.random = () => 0
+      randomScene.update(0.1, 960, 240, 0, undefined, () => zaps++, false)
+      assert.deepEqual(randomScene.view(960, 240, 0).lampColors, [1, 4, 1], 'daytime discharge does not change lamps')
+      const nightScene = new Scene()
+      nightScene.sync(state, id => species.find(s => s.id === id), 960, 240, NOW)
+      nightScene.view(960, 240, 0).agents.forEach(a => { a.zapCooldown = 0 })
+      nightScene.update(0.1, 960, 240, 0, undefined, undefined, true)
+      assert.deepEqual(nightScene.view(960, 240, 0).lampColors, sp.electric ? [2, 4, 1] : [1, 4, 1], 'only electric eels change a lamp at night')
+    } finally { Math.random = originalRandom }
+    view = randomScene.view(960, 240, 0)
+    assert.equal(zaps, sp.electric ? 1 : 0)
+    assert.equal((view.agents[0].dischargingTimer ?? 0) > 0, Boolean(sp.electric))
+  })
+}
 
 function keyEvent(key, extra = {}) {
   return { key, ctrlKey: false, metaKey: false, altKey: false, shiftKey: false,

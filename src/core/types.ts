@@ -15,6 +15,8 @@ export interface Species {
   tier: Tier
   /** Procedural body description, consumed by every renderer. */
   body: BodyShape
+  /** Can trigger the electric discharge easter egg. Independent of rarity. */
+  electric?: boolean
 }
 
 export interface DecorItem {
@@ -71,6 +73,7 @@ export type SilhouetteId =
   | 'glider-fish'
   | 'rhomboid-barb'
   | 'electric-eel'
+  | 'amber-eel'
   | 'ribbon-jelly'
   | 'moorish-idol'
   | 'manta'

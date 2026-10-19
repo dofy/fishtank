@@ -1,8 +1,8 @@
-# Balance & Game Data Guide / 游戏帮助与数值说明 (`v1.5.0`)
+# Balance & Game Data Guide / 游戏帮助与数值说明 (`v1.6.0`)
 
-Keyboard shortcuts were added in `v1.5.0`; see [Keyboard Shortcuts](../README.md#keyboard-shortcuts) or the in-game Help (`H` / `?`). Game rules and balance remain unchanged in this release.
+Keyboard shortcuts were added in `v1.5.0`; see [Keyboard Shortcuts](../README.md#keyboard-shortcuts) or the in-game Help (`H` / `?`). Tier and grade rules remain unchanged in v1.6.0.
 
-`v1.5.0` 新增键盘快捷键，完整按键见 [README 快捷键说明](../README.md#keyboard-shortcuts)，也可按 `H` / `?` 打开游戏内帮助。本版玩法与数值规则保持不变。
+`v1.5.0` 新增键盘快捷键，完整按键见 [README 快捷键说明](../README.md#keyboard-shortcuts)，也可按 `H` / `?` 打开游戏内帮助。v1.6.0 保留原有星级与品阶规则。
 
 In-game Help opens on the game guide. Dedicated tabs show breeding, levels, tier stats, grade EXP and shortcuts. Breeding rows are grouped by the lower parent tier (`0★` = starter); level rows use level-range pages. All table columns fit without horizontal scrolling, and small screens use a full-screen dialog.
 
@@ -11,6 +11,13 @@ In-game Help opens on the game guide. Dedicated tabs show breeding, levels, tier
 This document details the gameplay mechanics, progression curves, and breeding probabilities for **Fishtank**, modeled on [PC FISH: Taskbar Aquarium](https://store.steampowered.com/app/4842670/PC_FISH_Taskbar_Aquarium/).
 
 本文档详细说明 **Fishtank** 的核心玩法机制、升级容量曲线与繁育概率矩阵（数值参考 Steam《[PC FISH: Taskbar Aquarium](https://store.steampowered.com/app/4842670/PC_FISH_Taskbar_Aquarium/?l=tchinese)》）。
+
+### v1.6.0：高级电鳗 / Earlier electric eel
+
+- **29 species / 137 grade appearances**: 2 starter species with 1 grade each, plus 27 species with 5 grades. Tier pools contain 7 / 7 / 5 / 5 / 3 species at tiers 1–5.
+- **琥珀电鳗 / Amber Electric Eel** (`ambereel`) joins tier 2 alongside its six existing species, each with a conditional probability of `1/7` after rolling tier 2. Existing `volteel` stays tier 3; tier odds, grade weights and save format are unchanged.
+- 两种电鳗共享原有彩蛋：30 秒内点击同一条电鳗 6 次立即放电；游动中仍按原有随机概率触发。放电持续 0.85 秒，其他小鱼眩晕 3 秒；随机放电冷却 22–40 秒。夜间改变一盏顶灯颜色，日间不改灯色。极光彩带鳗不参与放电。
+- Both electric eels share the existing six-click and spontaneous-discharge behavior. Six clicks within 30 seconds trigger discharge; spontaneous discharges retain the 22–40 second cooldown. Discharge lasts 0.85 seconds and stuns other fish for 3 seconds. One lamp changes color at night; daytime lamp colors stay unchanged. Ribbon eels are not electric.
 
 ---
 

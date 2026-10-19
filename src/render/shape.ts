@@ -25,20 +25,20 @@ export function fishPath(
         const domeTop = -h * (0.36 + pulse * 0.04)
         const rimY = -h * 0.02
         const rx = len * (0.42 - pulse * 0.03)
-        path.moveTo(cx - rx, rimY)
-        path.bezierCurveTo(cx - rx, domeTop, cx + rx, domeTop, cx + rx, rimY)
+        path.moveTo(cx + rx, rimY)
+        path.bezierCurveTo(cx + rx, domeTop, cx - rx, domeTop, cx - rx, rimY)
         const lobes = 6
         const lobeW = (rx * 2) / lobes
-        for (let i = lobes - 1; i >= 0; i--) {
+        for (let i = 0; i < lobes; i++) {
           const x1 = cx - rx + (i + 0.5) * lobeW
-          const x0 = cx - rx + i * lobeW
+          const x0 = cx - rx + (i + 1) * lobeW
           path.quadraticCurveTo(x1, rimY + h * 0.06, x0, rimY)
         }
         path.closePath()
         for (let i = -3; i <= 3; i++) {
           const tx = cx + (i / 3.2) * rx * 0.85
           const lenT = h * (0.28 + (3 - Math.abs(i)) * 0.04)
-          addCapsule(path, tx, rimY + h * 0.02, tx + wave * 0.6 + i * 1.2, rimY + lenT, Math.max(1, len * 0.018))
+          addBodyCapsule(path, tx, rimY + h * 0.02, tx + wave * 0.6 + i * 1.2, rimY + lenT, Math.max(1, len * 0.018))
         }
         return { path, height: h }
       }
@@ -47,26 +47,22 @@ export function fishPath(
         // Astral Crown Jelly: 3-spired royal coronet dome + flared collar + 5 beaded streamers
         const rimY = -h * 0.04
         const rx = len * (0.38 - pulse * 0.03)
-        // Crown spires on top of bell
-        path.moveTo(cx - rx, rimY)
-        path.lineTo(cx - rx * 0.82, -h * 0.36)
-        path.lineTo(cx - rx * 0.42, -h * 0.24)
-        path.lineTo(cx, -h * (0.5 + pulse * 0.04))
-        path.lineTo(cx + rx * 0.42, -h * 0.24)
-        path.lineTo(cx + rx * 0.82, -h * 0.36)
-        path.lineTo(cx + rx, rimY)
-        path.closePath()
+        // The bell and its collar use the same winding direction.
+        addBodyPolygon(path, [
+          [cx - rx, rimY], [cx - rx * 0.82, -h * 0.36], [cx - rx * 0.42, -h * 0.24],
+          [cx, -h * (0.5 + pulse * 0.04)], [cx + rx * 0.42, -h * 0.24],
+          [cx + rx * 0.82, -h * 0.36], [cx + rx, rimY],
+        ])
         // Flared skirt collar
-        path.ellipse(cx, rimY + h * 0.03, rx * 1.08, h * 0.07, 0, 0, Math.PI * 2)
+        addBodyEllipse(path, cx, rimY + h * 0.03, rx * 1.08, h * 0.07, 0)
         // 5 undulating tentacles with glowing nodes
         for (let i = -2; i <= 2; i++) {
           const tx = cx + i * rx * 0.36
           const drop = h * (i === 0 ? 0.48 : Math.abs(i) === 1 ? 0.4 : 0.3)
-          const midX = tx + wave * (i % 2 === 0 ? 1 : -0.8)
-          addCapsule(path, tx, rimY + h * 0.06, midX, h * 0.22, Math.max(1.2, len * 0.024))
-          addCapsule(path, midX, h * 0.22, tx - wave * 0.5, drop, Math.max(1, len * 0.02))
-          path.moveTo(tx - wave * 0.5 + len * 0.038, drop)
-          path.arc(tx - wave * 0.5, drop, Math.max(1.5, len * 0.038), 0, Math.PI * 2)
+          const midX = tx + wave * (0.65 + i * 0.08)
+          addBodyCapsule(path, tx, rimY + h * 0.06, midX, h * 0.22, Math.max(1.2, len * 0.024))
+          addBodyCapsule(path, midX, h * 0.22, tx + wave * 0.35, drop, Math.max(1, len * 0.02))
+          addBodyEllipse(path, tx + wave * 0.35, drop, Math.max(1.5, len * 0.038), Math.max(1.5, len * 0.038), 0)
         }
         return { path, height: h }
       }
@@ -75,162 +71,103 @@ export function fishPath(
       const domeTop = -h * (0.48 + pulse * 0.05)
       const rimY = -h * 0.04
       const rx = len * (0.33 - pulse * 0.03)
-      path.moveTo(cx - rx, rimY)
-      path.bezierCurveTo(cx - rx * 0.95, domeTop, cx + rx * 0.95, domeTop, cx + rx, rimY)
-      path.quadraticCurveTo(cx, rimY + h * 0.1, cx - rx, rimY)
+      path.moveTo(cx + rx, rimY)
+      path.bezierCurveTo(cx + rx * 0.95, domeTop, cx - rx * 0.95, domeTop, cx - rx, rimY)
+      path.quadraticCurveTo(cx, rimY + h * 0.1, cx + rx, rimY)
       path.closePath()
 
       for (const off of [-0.52, 0, 0.52]) {
         const tx = cx + off * rx
-        const s1 = wave + off * len * 0.08
-        const s2 = -wave * 0.8 + off * len * 0.12
-        const r = off === 0 ? Math.max(1.6, len * 0.036) : Math.max(1.2, len * 0.024)
-        addCapsule(path, tx, rimY + h * 0.03, tx + s1, h * 0.22, r)
-        addCapsule(path, tx + s1, h * 0.22, tx + s2, h * 0.46, r * 0.78)
+        let previous = { x: tx, y: rimY }
+        for (let i = 1; i <= 18; i++) {
+          const u = i / 18
+          const x = tx + Math.sin(u * Math.PI * 2 + animPhase * 2 + off) * len * 0.045 * u
+          const y = rimY + h * 0.5 * u
+          const r = len * (off === 0 ? 0.031 : 0.022) * (1 - u * 0.4)
+          addBodyCapsule(path, previous.x, previous.y, x, y, r)
+          previous = { x, y }
+        }
       }
       return { path, height: h }
     }
 
     case 'seahorse': {
-      const cx = len * 0.48
-      const flutter = animPhase ? Math.sin(animPhase * 7.5) * (h * 0.04) : 0
-      // Head
-      path.ellipse(cx + len * 0.04, -h * 0.3, len * 0.13, h * 0.12, -0.15, 0, Math.PI * 2)
-      // Snout
-      const snoutLen = sil === 'leafy-seahorse' ? 0.34 : 0.26
-      addCapsule(
-        path,
-        cx + len * 0.1,
-        -h * 0.29,
-        cx + len * snoutLen,
-        -h * 0.26,
-        Math.max(1.5, h * 0.046),
-      )
-      // Arching neck & belly
-      path.moveTo(cx - len * 0.04, -h * 0.24)
-      path.quadraticCurveTo(cx + len * 0.22, -h * 0.04, cx + len * 0.04, h * 0.18)
-      path.quadraticCurveTo(cx - len * 0.16, h * 0.02, cx - len * 0.04, -h * 0.24)
+      const leaf = sil === 'leafy-seahorse'
+      const flutter = Math.sin(animPhase * 5) * h * 0.025
+      // S-curved neck and rounded belly, with a separate snout attached to the head.
+      path.moveTo(len * 0.52, -h * 0.34)
+      path.bezierCurveTo(len * 0.44, -h * 0.25, len * 0.5, -h * 0.15, len * 0.46, -h * 0.05)
+      path.bezierCurveTo(len * 0.4, h * 0.1, len * 0.51, h * 0.25, len * 0.61, h * 0.14)
+      path.bezierCurveTo(len * 0.7, -h * 0.03, len * 0.5, -h * 0.18, len * 0.61, -h * 0.31)
       path.closePath()
-      // Dorsal fin
-      const fin = new Path2D()
-      fin.moveTo(cx - len * 0.08, -h * 0.08)
-      fin.lineTo(cx - len * 0.23, -h * 0.15 + flutter)
-      fin.lineTo(cx - len * 0.21, h * 0.05 + flutter)
-      fin.lineTo(cx - len * 0.07, h * 0.06)
-      fin.closePath()
-      path.addPath(fin)
-      // Curled prehensile tail
-      addCapsule(path, cx, h * 0.14, cx - len * 0.1, h * 0.36, Math.max(1.4, len * 0.042))
-      addCapsule(
-        path,
-        cx - len * 0.1,
-        h * 0.36,
-        cx + len * 0.06,
-        h * 0.44,
-        Math.max(1.2, len * 0.032),
-      )
-      addCapsule(
-        path,
-        cx + len * 0.06,
-        h * 0.44,
-        cx + len * 0.11,
-        h * 0.31,
-        Math.max(1, len * 0.024),
-      )
-
-      if (sil === 'leafy-seahorse') {
-        // Golden Leafy Sea Dragon: tall royal coronet + leaf fronds along neck, back, and tail
-        addCapsule(path, cx, -h * 0.38, cx - len * 0.08, -h * 0.49, Math.max(1.2, len * 0.025))
-        addCapsule(path, cx + len * 0.04, -h * 0.39, cx + len * 0.05, -h * 0.5, Math.max(1.2, len * 0.025))
-        path.ellipse(cx - len * 0.18, -h * 0.24, len * 0.09, h * 0.038, 0.5, 0, Math.PI * 2)
-        path.ellipse(cx + len * 0.19, -h * 0.1, len * 0.08, h * 0.035, -0.4, 0, Math.PI * 2)
-        path.ellipse(cx - len * 0.2, h * 0.22, len * 0.09, h * 0.038, -0.5, 0, Math.PI * 2)
+      addBodyEllipse(path, len * 0.6, -h * 0.32, len * 0.115, h * 0.11, -0.1)
+      addBodyCapsule(path, len * 0.65, -h * 0.31, len * (leaf ? 0.91 : 0.85), -h * 0.29, h * 0.033)
+      addBodyPolygon(path, [[len * 0.47, -h * 0.1], [len * 0.32, -h * 0.15 + flutter], [len * 0.35, h * 0.06], [len * 0.48, h * 0.08]])
+      let previous = { x: len * 0.54, y: h * 0.15 }
+      for (let i = 0; i <= 28; i++) {
+        const u = i / 28
+        const angle = Math.PI + u * Math.PI * 1.7
+        const radius = 1 - u * 0.62
+        const next = { x: len * 0.55 + Math.cos(angle) * len * 0.12 * radius, y: h * 0.34 + Math.sin(angle) * h * 0.12 * radius }
+        addBodyCapsule(path, previous.x, previous.y, next.x, next.y, len * (0.025 - u * 0.012))
+        previous = next
+      }
+      if (leaf) {
+        for (const [x, y, angle] of [[0.47, -0.4, -0.7], [0.4, -0.2, -0.5], [0.7, 0.01, 0.4], [0.35, 0.13, -0.5], [0.66, 0.31, 0.5]]) {
+          addBodyCapsule(path, len * 0.52, h * y!, len * x!, h * y!, len * 0.012)
+          addBodyEllipse(path, len * x!, h * y!, len * 0.085, h * 0.035, angle!)
+        }
       } else {
-        // Coral Spiny Seahorse: thorny tubercles along crown and spine
-        path.moveTo(cx - len * 0.02, -h * 0.38)
-        path.lineTo(cx - len * 0.06, -h * 0.46)
-        path.lineTo(cx + len * 0.04, -h * 0.4)
-        path.closePath()
+        for (const [x, y] of [[0.51, -0.42], [0.43, -0.18], [0.43, 0.02]]) {
+          addBodyPolygon(path, [[len * x!, h * y!], [len * (x! - 0.06), h * (y! - 0.05)], [len * (x! + 0.04), h * (y! + 0.06)]])
+        }
       }
       return { path, height: h }
     }
 
     case 'eel':
     case 'seasnake': {
-      const segs = 14
-      const isRibbon = sil === 'ribbon-eel'
-      const isDragon = sil === 'sea-dragon'
-      const waves = isRibbon ? 2.6 : form === 'seasnake' ? 2.2 : 1.4
-      const amp = h * (isRibbon ? 0.28 : form === 'seasnake' ? 0.25 : 0.18)
-      const baseThick = h * (isRibbon ? 0.14 : form === 'seasnake' ? 0.16 : 0.24)
-      const travel = animPhase * 3.8
-
-      for (let i = 0; i < segs; i++) {
-        const t0 = i / segs
-        const t1 = (i + 1) / segs
-        const x0 = len * (0.06 + t0 * 0.86)
-        const x1 = len * (0.06 + t1 * 0.86)
-        const y0 = Math.sin(t0 * Math.PI * waves + travel) * amp
-        const y1 = Math.sin(t1 * Math.PI * waves + travel) * amp
-        const r = Math.max(1.3, baseThick * (0.4 + 0.6 * Math.sin(t0 * Math.PI)))
-        addCapsule(path, x0, y0, x1, y1, r)
+      const profile = elongatedProfile(body, len, animPhase)
+      const { center, radius } = profile
+      const sample = (u: number, side: number): [number, number] => [len * (0.04 + u * 0.88), center(u) + radius(u) * side]
+      const upper: [number, number][] = []
+      const lower: [number, number][] = []
+      for (let i = 0; i <= 36; i++) {
+        upper.push(sample(i / 36, -1))
+        lower.push(sample(i / 36, 1))
       }
+      addBodyPolygon(path, [...upper, ...lower.reverse()])
+      addBodyEllipse(path, len * 0.92, center(1), len * 0.055, radius(1), 0)
 
-      if (sil === 'electric-eel') {
-        // Volt Electric Eel: deep ventral undulating electric organ + jagged dorsal spark spikes
-        for (let i = 2; i < segs - 1; i++) {
-          const t0 = i / segs
-          const t1 = (i + 1) / segs
-          const x0 = len * (0.06 + t0 * 0.86)
-          const x1 = len * (0.06 + t1 * 0.86)
-          const y0 = Math.sin(t0 * Math.PI * waves + travel) * amp + baseThick * 0.95
-          const y1 = Math.sin(t1 * Math.PI * waves + travel) * amp + baseThick * 0.95
-          addCapsule(path, x0, y0, x1, y1, Math.max(1.2, baseThick * 0.55))
-          if (i % 3 === 0) {
-            const sy = Math.sin(t0 * Math.PI * waves + travel) * amp - baseThick * 0.8
-            path.moveTo(x0 - len * 0.03, sy + baseThick * 0.4)
-            path.lineTo(x0 + len * 0.01, sy - baseThick * 0.95)
-            path.lineTo(x0 + len * 0.04, sy + baseThick * 0.4)
-            path.closePath()
-          }
+      if (form === 'eel') {
+        const crest: [number, number][] = []
+        const skirt: [number, number][] = []
+        const ribbon = sil === 'ribbon-eel'
+        const amber = sil === 'amber-eel'
+        for (let i = 2; i <= 33; i++) {
+          const u = i / 36
+          const x = len * (0.04 + u * 0.88)
+          const fin = Math.sin(u * Math.PI) * h * (ribbon ? 0.22 : amber ? 0.065 : 0.13)
+          crest.push([x, center(u) - radius(u) - fin * (ribbon ? 1 : 0.22)])
+          skirt.push([x, center(u) + radius(u) + fin])
         }
-      } else if (isRibbon) {
-        // Aurora Ribbon Eel: continuous tall dorsal crest + flared snout leaf-nostrils
-        for (let i = 1; i < segs; i++) {
-          const t0 = i / segs
-          const t1 = (i + 1) / segs
-          const x0 = len * (0.06 + t0 * 0.86)
-          const x1 = len * (0.06 + t1 * 0.86)
-          const y0 = Math.sin(t0 * Math.PI * waves + travel) * amp - baseThick * 1.15
-          const y1 = Math.sin(t1 * Math.PI * waves + travel) * amp - baseThick * 1.15
-          addCapsule(path, x0, y0, x1, y1, Math.max(1.1, baseThick * 0.65))
+        addBodyPolygon(path, [...crest, ...Array.from({ length: 32 }, (_, i) => sample((33 - i) / 36, -0.85))])
+        addBodyPolygon(path, [...skirt, ...Array.from({ length: 32 }, (_, i) => sample((33 - i) / 36, 0.85))])
+        if (ribbon) {
+          addBodyEllipse(path, len * 0.96, center(1) - h * 0.1, len * 0.045, h * 0.045, -0.7)
+          addBodyEllipse(path, len * 0.97, center(1) + h * 0.07, len * 0.035, h * 0.035, 0.6)
         }
-        const headY = Math.sin(Math.PI * waves + travel) * amp
-        path.ellipse(len * 0.95, headY - baseThick * 0.5, len * 0.045, baseThick * 0.5, -0.4, 0, Math.PI * 2)
-      } else if (isDragon) {
-        // Leviathan Sea Serpent: dragon horns, dorsal spines & trident tail fan
-        const headY = Math.sin(Math.PI * waves + travel) * amp
-        addCapsule(path, len * 0.86, headY - baseThick * 0.5, len * 0.74, headY - baseThick * 2.1, Math.max(1.2, baseThick * 0.38))
-        addCapsule(path, len * 0.88, headY + baseThick * 0.5, len * 0.8, headY + baseThick * 1.7, Math.max(1, baseThick * 0.3))
-        for (let i = 3; i < segs - 1; i += 3) {
-          const t0 = i / segs
-          const sx = len * (0.06 + t0 * 0.86)
-          const sy = Math.sin(t0 * Math.PI * waves + travel) * amp
-          path.moveTo(sx - len * 0.035, sy - baseThick * 0.5)
-          path.lineTo(sx - len * 0.01, sy - baseThick * 1.8)
-          path.lineTo(sx + len * 0.035, sy - baseThick * 0.5)
-          path.closePath()
+      } else if (sil === 'sea-dragon') {
+        for (const u of [0.22, 0.4, 0.58, 0.76]) {
+          const [x, y] = sample(u, -0.7)
+          addBodyPolygon(path, [[x - len * 0.035, y], [x - len * 0.055, y - h * 0.2], [x + len * 0.045, y]])
         }
-        const tailY = Math.sin(travel) * amp
-        path.moveTo(len * 0.09, tailY)
-        path.lineTo(0, tailY - baseThick * 1.6)
-        path.lineTo(len * 0.03, tailY)
-        path.lineTo(0, tailY + baseThick * 1.6)
-        path.closePath()
+        const headY = center(1)
+        addBodyCapsule(path, len * 0.9, headY - radius(1) * 0.5, len * 0.82, headY - h * 0.32, len * 0.014)
+        addBodyCapsule(path, len * 0.94, headY + radius(1) * 0.5, len * 0.86, headY + h * 0.28, len * 0.012)
+        addBodyPolygon(path, [[len * 0.14, center(0.1)], [0, center(0) - h * 0.2], [len * 0.035, center(0)], [0, center(0) + h * 0.2]])
       } else {
-        // Banded Sea Snake: smooth body with broad oar paddle tail
-        const tailY = Math.sin(travel) * amp
-        path.ellipse(len * 0.08, tailY, len * 0.065, baseThick * 1.2, 0, 0, Math.PI * 2)
+        addBodyEllipse(path, len * 0.065, center(0.03), len * 0.065, h * 0.11, 0)
       }
       return { path, height: h }
     }
@@ -259,21 +196,21 @@ export function fishPath(
       path.quadraticCurveTo(midX + len * 0.1, h * 0.48 - flap, nose, 0)
       path.closePath()
       // Manta cephalic horn lobes at the front
-      addCapsule(path, nose - len * 0.06, -h * 0.1, len * 0.98, -h * 0.15, Math.max(1.2, h * 0.045))
-      addCapsule(path, nose - len * 0.06, h * 0.1, len * 0.98, h * 0.15, Math.max(1.2, h * 0.045))
+      addBodyCapsule(path, nose - len * 0.06, -h * 0.1, len * 0.98, -h * 0.15, Math.max(1.2, h * 0.045))
+      addBodyCapsule(path, nose - len * 0.06, h * 0.1, len * 0.98, h * 0.15, Math.max(1.2, h * 0.045))
       // Whip tail
-      addCapsule(path, discStart + len * 0.04, 0, len * 0.03, flap * 0.4, Math.max(1.2, h * 0.035))
+      addBodyCapsule(path, discStart + len * 0.04, 0, len * 0.03, flap * 0.4, Math.max(1.2, h * 0.035))
       return { path, height: h }
     }
 
     case 'turtle': {
       const stroke = animPhase ? Math.sin(animPhase * 2.8) * 0.25 : 0
-      path.ellipse(len * 0.46, -h * 0.03, len * 0.3, h * 0.32, 0, 0, Math.PI * 2)
-      path.ellipse(len * 0.83, -h * 0.05, len * 0.11, h * 0.13, -0.1, 0, Math.PI * 2)
-      path.ellipse(len * 0.62, -h * 0.34, len * 0.16, h * 0.08, -0.55 + stroke, 0, Math.PI * 2)
-      path.ellipse(len * 0.62, h * 0.3, len * 0.16, h * 0.08, 0.55 - stroke, 0, Math.PI * 2)
-      path.ellipse(len * 0.22, -h * 0.24, len * 0.11, h * 0.06, 0.45, 0, Math.PI * 2)
-      path.ellipse(len * 0.22, h * 0.2, len * 0.11, h * 0.06, -0.45, 0, Math.PI * 2)
+      addBodyEllipse(path, len * 0.46, -h * 0.03, len * 0.3, h * 0.32, 0)
+      addBodyEllipse(path, len * 0.83, -h * 0.05, len * 0.11, h * 0.13, -0.1)
+      addBodyEllipse(path, len * 0.62, -h * 0.34, len * 0.16, h * 0.08, -0.55 + stroke)
+      addBodyEllipse(path, len * 0.62, h * 0.3, len * 0.16, h * 0.08, 0.55 - stroke)
+      addBodyEllipse(path, len * 0.22, -h * 0.24, len * 0.11, h * 0.06, 0.45)
+      addBodyEllipse(path, len * 0.22, h * 0.2, len * 0.11, h * 0.06, -0.45)
       return { path, height: h }
     }
 
@@ -290,7 +227,7 @@ export function fishPath(
         const cx = len * 0.54
         const rx = len * 0.34
         const ry = h * 0.42
-        path.ellipse(cx, 0, rx, ry, 0, 0, Math.PI * 2)
+        addBodyEllipse(path, cx, 0, rx, ry, 0)
         // Small paddle tail
         path.moveTo(cx - rx * 0.85, 0)
         path.lineTo(len * 0.08, -h * 0.2 + wag)
@@ -304,79 +241,41 @@ export function fishPath(
           const by = Math.sin(ang) * ry * 0.92
           const tx = cx + Math.cos(ang) * (rx + h * 0.1)
           const ty = Math.sin(ang) * (ry + h * 0.1)
-          addCapsule(path, bx, by, tx, ty, Math.max(1, len * 0.022))
+          addBodyCapsule(path, bx, by, tx, ty, Math.max(1, len * 0.022))
         }
         return { path, height: h }
       }
 
       if (sil === 'glider-fish') {
-        // Skywing Flying Fish: sleek torpedo + large swept-back delta wings top & bottom
-        const bodyH = h * 0.46
-        path.ellipse(ox + span * 0.55, 0, span * 0.46, bodyH * 0.5, 0, 0, Math.PI * 2)
-        // Swept-back high glider wing
-        const wing = new Path2D()
-        wing.moveTo(ox + span * 0.68, -bodyH * 0.2)
-        wing.lineTo(ox + span * 0.18, -h * 0.5 + wag * 0.6)
-        wing.lineTo(ox + span * 0.36, -bodyH * 0.15)
-        wing.closePath()
-        path.addPath(wing)
-        // Lower pelvic glider wing
-        const pWing = new Path2D()
-        pWing.moveTo(ox + span * 0.58, bodyH * 0.2)
-        pWing.lineTo(ox + span * 0.22, h * 0.46 - wag * 0.5)
-        pWing.lineTo(ox + span * 0.38, bodyH * 0.15)
-        pWing.closePath()
-        path.addPath(pWing)
-        // Hypocercal forked tail (longer lower lobe)
-        const fin = new Path2D()
-        fin.moveTo(ox + tail * 0.5, 0)
-        fin.lineTo(ox * 0.5, -h * 0.34 + wag)
-        fin.lineTo(ox + tail * 0.25, 0)
-        fin.lineTo(ox * 0.2, h * 0.46 + wag)
-        fin.closePath()
-        path.addPath(fin)
+        addBodyEllipse(path, len * 0.6, 0, len * 0.32, h * 0.17, 0)
+        addBodyPolygon(path, [[len * 0.72, -h * 0.04], [len * 0.18, -h * 0.49 + wag * 0.5], [len * 0.36, -h * 0.02]])
+        addBodyPolygon(path, [[len * 0.66, h * 0.06], [len * 0.24, h * 0.44 - wag * 0.4], [len * 0.4, h * 0.03]])
+        addBodyPolygon(path, [[len * 0.34, 0], [len * 0.055, -h * 0.26 + wag], [len * 0.15, 0], [len * 0.015, h * 0.38 + wag]])
         return { path, height: h }
       }
 
       if (sil === 'moorish-idol') {
-        // Golden Moorish Idol: steep triangular disc + tubular snout + ultra-long dorsal pennant whip
-        path.moveTo(nose, h * 0.04)
-        path.lineTo(nose - len * 0.13, -h * 0.05)
-        path.quadraticCurveTo(ox + span * 0.58, -h * 0.46, ox + tail * 0.55, -h * 0.14)
-        path.quadraticCurveTo(ox + tail * 0.3, 0, ox + tail * 0.55, h * 0.16)
-        path.quadraticCurveTo(ox + span * 0.58, h * 0.46, nose - len * 0.12, h * 0.1)
+        path.moveTo(len * 0.89, h * 0.02)
+        path.quadraticCurveTo(len * 0.66, -h * 0.55, len * 0.32, -h * 0.18)
+        path.quadraticCurveTo(len * 0.22, 0, len * 0.32, h * 0.18)
+        path.quadraticCurveTo(len * 0.67, h * 0.49, len * 0.89, h * 0.02)
         path.closePath()
-        // Long whip streamer trailing past the tail
-        addCapsule(path, ox + span * 0.56, -h * 0.36, ox * 0.15, -h * 0.46 + wag * 1.4, Math.max(1.3, len * 0.032))
-        // Ventral spike fins
-        path.moveTo(ox + span * 0.62, h * 0.3)
-        path.lineTo(ox + span * 0.42, h * 0.5)
-        path.lineTo(ox + span * 0.52, h * 0.26)
-        path.closePath()
-        // Forked tail
-        path.moveTo(ox + tail * 0.55, 0)
-        path.lineTo(ox * 0.6, -h * 0.28 + wag)
-        path.lineTo(ox + tail * 0.3, 0)
-        path.lineTo(ox * 0.6, h * 0.28 + wag)
-        path.closePath()
+        addBodyCapsule(path, len * 0.84, h * 0.02, len * 0.99, h * 0.05, h * 0.03)
+        const pennant = new Path2D()
+        pennant.moveTo(len * 0.65, -h * 0.29)
+        pennant.bezierCurveTo(len * 0.5, -h * 0.57, len * 0.18, -h * 0.5, len * 0.03, -h * 0.4 + wag)
+        pennant.bezierCurveTo(len * 0.25, -h * 0.43, len * 0.5, -h * 0.43, len * 0.54, -h * 0.24)
+        pennant.closePath()
+        path.addPath(pennant)
+        addBodyPolygon(path, [[len * 0.34, 0], [len * 0.04, -h * 0.17 + wag], [len * 0.1, 0], [len * 0.04, h * 0.17 + wag]])
         return { path, height: h }
       }
 
       if (sil === 'banner-cardinal') {
-        // Banggai Starfin: diamond body + twin symmetrical high sickle dorsal & anal sails + long forked tail
-        const bodyH = h * 0.52
-        path.moveTo(nose, 0)
-        path.quadraticCurveTo(ox + span * 0.58, -bodyH * 0.6, ox + tail * 0.55, -bodyH * 0.18)
-        path.quadraticCurveTo(ox + tail * 0.3, 0, ox + tail * 0.55, bodyH * 0.18)
-        path.quadraticCurveTo(ox + span * 0.58, bodyH * 0.6, nose, 0)
-        path.closePath()
-        // High sickle dorsal sail
-        addCapsule(path, ox + span * 0.6, -bodyH * 0.3, ox + span * 0.24, -h * 0.48, Math.max(1.4, len * 0.042))
-        // Matching sickle anal sail
-        addCapsule(path, ox + span * 0.56, bodyH * 0.3, ox + span * 0.22, h * 0.48, Math.max(1.4, len * 0.042))
-        // Deeply forked streamer tail
-        addCapsule(path, ox + tail * 0.55, 0, ox * 0.3, -h * 0.38 + wag, Math.max(1.2, len * 0.032))
-        addCapsule(path, ox + tail * 0.55, 0, ox * 0.3, h * 0.38 + wag, Math.max(1.2, len * 0.032))
+        addBodyEllipse(path, len * 0.6, 0, len * 0.26, h * 0.27, 0)
+        addBodyPolygon(path, [[len * 0.38, -h * 0.14], [len * 0.42, -h * 0.49], [len * 0.68, -h * 0.2]])
+        addBodyPolygon(path, [[len * 0.4, h * 0.13], [len * 0.42, h * 0.48], [len * 0.7, h * 0.18]])
+        addBodyPolygon(path, [[len * 0.4, -h * 0.07], [len * 0.04, -h * 0.34 + wag], [len * 0.16, wag * 0.3], [len * 0.04, h * 0.34 + wag], [len * 0.4, h * 0.07]])
         return { path, height: h }
       }
 
@@ -384,7 +283,7 @@ export function fishPath(
         // Copperband Butterflyfish: forceps beak snout + steep diamond body + fan tail
         const beak = len * 0.16
         const bodyNose = nose - beak
-        addCapsule(path, bodyNose - len * 0.02, 0, nose, 0, Math.max(1.4, h * 0.055))
+        addBodyCapsule(path, bodyNose - len * 0.02, 0, nose, 0, Math.max(1.4, h * 0.055))
         path.moveTo(bodyNose, 0)
         path.quadraticCurveTo(ox + span * 0.52, -h * 0.52, ox + tail * 0.5, -h * 0.18)
         path.lineTo(ox + tail * 0.5, h * 0.18)
@@ -400,9 +299,9 @@ export function fishPath(
 
       if (sil === 'unicorn-tang') {
         // Moonhorn Tang: oval body + frontal unicorn horn + lunate crescent tail
-        path.ellipse(ox + span * 0.54, 0, span * 0.42, h * 0.38, 0, 0, Math.PI * 2)
+        addBodyEllipse(path, ox + span * 0.54, 0, span * 0.42, h * 0.38, 0)
         // Unicorn horn jutting forward from forehead
-        addCapsule(path, ox + span * 0.82, -h * 0.16, nose + len * 0.06, -h * 0.2, Math.max(1.3, h * 0.048))
+        addBodyCapsule(path, ox + span * 0.82, -h * 0.16, nose + len * 0.06, -h * 0.2, Math.max(1.3, h * 0.048))
         // Lunate crescent tail with long tips
         path.moveTo(ox + tail * 0.65, 0)
         path.quadraticCurveTo(ox + tail * 0.2, -h * 0.42, ox * 0.3, -h * 0.48 + wag)
@@ -413,34 +312,23 @@ export function fishPath(
       }
 
       if (sil === 'catfish') {
-        // Mossback Otocinclus: flat belly, arched back, high shark dorsal sail, downward mouth barbels
-        path.moveTo(nose, h * 0.16)
-        path.quadraticCurveTo(ox + span * 0.65, -h * 0.36, ox + tail * 0.5, h * 0.04)
-        path.lineTo(ox + tail * 0.5, h * 0.18)
-        path.lineTo(nose, h * 0.18)
+        path.moveTo(len * 0.96, h * 0.14)
+        path.bezierCurveTo(len * 0.92, -h * 0.09, len * 0.64, -h * 0.34, len * 0.44, -h * 0.18)
+        path.lineTo(len * 0.25, h * 0.05)
+        path.bezierCurveTo(len * 0.4, h * 0.24, len * 0.82, h * 0.25, len * 0.96, h * 0.14)
         path.closePath()
-        // High triangular dorsal sail
-        path.moveTo(ox + span * 0.68, -h * 0.12)
-        path.lineTo(ox + span * 0.48, -h * 0.5)
-        path.lineTo(ox + span * 0.36, -h * 0.04)
-        path.closePath()
-        // Sucker barbels at snout
-        addCapsule(path, nose - len * 0.04, h * 0.16, nose + len * 0.03, h * 0.3, Math.max(1, len * 0.025))
-        // Forked tail
-        path.moveTo(ox + tail * 0.55, h * 0.1)
-        path.lineTo(ox * 0.5, -h * 0.26 + wag)
-        path.lineTo(ox + tail * 0.3, h * 0.1)
-        path.lineTo(ox * 0.5, h * 0.38 + wag)
-        path.closePath()
+        addBodyPolygon(path, [[len * 0.43, -h * 0.1], [len * 0.5, -h * 0.49], [len * 0.68, -h * 0.13]])
+        addBodyPolygon(path, [[len * 0.33, h * 0.06], [len * 0.04, -h * 0.25 + wag], [len * 0.13, h * 0.06], [len * 0.04, h * 0.3 + wag]])
+        addBodyCapsule(path, len * 0.93, h * 0.15, len * 0.99, h * 0.28, len * 0.012)
         return { path, height: h }
       }
 
       if (sil === 'fire-goby') {
         // Blushing Firefish: slender body + tall forward-flicking dorsal antenna flag + tapering rear fins
         const bodyH = h * 0.45
-        path.ellipse(ox + span * 0.56, 0, span * 0.44, bodyH * 0.48, 0, 0, Math.PI * 2)
+        addBodyEllipse(path, ox + span * 0.56, 0, span * 0.44, bodyH * 0.48, 0)
         // Iconic tall flicking first dorsal spine
-        addCapsule(path, ox + span * 0.62, -bodyH * 0.3, ox + span * 0.74, -h * 0.5, Math.max(1.3, len * 0.032))
+        addBodyCapsule(path, ox + span * 0.62, -bodyH * 0.3, ox + span * 0.74, -h * 0.5, Math.max(1.3, len * 0.032))
         // Long rear dorsal & anal tapering fins
         path.moveTo(ox + span * 0.52, -bodyH * 0.3)
         path.lineTo(ox + tail * 0.6, -h * 0.34)
@@ -459,11 +347,12 @@ export function fishPath(
 
       if (sil === 'crown-butterfly') {
         // Golden Butterflyfish: round disc body + 4 distinct spiky crown spines on top + brush tail
-        path.ellipse(ox + span * 0.54, 0, span * 0.42, h * 0.42, 0, 0, Math.PI * 2)
-        for (let i = 0; i < 4; i++) {
-          const sx = ox + span * (0.34 + i * 0.11)
-          addCapsule(path, sx, -h * 0.3, sx - len * 0.04, -h * 0.49, Math.max(1.2, len * 0.028))
-        }
+        addBodyEllipse(path, ox + span * 0.54, 0, span * 0.42, h * 0.42, 0)
+        addBodyPolygon(path, [
+          [len * 0.28, -h * 0.18], [len * 0.32, -h * 0.43], [len * 0.4, -h * 0.36],
+          [len * 0.46, -h * 0.48], [len * 0.54, -h * 0.4], [len * 0.61, -h * 0.47],
+          [len * 0.7, -h * 0.35], [len * 0.77, -h * 0.18],
+        ])
         path.moveTo(ox + tail * 0.6, 0)
         path.lineTo(ox * 0.5, -h * 0.28 + wag)
         path.lineTo(ox * 0.5, h * 0.28 + wag)
@@ -472,77 +361,62 @@ export function fishPath(
       }
 
       if (sil === 'veil-koi') {
-        // Prism Koi: plump koi body + ultra-long flowing twin veil tail ribbons + wide pectoral wings + barbels
-        path.moveTo(nose, 0)
-        path.quadraticCurveTo(ox + span * 0.62, -h * 0.42, ox + tail * 0.65, -h * 0.14)
-        path.quadraticCurveTo(ox + tail * 0.45, 0, ox + tail * 0.65, h * 0.14)
-        path.quadraticCurveTo(ox + span * 0.62, h * 0.42, nose, 0)
-        path.closePath()
-        // Flowing veil tail ribbons
-        path.moveTo(ox + tail * 0.68, 0)
-        path.quadraticCurveTo(ox + tail * 0.2, -h * 0.54, ox * 0.1, -h * 0.42 + wag * 1.3)
-        path.quadraticCurveTo(ox + tail * 0.32, wag * 0.4, ox * 0.1, h * 0.42 + wag * 1.3)
-        path.quadraticCurveTo(ox + tail * 0.2, h * 0.54, ox + tail * 0.68, 0)
-        path.closePath()
-        // Dorsal sail & sweeping ventral fin
-        path.moveTo(ox + span * 0.68, -h * 0.24)
-        path.quadraticCurveTo(ox + span * 0.42, -h * 0.52, ox + tail * 0.72, -h * 0.14)
-        path.closePath()
-        path.moveTo(ox + span * 0.66, h * 0.22)
-        path.lineTo(ox + span * 0.44, h * 0.48)
-        path.lineTo(ox + span * 0.54, h * 0.2)
-        path.closePath()
-        // Koi whisker barbels
-        addCapsule(path, nose - len * 0.02, h * 0.03, nose + len * 0.04, h * 0.18, Math.max(1, len * 0.022))
+        addBodyEllipse(path, len * 0.64, 0, len * 0.32, h * 0.32, 0)
+        const veil = new Path2D()
+        veil.moveTo(len * 0.39, -h * 0.1)
+        veil.bezierCurveTo(len * 0.2, -h * 0.43, len * 0.12, -h * 0.56, len * 0.02, -h * 0.42 + wag)
+        veil.quadraticCurveTo(len * 0.13, 0, len * 0.02, h * 0.42 + wag)
+        veil.bezierCurveTo(len * 0.16, h * 0.5, len * 0.27, h * 0.29, len * 0.39, h * 0.1)
+        veil.closePath()
+        path.addPath(veil)
+        addBodyPolygon(path, [[len * 0.52, -h * 0.24], [len * 0.48, -h * 0.46], [len * 0.75, -h * 0.28]])
+        addBodyPolygon(path, [[len * 0.66, h * 0.16], [len * 0.45, h * 0.43], [len * 0.78, h * 0.24]])
+        addBodyCapsule(path, len * 0.93, h * 0.05, len * 0.99, h * 0.18, len * 0.009)
         return { path, height: h }
       }
 
       if (sil === 'lyretail') {
-        // Royal Goldtail: swallowtail with long outer filaments + twin ventral streamers + continuous crest
-        path.ellipse(ox + span * 0.55, 0, span * 0.42, h * 0.34, 0, 0, Math.PI * 2)
-        // Continuous dorsal crest
-        path.moveTo(ox + span * 0.75, -h * 0.22)
-        path.quadraticCurveTo(ox + span * 0.45, -h * 0.48, ox + tail * 0.68, -h * 0.18)
-        path.closePath()
-        // Swallowtail streamers
-        addCapsule(path, ox + tail * 0.62, -h * 0.08, ox * 0.15, -h * 0.45 + wag, Math.max(1.3, len * 0.032))
-        addCapsule(path, ox + tail * 0.62, h * 0.08, ox * 0.15, h * 0.45 + wag, Math.max(1.3, len * 0.032))
-        // Ventral streamers
-        addCapsule(path, ox + span * 0.56, h * 0.24, ox + span * 0.34, h * 0.48, Math.max(1.1, len * 0.026))
+        addBodyEllipse(path, len * 0.63, 0, len * 0.3, h * 0.32, 0)
+        const tailFin = new Path2D()
+        tailFin.moveTo(len * 0.4, -h * 0.1)
+        tailFin.quadraticCurveTo(len * 0.16, -h * 0.2, len * 0.025, -h * 0.46 + wag)
+        tailFin.quadraticCurveTo(len * 0.25, 0, len * 0.025, h * 0.46 + wag)
+        tailFin.quadraticCurveTo(len * 0.16, h * 0.2, len * 0.4, h * 0.1)
+        tailFin.closePath()
+        path.addPath(tailFin)
+        addBodyPolygon(path, [[len * 0.35, -h * 0.18], [len * 0.48, -h * 0.43], [len * 0.8, -h * 0.23]])
+        addBodyPolygon(path, [[len * 0.57, h * 0.2], [len * 0.42, h * 0.43], [len * 0.7, h * 0.24]])
+        return { path, height: h }
+      }
+
+      if (sil === 'tetra') {
+        addBodyEllipse(path, len * 0.59, 0, len * 0.32, h * 0.25, 0)
+        addBodyPolygon(path, [[len * 0.32, 0], [len * 0.06, -h * 0.26 + wag], [len * 0.13, 0], [len * 0.06, h * 0.26 + wag]])
+        addBodyPolygon(path, [[len * 0.45, -h * 0.16], [len * 0.48, -h * 0.42], [len * 0.67, -h * 0.2]])
+        addBodyPolygon(path, [[len * 0.42, h * 0.16], [len * 0.37, h * 0.33], [len * 0.7, h * 0.19]])
+        return { path, height: h }
+      }
+
+      if (sil === 'damsel') {
+        addBodyEllipse(path, len * 0.59, 0, len * 0.3, h * 0.4, 0)
+        addBodyPolygon(path, [[len * 0.31, 0], [len * 0.06, -h * 0.25 + wag], [len * 0.12, 0], [len * 0.06, h * 0.25 + wag]])
+        addBodyPolygon(path, [[len * 0.31, -h * 0.15], [len * 0.42, -h * 0.48], [len * 0.76, -h * 0.28]])
+        addBodyPolygon(path, [[len * 0.48, h * 0.3], [len * 0.37, h * 0.49], [len * 0.65, h * 0.32]])
         return { path, height: h }
       }
 
       if (sil === 'wrasse') {
         // Neon Cleaner Wrasse: sleek cigar body + rounded spade paddle tail + full-length low dorsal ridge
-        path.ellipse(ox + span * 0.54, 0, span * 0.45, h * 0.38, 0, 0, Math.PI * 2)
-        path.ellipse(ox + tail * 0.32, wag * 0.5, tail * 0.42, h * 0.36, 0, 0, Math.PI * 2)
+        addBodyEllipse(path, ox + span * 0.54, 0, span * 0.45, h * 0.38, 0)
+        addBodyEllipse(path, ox + tail * 0.32, wag * 0.5, tail * 0.42, h * 0.36, 0)
         return { path, height: h }
       }
 
-      if (sil === 'rhomboid-barb' || sil === 'tetra') {
-        // Angular diamond characin/barb with sharp dorsal, anal, and ventral fins
-        path.moveTo(nose, 0)
-        path.lineTo(ox + span * 0.56, -h * 0.38)
-        path.lineTo(ox + tail * 0.55, -h * 0.12)
-        path.lineTo(ox + tail * 0.55, h * 0.12)
-        path.lineTo(ox + span * 0.56, h * 0.38)
-        path.closePath()
-        // Sharp high dorsal fin
-        path.moveTo(ox + span * 0.62, -h * 0.3)
-        path.lineTo(ox + span * 0.44, -h * 0.52)
-        path.lineTo(ox + span * 0.38, -h * 0.2)
-        path.closePath()
-        // Anal & pelvic triangular fins
-        path.moveTo(ox + span * 0.54, h * 0.3)
-        path.lineTo(ox + span * 0.38, h * 0.48)
-        path.lineTo(ox + tail * 0.65, h * 0.14)
-        path.closePath()
-        // Forked tail
-        path.moveTo(ox + tail * 0.58, 0)
-        path.lineTo(ox * 0.5, -h * 0.38 + wag)
-        path.lineTo(ox + tail * 0.3, 0)
-        path.lineTo(ox * 0.5, h * 0.38 + wag)
-        path.closePath()
+      if (sil === 'rhomboid-barb') {
+        addBodyPolygon(path, [[len * 0.95, 0], [len * 0.61, -h * 0.34], [len * 0.29, -h * 0.12], [len * 0.29, h * 0.12], [len * 0.61, h * 0.34]])
+        addBodyPolygon(path, [[len * 0.44, -h * 0.17], [len * 0.48, -h * 0.51], [len * 0.74, -h * 0.2]])
+        addBodyPolygon(path, [[len * 0.43, h * 0.17], [len * 0.37, h * 0.45], [len * 0.7, h * 0.23]])
+        addBodyPolygon(path, [[len * 0.34, 0], [len * 0.035, -h * 0.35 + wag], [len * 0.14, 0], [len * 0.035, h * 0.35 + wag]])
         return { path, height: h }
       }
 
@@ -576,16 +450,23 @@ export function fishPath(
         path.addPath(d)
       }
 
-      if (sil === 'damsel') {
-        // Pointed pelvic fin on damselfish
-        path.moveTo(ox + span * 0.62, h * 0.32)
-        path.lineTo(ox + span * 0.44, h * 0.52)
-        path.lineTo(ox + span * 0.5, h * 0.28)
-        path.closePath()
-      }
-
       return { path, height: h }
     }
+  }
+}
+
+/** One centerline drives both the continuous body and its eye through the entire swim cycle. */
+export function elongatedProfile(body: BodyShape, len: number, phase = 0): {
+  center: (u: number) => number; radius: (u: number) => number
+} {
+  const h = len * body.depth
+  const ribbon = body.silhouette === 'ribbon-eel'
+  const snake = body.form === 'seasnake'
+  const waves = ribbon ? 2.5 : snake ? 2.2 : body.silhouette === 'amber-eel' ? 1.3 : 1.7
+  const speed = ribbon ? 2.6 : snake ? 3.1 : 2.3
+  return {
+    center: u => Math.sin((1 - u) * Math.PI * waves + phase * speed) * h * (ribbon ? 0.24 : 0.2) * (1 - u * 0.8),
+    radius: u => h * (ribbon ? 0.1 : snake ? 0.135 : 0.17) * (0.18 + 0.82 * Math.pow(u, 0.65)),
   }
 }
 
@@ -602,14 +483,11 @@ export function eyeAt(
     case 'jellyfish':
       return { x: len * 0.58, y: -h * 0.18, r: Math.max(1, len * 0.045) }
     case 'seahorse':
-      return { x: len * 0.53, y: -h * 0.31, r: Math.max(1, len * 0.048) }
+      return { x: len * 0.63, y: -h * 0.34, r: Math.max(1, len * 0.039) }
     case 'eel':
     case 'seasnake': {
-      const isRibbon = sil === 'ribbon-eel'
-      const waves = isRibbon ? 2.6 : form === 'seasnake' ? 2.2 : 1.4
-      const amp = h * (isRibbon ? 0.28 : form === 'seasnake' ? 0.25 : 0.18)
-      const headY = Math.sin(0.9 * Math.PI * waves + animPhase * 3.8) * amp
-      return { x: len * 0.86, y: headY - h * 0.04, r: Math.max(1, len * 0.042) }
+      const profile = elongatedProfile(body, len, animPhase)
+      return { x: len * 0.93, y: profile.center(1) - profile.radius(1) * 0.22, r: Math.max(1, len * 0.027) }
     }
     case 'ray':
       return { x: len * 0.76, y: -h * 0.11, r: Math.max(1, len * 0.046) }
@@ -620,6 +498,10 @@ export function eyeAt(
       const tail = len * body.tail
       const ox = tail * 0.5
       const span = len - tail
+      if (sil === 'catfish') return { x: len * 0.81, y: h * 0.025, r: Math.max(1, len * 0.037) }
+      if (['veil-koi', 'lyretail', 'tetra', 'damsel', 'banner-cardinal', 'glider-fish', 'rhomboid-barb'].includes(sil ?? '')) {
+        return { x: len * (sil === 'banner-cardinal' ? 0.77 : 0.84), y: -h * 0.07, r: Math.max(1, len * 0.041) }
+      }
       if (sil === 'beak-butterfly') {
         return { x: ox + span * 0.68, y: -h * 0.1, r: Math.max(1, len * 0.052) }
       }
@@ -627,7 +509,7 @@ export function eyeAt(
         return { x: len * 0.72, y: -h * 0.1, r: Math.max(1.2, len * 0.06) }
       }
       if (sil === 'moorish-idol') {
-        return { x: ox + span * 0.72, y: -h * 0.1, r: Math.max(1, len * 0.052) }
+        return { x: len * 0.79, y: -h * 0.08, r: Math.max(1, len * 0.04) }
       }
       return { x: ox + span * 0.8, y: -h * 0.1, r: Math.max(1, len * 0.055) }
     }
@@ -639,11 +521,15 @@ export function patternBands(body: BodyShape, len: number): { x: number; w: numb
   const tail = len * body.tail
   const ox = (body.form ?? 'fish') === 'fish' ? tail * 0.5 : 0
   const span = len - tail
+  const sil = body.silhouette
+  if (['wrasse', 'tetra', 'amber-eel', 'electric-eel', 'ribbon-eel', 'sea-turtle'].includes(sil ?? '')) return []
+  if (sil === 'rhomboid-barb') return [0.35, 0.51, 0.67, 0.82].map(x => ({ x: len * x, w: len * 0.065 }))
+  if (sil === 'moorish-idol' || sil === 'banner-cardinal') return [0.4, 0.62, 0.8].map(x => ({ x: len * x, w: len * 0.09 }))
   switch (body.pattern) {
     case 'stripes':
-      return [0.3, 0.5, 0.7].map((t) => ({ x: ox + tail + span * t * 0.8, w: Math.max(1, len * 0.05) }))
+      return [0.3, 0.5, 0.7].map((t) => ({ x: ox + span * (0.12 + t * 0.82), w: Math.max(1, len * 0.05) }))
     case 'bands':
-      return [0.25, 0.6].map((t) => ({ x: ox + tail + span * t * 0.8, w: Math.max(2, len * 0.12) }))
+      return [0.25, 0.6].map((t) => ({ x: ox + span * (0.12 + t * 0.82), w: Math.max(2, len * 0.12) }))
     default:
       return []
   }
@@ -655,7 +541,7 @@ export function patternSpots(
   len: number,
   seed: number,
 ): { x: number; y: number; r: number }[] {
-  if (body.pattern !== 'spots') return []
+  if (body.pattern !== 'spots' || body.silhouette === 'sea-turtle') return []
   const h = len * body.depth
   const tail = len * body.tail
   const ox = (body.form ?? 'fish') === 'fish' ? tail * 0.5 : 0
@@ -669,7 +555,7 @@ export function patternSpots(
     out.push({
       x: ox + tail * 0.6 + (len - tail) * (0.15 + fx * 0.7),
       y: (fy - 0.5) * h * 0.55,
-      r: Math.max(1, len * 0.045),
+      r: Math.max(0.7, len * 0.025),
     })
   }
   return out
@@ -1071,6 +957,39 @@ export function decorLayers(id: DecorId, w: number, h: number, time = 0): DecorL
     { path: primary, role: 'primary' },
     { path: detail, role: 'detail' },
   ]
+}
+
+/** Separate, counterclockwise contours prevent overlapping parts cutting holes in each other. */
+function addBodyEllipse(path: Path2D, x: number, y: number, rx: number, ry: number, angle: number): void {
+  const oval = new Path2D()
+  oval.ellipse(x, y, rx, ry, angle, 0, Math.PI * 2, true)
+  oval.closePath()
+  path.addPath(oval)
+}
+
+function addBodyCapsule(path: Path2D, x0: number, y0: number, x1: number, y1: number, r: number): void {
+  const angle = Math.atan2(y1 - y0, x1 - x0)
+  const nx = -Math.sin(angle) * r
+  const ny = Math.cos(angle) * r
+  const capsule = new Path2D()
+  capsule.moveTo(x0 + nx, y0 + ny)
+  capsule.lineTo(x1 + nx, y1 + ny)
+  capsule.arc(x1, y1, r, angle + Math.PI / 2, angle - Math.PI / 2, true)
+  capsule.lineTo(x0 - nx, y0 - ny)
+  capsule.arc(x0, y0, r, angle - Math.PI / 2, angle - Math.PI * 1.5, true)
+  capsule.closePath()
+  path.addPath(capsule)
+}
+
+function addBodyPolygon(path: Path2D, points: [number, number][]): void {
+  const area = points.reduce((sum, [x, y], i) => {
+    const next = points[(i + 1) % points.length]!
+    return sum + x * next[1] - y * next[0]
+  }, 0)
+  const contour = area > 0 ? [...points].reverse() : points
+  path.moveTo(...contour[0]!)
+  for (const point of contour.slice(1)) path.lineTo(...point)
+  path.closePath()
 }
 
 function addCapsule(

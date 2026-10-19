@@ -16,7 +16,7 @@ export const SPECIES: Species[] = [
   { id: 'neoncleaner', name: 'Neon Cleaner Wrasse', tier: 1, body: { form: 'fish', silhouette: 'wrasse', length: 14, depth: 0.32, tail: 0.26, dorsal: 0.25, pattern: 'stripes', hue: 206, sat: 0.82, light: 0.56 } },
   { id: 'mossback', name: 'Mossback Otocinclus', tier: 1, body: { form: 'fish', silhouette: 'catfish', length: 13, depth: 0.44, tail: 0.28, dorsal: 0.55, pattern: 'spots', hue: 96, sat: 0.48, light: 0.42 } },
   { id: 'sapphiredamsel', name: 'Sapphire Damselfish', tier: 1, body: { form: 'fish', silhouette: 'damsel', length: 13, depth: 0.58, tail: 0.34, dorsal: 0.42, pattern: 'gradient', hue: 222, sat: 0.86, light: 0.52 } },
-  { id: 'banggai', name: 'Banggai Starfin', tier: 1, body: { form: 'fish', silhouette: 'banner-cardinal', length: 14, depth: 0.84, tail: 0.46, dorsal: 0.85, pattern: 'spots', hue: 248, sat: 0.32, light: 0.62 } },
+  { id: 'banggai', name: 'Banggai Starfin', tier: 1, body: { form: 'fish', silhouette: 'banner-cardinal', length: 14, depth: 0.84, tail: 0.46, dorsal: 0.85, pattern: 'bands', hue: 248, sat: 0.32, light: 0.62 } },
   { id: 'moonjelly', name: 'Moon Jellyfish', tier: 1, body: { form: 'jellyfish', silhouette: 'saucer-jelly', length: 14, depth: 0.76, tail: 0.4, dorsal: 0.2, pattern: 'spots', hue: 192, sat: 0.78, light: 0.68 } },
 
   // Tier 2 — Uncommon.
@@ -26,12 +26,13 @@ export const SPECIES: Species[] = [
   { id: 'creampuff', name: 'Cream Puff Puffer', tier: 2, body: { form: 'fish', silhouette: 'spiky-puffer', length: 13, depth: 0.92, tail: 0.22, dorsal: 0.25, pattern: 'spots', hue: 38, sat: 0.42, light: 0.74 } },
   { id: 'coralseahorse', name: 'Coral Seahorse', tier: 2, body: { form: 'seahorse', silhouette: 'spiny-seahorse', length: 14, depth: 0.92, tail: 0.3, dorsal: 0.5, pattern: 'bands', hue: 340, sat: 0.78, light: 0.62 } },
   { id: 'bandedkrait', name: 'Banded Sea Snake', tier: 2, body: { form: 'seasnake', silhouette: 'krait', length: 19, depth: 0.36, tail: 0.2, dorsal: 0.1, pattern: 'bands', hue: 190, sat: 0.58, light: 0.58 } },
+  { id: 'ambereel', name: 'Amber Electric Eel', tier: 2, electric: true, body: { form: 'eel', silhouette: 'amber-eel', length: 19, depth: 0.32, tail: 0.2, dorsal: 0.28, pattern: 'gradient', hue: 39, sat: 0.8, light: 0.51 } },
 
   // Tier 3 — Rare.
   { id: 'royalgoldtail', name: 'Royal Goldtail', tier: 3, body: { form: 'fish', silhouette: 'lyretail', length: 17, depth: 0.62, tail: 0.48, dorsal: 0.5, pattern: 'gradient', hue: 274, sat: 0.72, light: 0.54 } },
   { id: 'skywing', name: 'Skywing Flying Fish', tier: 3, body: { form: 'fish', silhouette: 'glider-fish', length: 18, depth: 0.68, tail: 0.4, dorsal: 0.88, pattern: 'plain', hue: 202, sat: 0.68, light: 0.64 } },
   { id: 'emberbarb', name: 'Ember Barb', tier: 3, body: { form: 'fish', silhouette: 'rhomboid-barb', length: 15, depth: 0.64, tail: 0.36, dorsal: 0.48, pattern: 'bands', hue: 14, sat: 0.88, light: 0.52 } },
-  { id: 'volteel', name: 'Volt Electric Eel', tier: 3, body: { form: 'eel', silhouette: 'electric-eel', length: 21, depth: 0.38, tail: 0.2, dorsal: 0.5, pattern: 'stripes', hue: 198, sat: 0.92, light: 0.56 } },
+  { id: 'volteel', name: 'Volt Electric Eel', tier: 3, electric: true, body: { form: 'eel', silhouette: 'electric-eel', length: 21, depth: 0.38, tail: 0.2, dorsal: 0.5, pattern: 'stripes', hue: 198, sat: 0.92, light: 0.56 } },
   { id: 'crystaljelly', name: 'Sakura Jellyfish', tier: 3, body: { form: 'jellyfish', silhouette: 'ribbon-jelly', length: 16, depth: 0.9, tail: 0.5, dorsal: 0.3, pattern: 'gradient', hue: 326, sat: 0.84, light: 0.66 } },
 
   // Tier 4 — Legendary.

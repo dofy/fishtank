@@ -198,11 +198,11 @@ export class Scene {
     const a = this.agents.get(uid)
     if (!a || a.dropping) return false
 
-    // Track clicks within a 30s sliding window; 6 clicks on a Volt Electric Eel triggers immediate discharge
+    // Track clicks within a 30s sliding window; 6 clicks on an electric eel triggers immediate discharge
     const recent = (a.clickTimestamps ?? []).filter((ts) => now - ts <= 30_000)
     recent.push(now)
     a.clickTimestamps = recent
-    if (a.fish.speciesId === 'volteel' && recent.length >= 6) {
+    if (a.species.electric && recent.length >= 6) {
       a.clickTimestamps = []
       const night = typeof document !== 'undefined' && document.documentElement.dataset.mode !== 'light'
       this.triggerDischarge(a, undefined, night)
@@ -295,9 +295,9 @@ export class Scene {
         a.zapCooldown = Math.max(0, a.zapCooldown - dt)
       }
 
-      // Low-probability spontaneous electric discharge when Volt Electric Eel is swimming
+      // Low-probability spontaneous electric discharge when an electric eel is swimming
       if (
-        a.fish.speciesId === 'volteel' &&
+        a.species.electric &&
         !a.dropping &&
         (!a.zapCooldown || a.zapCooldown <= 0) &&
         (!a.shockedTimer || a.shockedTimer <= 0) &&
