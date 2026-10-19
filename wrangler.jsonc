@@ -7,6 +7,10 @@
     {
       "pattern": "fishtank.phpz.org",
       "custom_domain": true
+    },
+    {
+      "pattern": "fish.yahaha.net",
+      "custom_domain": true
     }
   ],
   "assets": {
