@@ -73,6 +73,21 @@ export function renderChangelogDialog(
   body.tabIndex = 0
   body.setAttribute('aria-label', c.changelogBtn)
 
+  const releases: { article: HTMLElement; jump: HTMLButtonElement }[] = []
+  const setActive = (active: HTMLButtonElement): void => {
+    if (active.getAttribute('aria-current') === 'location') return
+    for (const { jump } of releases) {
+      if (jump === active) jump.setAttribute('aria-current', 'location')
+      else jump.removeAttribute('aria-current')
+    }
+    if (navigation.scrollWidth > navigation.clientWidth && (
+      active.offsetLeft < navigation.scrollLeft ||
+      active.offsetLeft + active.offsetWidth > navigation.scrollLeft + navigation.clientWidth
+    )) {
+      navigation.scrollTo({ left: active.offsetLeft - (navigation.clientWidth - active.offsetWidth) / 2 })
+    }
+  }
+
   let article: HTMLElement | null = null
   let list: HTMLUListElement | null = null
   let hiddenSection = false
@@ -84,15 +99,20 @@ export function renderChangelogDialog(
       const releaseLabel = unreleased ? c.changelogUnreleased : `v${version}`
       article = document.createElement('article')
       article.className = 'changelog-release'
+      article.dataset.current = String(version === currentVersion)
       const releaseHeader = document.createElement('div')
       releaseHeader.className = 'changelog-release-head'
       const heading = document.createElement('h3')
+      heading.id = `changelog-version-${version.replaceAll('.', '-')}`
       heading.textContent = releaseLabel
+      article.setAttribute('aria-labelledby', heading.id)
       releaseHeader.append(heading)
       if (release[2]) {
         const date = document.createElement('time')
         date.dateTime = release[2]
-        date.textContent = release[2]
+        date.textContent = new Intl.DateTimeFormat(locale === 'zh' ? 'zh-CN' : 'en', {
+          year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC',
+        }).format(new Date(`${release[2]}T00:00:00Z`))
         releaseHeader.append(date)
       }
       if (version === currentVersion) {
@@ -107,10 +127,14 @@ export function renderChangelogDialog(
       const jump = document.createElement('button')
       jump.type = 'button'
       jump.textContent = releaseLabel
-      jump.onclick = () => body.scrollTo({
-        top: target.offsetTop,
-        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
-      })
+      jump.onclick = () => {
+        setActive(jump)
+        body.scrollTo({
+          top: target.offsetTop,
+          behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+        })
+      }
+      releases.push({ article, jump })
       navigation.append(jump)
       list = null
       hiddenSection = false
@@ -119,7 +143,7 @@ export function renderChangelogDialog(
     if (!article) continue
     if (line.startsWith('### ')) {
       // Keep the in-game page focused on player-visible changes and save compatibility.
-      hiddenSection = line === '### 验证与发布'
+      hiddenSection = line === '### 验证与发布' || line === '### 开发与兼容说明'
       list = null
       if (!hiddenSection) {
         const heading = document.createElement('h4')
@@ -144,11 +168,36 @@ export function renderChangelogDialog(
       list = null
       const paragraph = document.createElement('p')
       appendInline(paragraph, line)
-      article.append(paragraph)
+      if (line.startsWith('对应标签：')) {
+        const details = document.createElement('details')
+        details.className = 'changelog-sources'
+        const summary = document.createElement('summary')
+        summary.textContent = c.changelogSources
+        details.append(summary, paragraph)
+        article.append(details)
+      } else {
+        article.append(paragraph)
+      }
     }
   }
 
-  dialog.append(header, intro, navigation, body)
+  if (releases[0]) setActive(releases[0].jump)
+  body.addEventListener('scroll', () => {
+    const atBottom = body.scrollTop + body.clientHeight >= body.scrollHeight - 2
+    let active = atBottom ? releases.at(-1) : releases[0]
+    if (!atBottom) {
+      for (const release of releases) {
+        if (release.article.offsetTop > body.scrollTop + 24) break
+        active = release
+      }
+    }
+    if (active) setActive(active.jump)
+  }, { passive: true })
+
+  const layout = document.createElement('div')
+  layout.className = 'changelog-layout'
+  layout.append(navigation, body)
+  dialog.append(header, intro, layout)
   dialog.addEventListener('cancel', (event) => {
     event.preventDefault()
     onClose()

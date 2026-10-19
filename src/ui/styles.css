@@ -637,29 +637,49 @@ a.footer-link {
 .help-body { @apply flex-1 min-h-0 overflow-y-auto pr-1 grid gap-2; }
 .help-list { @apply m-0 pl-4 list-disc grid gap-1.5 text-xs leading-relaxed text-[var(--text)]; }
 
-.changelog-dialog { @apply m-auto; }
+.changelog-dialog { @apply m-auto w-[min(900px,94vw)] gap-4; }
 .changelog-dialog:not([open]) { display: none; }
 .changelog-dialog::backdrop { @apply bg-black/60 backdrop-blur-sm; }
 :root[data-theme='lcd'] .changelog-dialog::backdrop { @apply bg-[#20250f]/55 backdrop-blur-none; }
-.changelog-title { @apply m-0 flex items-center gap-2 text-base font-bold text-[var(--accent)]; }
+.changelog-title { @apply m-0 flex items-center gap-2 text-lg font-bold text-[var(--accent)]; }
 .changelog-title .ico { @apply w-5 h-5; }
-.changelog-intro { @apply m-0 text-xs leading-relaxed text-[var(--muted)]; }
-.changelog-nav { @apply flex shrink-0 flex-wrap gap-1.5; }
-.changelog-nav button { @apply px-2 py-1 text-[11px] tabular-nums; }
-.changelog-body { @apply relative block; }
+.changelog-intro { @apply m-0 text-[13px] leading-6 text-[var(--muted)]; }
+.changelog-layout { @apply grid grid-cols-[124px_minmax(0,1fr)] flex-1 min-h-0 gap-6; }
+.changelog-nav { @apply relative flex flex-col gap-1.5 min-h-0 overflow-y-auto pr-3 border-r border-[var(--border)]; }
+.changelog-nav button { @apply shrink-0 px-3 py-2 text-[13px] text-left tabular-nums; box-shadow: none; }
+.changelog-nav button[aria-current] { @apply font-semibold text-[var(--accent)] border-[var(--accent)]; background: var(--panel-2); }
+.changelog-body { @apply relative block py-1 pr-3; scrollbar-gutter: stable; }
 .changelog-body:focus-visible { outline: 1px solid var(--accent); outline-offset: 2px; }
-.changelog-release { @apply pb-5 mb-5 border-b border-[var(--border)] last:border-0 last:mb-0 last:pb-0; }
+.changelog-release { @apply relative ml-1.5 pl-5 pb-9 border-l border-[var(--border)] last:pb-1; }
+.changelog-release::before { content: ''; position: absolute; left: -4px; top: 9px; width: 7px; height: 7px; border-radius: 50%; background: var(--border); }
+.changelog-release[data-current='true']::before { background: var(--accent); }
 .changelog-release-head { @apply flex items-center flex-wrap gap-x-3 gap-y-1 mb-3; }
-.changelog-release-head h3 { @apply m-0 text-base font-bold text-[var(--accent)] tabular-nums; }
-.changelog-release-head time { @apply text-[11px] text-[var(--muted)] tabular-nums; }
-.changelog-current { @apply px-1.5 py-0.5 rounded text-[10px] font-medium text-[var(--accent)] bg-[var(--cell-bg)] border border-[var(--border)]; }
-.changelog-release h4 { @apply mt-4 mb-2 text-xs font-semibold text-[var(--text)]; }
+.changelog-release-head h3 { @apply m-0 text-xl font-bold text-[var(--accent)] tabular-nums; }
+.changelog-release-head time { @apply text-xs text-[var(--muted)] tabular-nums; }
+.changelog-current { @apply px-2 py-0.5 rounded text-[11px] font-medium text-[var(--accent)] bg-[var(--cell-bg)] border border-[var(--border)]; }
+.changelog-release h4 { @apply mt-5 mb-2.5 text-[13px] font-semibold text-[var(--muted)]; }
 .changelog-release p,
-.changelog-release li { @apply text-xs leading-6 text-[var(--text)] break-words; }
-.changelog-release p { @apply my-2; }
-.changelog-release ul { @apply pl-4 my-2 list-disc space-y-1.5; }
-.changelog-release code { @apply px-1 py-0.5 rounded bg-[var(--cell-bg)] text-[11px]; }
+.changelog-release li { @apply text-sm leading-[1.85] text-[var(--text)] break-words; }
+.changelog-release p { @apply my-3; }
+.changelog-release > p:first-of-type { @apply mt-0 text-[15px] leading-7; }
+.changelog-release ul { @apply pl-4 my-3 list-disc space-y-3; }
+.changelog-release li::marker { color: var(--muted); }
+.changelog-release strong { @apply font-semibold; }
+.changelog-release code { @apply px-1 py-0.5 rounded bg-[var(--cell-bg)] text-xs; }
 .changelog-release a { @apply text-[var(--accent)] underline underline-offset-2; }
+.changelog-sources { @apply mt-4 text-xs text-[var(--muted)]; }
+.changelog-sources summary { @apply cursor-pointer w-fit py-1 hover:text-[var(--accent)]; }
+.changelog-sources p { @apply text-xs leading-6 text-[var(--muted)]; }
+@media (prefers-reduced-motion: reduce) {
+  .changelog-dialog { animation: none; }
+}
+@media (max-width: 640px) {
+  .changelog-layout { @apply grid-cols-1 grid-rows-[auto_minmax(0,1fr)] gap-4; }
+  .changelog-nav { @apply flex-row gap-2 overflow-x-auto overflow-y-hidden pr-0 pb-2 border-r-0 border-b; }
+  .changelog-nav button { @apply px-2.5 py-1.5 text-xs; }
+  .changelog-body { @apply pr-1; }
+  .changelog-release { @apply pl-4 pb-8; }
+}
 @media (max-width: 400px) {
   .footer-links { @apply gap-1; }
   .footer-links .footer-link { @apply px-1.5 gap-1; }
