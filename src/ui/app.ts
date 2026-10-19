@@ -1127,7 +1127,7 @@ export class App {
               ownedCopies[0]?.uid ??
               null
             if (window.innerWidth <= 720) {
-              this.body.scrollTo({ top: 0, behavior: 'smooth' })
+              this.body.scrollTo({ top: 0, behavior: this.renderer.manifest.renderer === 'lcd' || window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' })
             }
           }
         } else {

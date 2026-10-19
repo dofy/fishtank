@@ -725,6 +725,14 @@ table.help-matrix td:not(:first-child) { @apply whitespace-nowrap px-0.5; }
 :root[data-theme='lcd'] button:hover:not(:disabled) { filter: none; }
 :root[data-theme='lcd'] :focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
 :root[data-theme='lcd'] button.danger-confirm { color: var(--panel); background: var(--text); }
+:root[data-theme='lcd'] button.variant-chip[aria-pressed='true'] {
+  background: var(--panel-2);
+  color: var(--text);
+  border-color: var(--accent);
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  box-shadow: none;
+}
 :root[data-theme='lcd'] .showcase-backdrop,
 :root[data-theme='lcd'] .showcase-card,
 :root[data-theme='lcd'] .help-modal,
