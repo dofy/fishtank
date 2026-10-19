@@ -1665,7 +1665,7 @@ export class App {
     card.setAttribute('aria-labelledby', 'help-title')
 
     const top = document.createElement('div')
-    top.className = 'book-detail-head'
+    top.className = 'book-detail-head modal-header'
     const title = document.createElement('h2')
     title.className = 'm-0 text-base font-bold text-[var(--accent)]'
     title.id = 'help-title'
@@ -2037,12 +2037,13 @@ export class App {
 
     const card = document.createElement('div')
     card.className = `showcase-card tier-border-${inCeremony ? 1 : child.tier}`
+    card.dataset.phase = inCeremony ? 'ceremony' : 'result'
     card.setAttribute('role', 'dialog')
     card.setAttribute('aria-modal', 'true')
     card.setAttribute('aria-labelledby', 'showcase-title')
 
     const header = document.createElement('div')
-    header.className = 'showcase-header'
+    header.className = 'showcase-header modal-header'
     const title = document.createElement('span')
     title.className = 'showcase-title'
     title.id = 'showcase-title'
@@ -2072,7 +2073,13 @@ export class App {
     this.showcaseCanvas = miniCanvas
     tankWrap.append(miniCanvas)
 
-    card.append(header, tankWrap)
+    const body = document.createElement('div')
+    body.className = 'showcase-body'
+    const content = document.createElement('div')
+    content.className = 'showcase-content'
+    content.append(header, tankWrap)
+    body.append(content)
+    card.append(body)
 
     if (!inCeremony) {
       const nameRow = document.createElement('div')
@@ -2115,14 +2122,21 @@ export class App {
       closeBtn.dataset.shortcut = 'collect'
       closeBtn.setAttribute('aria-keyshortcuts', 'Enter Escape')
 
-      card.append(nameRow, metaLine, chips, closeBtn)
+      const details = document.createElement('div')
+      details.className = 'showcase-details'
+      details.append(nameRow, metaLine, chips)
+      content.append(details)
+      const actions = document.createElement('div')
+      actions.className = 'showcase-actions'
+      actions.append(closeBtn)
+      content.append(actions)
     } else {
       const progressOuter = document.createElement('div')
       progressOuter.className = 'ceremony-bar'
       const progressInner = document.createElement('span')
       progressInner.dataset.ceremonyBar = '1'
       progressOuter.append(progressInner)
-      card.append(progressOuter)
+      content.append(progressOuter)
     }
 
     backdrop.append(card)

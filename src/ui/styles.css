@@ -558,6 +558,7 @@ button.check-row[aria-checked='true'] .check-dot {
 :root[data-theme='lcd'] .showcase-card { border-color: var(--border); box-shadow: 6px 6px 0 var(--border); }
 
 .showcase-header { @apply w-full flex items-center justify-center gap-2; }
+.showcase-body, .showcase-content, .showcase-details, .showcase-actions { display: contents; }
 .showcase-title { @apply text-[15px] max-[720px]:text-[13px] font-bold tracking-[0.06em] uppercase text-[var(--accent)]; }
 .new-badge {
   @apply inline-flex items-center justify-center py-0.5 px-2 text-xs font-extrabold tracking-[0.08em] text-[#1a1102] bg-linear-to-br from-yellow-300 to-amber-500 rounded-full shadow-[0_2px_8px_rgba(245,158,11,0.45)];
@@ -762,8 +763,13 @@ table.help-matrix td:not(:first-child) { @apply whitespace-nowrap px-0.5; }
 @media (prefers-reduced-motion: reduce) {
   .changelog-dialog { animation: none; }
 }
-@media (max-width: 640px) {
+@media (max-width: 640px), (max-width: 960px) and (max-height: 500px) and (pointer: coarse) {
   .showcase-backdrop { @apply p-0 z-130; }
+  .showcase-backdrop, .changelog-dialog::backdrop {
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
   .footer-meta { @apply flex flex-col leading-tight; }
   .footer-separator, .footer-links .btn-text { display: none; }
   .footer-copyright { @apply text-[10px]; }
@@ -778,18 +784,99 @@ table.help-matrix td:not(:first-child) { @apply whitespace-nowrap px-0.5; }
     border: 0;
     border-radius: 0;
     margin: 0;
-    padding: max(14px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(14px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+    padding: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+    overflow: hidden;
+    gap: 0;
     animation: none;
   }
-  .showcase-card { @apply flex flex-col items-center; }
-  .showcase-card .mini-tank-wrap { @apply flex-1; }
-  .showcase-card > :not(.mini-tank-wrap) { @apply shrink-0; }
+  .modal-header {
+    flex: 0 0 auto;
+    align-items: center;
+    min-height: 44px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .modal-header > h2 { font-size: 14px; line-height: 1.4; letter-spacing: 0; }
+  .modal-header .book-close-btn { width: 44px; height: 44px; }
+  .showcase-card { display: flex; flex-direction: column; align-items: center; }
+  .showcase-header { justify-content: center; min-height: 32px; padding: 0; border: 0; }
+  .showcase-title { font-size: 14px; letter-spacing: 0; }
+  .showcase-body {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0;
+    min-height: 0;
+    width: 100%;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 16px 0;
+  }
+  .showcase-content {
+    display: grid;
+    flex: 0 0 auto;
+    width: 100%;
+    max-width: 480px;
+    margin: auto;
+    gap: 16px;
+  }
+  .showcase-details { display: grid; gap: 8px; }
+  .showcase-name-row { min-width: 0; }
+  .showcase-name { font-size: 20px; line-height: 1.35; overflow-wrap: anywhere; }
+  .showcase-meta { font-size: 13px; line-height: 1.5; }
+  .showcase-chips { gap: 6px; margin-top: 4px; }
+  .showcase-chip { padding: 5px 8px; line-height: 1.4; }
+  .showcase-actions {
+    display: block;
+    width: 100%;
+  }
+  .showcase-btn { display: block; max-width: 480px; min-height: 44px; margin: 0 auto; }
+  .help-modal > .modal-header { margin-bottom: 12px; }
+  .help-tabs { gap: 6px; margin-bottom: 12px; }
+  .help-tabs button { min-height: 36px; }
+  .help-modal > .help-body { align-content: start; padding: 0 0 12px; }
+  .help-list { gap: 12px; }
   :root[data-theme='lcd'] .help-modal, :root[data-theme='lcd'] .showcase-card { box-shadow: none; }
-  .changelog-layout { @apply grid-cols-1 grid-rows-[auto_minmax(0,1fr)] gap-4; }
+  :root[data-theme='lcd'] .showcase-backdrop,
+  :root[data-theme='lcd'] .changelog-dialog::backdrop { background: transparent; }
+  :root[data-theme='lcd'] .help-modal,
+  :root[data-theme='lcd'] .showcase-card { background: color-mix(in srgb, var(--panel) 94%, transparent); }
+  .changelog-layout { @apply grid-cols-1 grid-rows-[auto_minmax(0,1fr)] gap-3; }
   .changelog-nav { @apply flex-row gap-2 overflow-x-auto overflow-y-hidden pr-0 pb-2 border-r-0 border-b; }
   .changelog-nav button { @apply px-2.5 py-1.5 text-xs; }
   .changelog-body { @apply pr-1; }
-  .changelog-release { @apply pl-4 pb-8; }
+  .changelog-release { @apply pl-4 pb-6; }
+  .changelog-release-head { margin-bottom: 8px; }
+  .changelog-release-head h3 { font-size: 18px; }
+  .changelog-release ul { margin: 8px 0; }
+  .changelog-release li { font-size: 13px; line-height: 1.7; }
+}
+
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  @media (max-width: 640px), (max-width: 960px) and (max-height: 500px) and (pointer: coarse) {
+    :root[data-theme='realistic'] .help-modal,
+    :root[data-theme='realistic'] .showcase-card {
+      background: color-mix(in srgb, var(--panel) 84%, transparent);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+  }
+}
+
+@media (min-width: 641px) and (max-width: 960px) and (max-height: 500px) and (pointer: coarse) {
+  .showcase-card[data-phase='result'] .showcase-content {
+    max-width: 800px;
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    align-items: center;
+    gap: 12px 18px;
+  }
+  .showcase-card[data-phase='result'] .showcase-header { grid-column: 1 / -1; }
+  .showcase-card[data-phase='result'] .mini-tank-wrap { grid-column: 1; grid-row: 2 / 4; }
+  .showcase-card[data-phase='result'] .showcase-details { grid-column: 2; grid-row: 2; }
+  .showcase-card[data-phase='result'] .showcase-actions { grid-column: 2; grid-row: 3; }
+}
+
+@media (max-width: 360px) {
+  .shortcut-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }

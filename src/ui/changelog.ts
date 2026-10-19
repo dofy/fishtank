@@ -45,7 +45,7 @@ export function renderChangelogDialog(
   dialog.setAttribute('aria-labelledby', 'changelog-title')
 
   const header = document.createElement('div')
-  header.className = 'book-detail-head'
+  header.className = 'book-detail-head modal-header'
   const title = document.createElement('h2')
   title.id = 'changelog-title'
   title.className = 'changelog-title'
