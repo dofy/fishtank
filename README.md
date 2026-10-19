@@ -65,9 +65,9 @@
 
 ## 📖 游戏内帮助 / In-game Help
 
-按 `H` / `?` 或点击底栏「帮助」，先看看游戏说明，再按需切换繁育概率、等级解锁、星级属性、品阶经验和快捷键。概率按双亲中较低的星级分组，等级表按等级段翻页，所有列和当前页数据都能完整阅读，无需横向滚动。手机上帮助和更新日志会铺满屏幕，底栏也会完整显示版本号及各个入口。
+按 `H` / `?` 或点击底栏「帮助」，先看看游戏说明，再按需切换繁育概率、等级解锁、星级属性、品阶经验和快捷键。概率按双亲中较低的星级分组，等级表按等级段翻页，所有列和当前页数据都能完整阅读，无需横向滚动。小屏幕上，帮助、更新日志、繁育及合成结果使用满屏弹窗；底栏保留完整版本号，三个入口显示为旁边的图标，仍可悬停查看名称。桌面保留居中弹窗和文字入口。
 
-Open Help with `H` / `?` or the footer button. Start with the game guide, then browse breeding odds, level unlocks, tier stats, grade EXP and shortcuts. Tables use tier or level pages so every column fits without horizontal scrolling. Help and Changelog fill small screens; the footer keeps the full version and all links visible.
+Open Help with `H` / `?` or the footer button. Start with the game guide, then browse breeding odds, level unlocks, tier stats, grade EXP and shortcuts. Tables use tier or level pages so every column fits without horizontal scrolling. Help, Changelog, breeding and merge results fill small screens. Three labeled icons sit beside the full version in the footer, with names available on hover and to screen readers. Desktop keeps centered dialogs and text links.
 
 Help 分页支持左右方向键切换、`Home` / `End` 跳至首尾页；按 `Esc` 关闭并返回原入口。
 

@@ -711,11 +711,14 @@ table.help-matrix td:not(:first-child) { @apply whitespace-nowrap px-0.5; }
   .changelog-dialog { animation: none; }
 }
 @media (max-width: 640px) {
-  .help-backdrop { @apply p-0; }
-  footer.app-footer { @apply flex-col items-stretch gap-1.5; }
-  .footer-links { @apply grid grid-cols-3 gap-2; }
-  .footer-links .footer-link { @apply justify-center min-h-8; }
-  .help-modal {
+  .showcase-backdrop { @apply p-0 z-130; }
+  .footer-meta { @apply flex flex-col leading-tight; }
+  .footer-separator, .footer-links .btn-text { display: none; }
+  .footer-copyright { @apply text-[10px]; }
+  .footer-links { @apply gap-1; }
+  .footer-links .footer-link { @apply justify-center w-8 h-8 p-0; }
+  .footer-links .ico { @apply w-4 h-4; }
+  .help-modal, .showcase-card {
     width: 100vw;
     height: 100dvh;
     max-height: 100dvh;
@@ -726,16 +729,15 @@ table.help-matrix td:not(:first-child) { @apply whitespace-nowrap px-0.5; }
     padding: max(14px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(14px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
     animation: none;
   }
-  :root[data-theme='lcd'] .help-modal { box-shadow: none; }
+  .showcase-card { @apply flex flex-col items-center; }
+  .showcase-card .mini-tank-wrap { @apply flex-1; }
+  .showcase-card > :not(.mini-tank-wrap) { @apply shrink-0; }
+  :root[data-theme='lcd'] .help-modal, :root[data-theme='lcd'] .showcase-card { box-shadow: none; }
   .changelog-layout { @apply grid-cols-1 grid-rows-[auto_minmax(0,1fr)] gap-4; }
   .changelog-nav { @apply flex-row gap-2 overflow-x-auto overflow-y-hidden pr-0 pb-2 border-r-0 border-b; }
   .changelog-nav button { @apply px-2.5 py-1.5 text-xs; }
   .changelog-body { @apply pr-1; }
   .changelog-release { @apply pl-4 pb-8; }
-}
-@media (max-width: 400px) {
-  .footer-links { @apply gap-1; }
-  .footer-links .footer-link { @apply px-1.5 gap-1; }
 }
 
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }

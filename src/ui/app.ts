@@ -1597,7 +1597,15 @@ export class App {
     const c = this.t
     const left = document.createElement('div')
     left.className = 'footer-meta'
-    left.textContent = `Fishtank v${APP_VERSION} · © 2026 Seven Yu`
+    const version = document.createElement('span')
+    version.textContent = `Fishtank v${APP_VERSION}`
+    const separator = document.createElement('span')
+    separator.className = 'footer-separator'
+    separator.textContent = ' · '
+    const copyright = document.createElement('span')
+    copyright.className = 'footer-copyright'
+    copyright.textContent = '© 2026 Seven Yu'
+    left.append(version, separator, copyright)
 
     const right = document.createElement('div')
     right.className = 'footer-links'
@@ -1605,7 +1613,8 @@ export class App {
     const helpLink = document.createElement('button')
     helpLink.type = 'button'
     helpLink.className = 'footer-link'
-    helpLink.innerHTML = `<span class="ico">${HELP_ICON}</span><span>${c.helpBtn}</span>`
+    helpLink.innerHTML = `<span class="ico">${HELP_ICON}</span><span class="btn-text">${c.helpBtn}</span>`
+    helpLink.setAttribute('aria-label', c.helpBtn)
     helpLink.onclick = () => {
       sound.play('click')
       this.openHelp()
@@ -1619,6 +1628,7 @@ export class App {
       this.renderShowcase()
     })
     changelogLink.className = 'footer-link'
+    changelogLink.setAttribute('aria-label', c.changelogBtn)
     changelogLink.dataset.changelog = '1'
     bindShortcut(changelogLink, 'changelog')
 
@@ -1628,7 +1638,8 @@ export class App {
     ghLink.rel = 'noopener noreferrer'
     ghLink.className = 'footer-link'
     ghLink.title = 'GitHub: dofy/fishtank'
-    ghLink.innerHTML = `<span class="ico">${GITHUB_ICON}</span><span>GitHub</span>`
+    ghLink.setAttribute('aria-label', 'GitHub')
+    ghLink.innerHTML = `<span class="ico">${GITHUB_ICON}</span><span class="btn-text">GitHub</span>`
 
     right.append(helpLink, changelogLink, ghLink)
     this.footer.replaceChildren(left, right)
@@ -2025,11 +2036,15 @@ export class App {
 
     const card = document.createElement('div')
     card.className = `showcase-card tier-border-${inCeremony ? 1 : child.tier}`
+    card.setAttribute('role', 'dialog')
+    card.setAttribute('aria-modal', 'true')
+    card.setAttribute('aria-labelledby', 'showcase-title')
 
     const header = document.createElement('div')
     header.className = 'showcase-header'
     const title = document.createElement('span')
     title.className = 'showcase-title'
+    title.id = 'showcase-title'
     title.textContent = inCeremony
       ? kind === 'merge'
         ? c.mergingAnimTitle
