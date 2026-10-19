@@ -25,5 +25,6 @@
 - `pnpm build` 通过，包含 TypeScript 类型检查和 Vite 生产构建。
 - 本地生产构建已验证实际繁育、保存及模拟离线成年结算，控制台无警告或错误。
 - 同步更新页面版本、数值文档和 Service Worker 缓存版本为 `1.4.7`。
+- 已部署至 [fishtank.phpz.org](https://fishtank.phpz.org/)，线上页面显示 `v1.4.7`；HTML、JS、CSS 和 Service Worker 与本地生产构建逐字节一致。提交及 Cloudflare 部署标识见 [部署记录](docs/DEPLOYMENTS.md)。
 
 详细规则见 [游戏帮助与数值说明](docs/BALANCE.md)。
