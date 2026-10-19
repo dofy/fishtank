@@ -178,7 +178,6 @@ nav.tabs button {
 }
 nav.tabs .btn-text { @apply max-[720px]:hidden; }
 nav.tabs .ico { @apply max-[720px]:w-[17px] max-[720px]:h-[17px]; }
-.shortcut-hint { @apply ml-1 px-1 rounded border border-current text-[9px] leading-4 opacity-60 max-[720px]:hidden; font-family: inherit; }
 .shortcut-guide { @apply grid gap-2 text-xs leading-relaxed; }
 .shortcut-guide dl { @apply m-0; }
 .shortcut-tabs { @apply grid grid-cols-6 gap-x-3 gap-y-1.5 pb-2 border-b border-[var(--border)] max-[640px]:grid-cols-3; }

@@ -27,7 +27,7 @@
 
 **Fishtank** 是一款灵感源自 Steam 桌面放置游戏《[PC FISH: Taskbar Aquarium](https://store.steampowered.com/app/4842670/PC_FISH_Taskbar_Aquarium/?l=tchinese)》的网页端放置养成水族箱。无需注册登录、即开即玩，既可以在工作间隙体验配对繁育与全图鉴收集的乐趣，也可以一键切换至**全屏沉浸模式**，伴随轻柔的海洋白噪音与 Lo-Fi 音乐作为桌面生态屏保。
 
-版本更新记录见 [CHANGELOG](CHANGELOG.md)，完整玩法与数值见 [游戏帮助](docs/BALANCE.md)。
+当前版本 **v1.5.0**。版本更新记录见 [CHANGELOG](CHANGELOG.md)，完整玩法与数值见 [游戏帮助](docs/BALANCE.md)。
 
 ---
 
@@ -63,11 +63,13 @@
 
 ---
 
+<a id="keyboard-shortcuts"></a>
+
 ## ⌨️ 快捷键 / Keyboard Shortcuts
 
-直接按单键即可，无需 Ctrl 或 Cmd。游戏内「帮助」也有完整说明，按钮悬停提示会显示对应按键。
+自 v1.5.0 起，直接按单键即可，无需 Ctrl 或 Cmd。游戏内「帮助」也有完整说明，按钮悬停提示会显示对应按键。
 
-Use single keys without Ctrl or Cmd. The in-game Help and button tooltips show the same shortcuts.
+Available since v1.5.0. Use single keys without Ctrl or Cmd. The in-game Help and button tooltips show the same shortcuts.
 
 | 按键 / Key | 操作 / Action |
 | --- | --- |

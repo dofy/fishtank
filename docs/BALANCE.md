@@ -1,4 +1,8 @@
-# Balance & Game Data Guide / 游戏帮助与数值说明 (`v1.4.10`)
+# Balance & Game Data Guide / 游戏帮助与数值说明 (`v1.5.0`)
+
+Keyboard shortcuts were added in `v1.5.0`; see [Keyboard Shortcuts](../README.md#keyboard-shortcuts) or the in-game Help (`H` / `?`). Game rules and balance remain unchanged in this release.
+
+`v1.5.0` 新增键盘快捷键，完整按键见 [README 快捷键说明](../README.md#keyboard-shortcuts)，也可按 `H` / `?` 打开游戏内帮助。本版玩法与数值规则保持不变。
 
 This document details the gameplay mechanics, progression curves, and breeding probabilities for **Fishtank**, modeled on [PC FISH: Taskbar Aquarium](https://store.steampowered.com/app/4842670/PC_FISH_Taskbar_Aquarium/).
 

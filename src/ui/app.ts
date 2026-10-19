@@ -99,7 +99,7 @@ import {
 
 export { formatClock, stars } from './dom'
 
-export const APP_VERSION = '1.4.10'
+export const APP_VERSION = '1.5.0'
 export const GITHUB_URL = 'https://github.com/dofy/fishtank'
 
 export interface AppHooks {
@@ -498,7 +498,7 @@ export class App {
         })
         b.setAttribute('aria-pressed', String(this.tab === id))
         b.title = c.tabs[id]
-        bindShortcut(b, `tab-${id}`, true)
+        bindShortcut(b, `tab-${id}`)
         return b
       }),
     )

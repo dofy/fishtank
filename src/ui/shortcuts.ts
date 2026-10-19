@@ -30,16 +30,9 @@ export function shortcutLabels(action: ShortcutAction): string[] {
   )
 }
 
-export function bindShortcut(button: HTMLButtonElement, action: ShortcutAction, visible = false): void {
+export function bindShortcut(button: HTMLButtonElement, action: ShortcutAction): void {
   const keys = SHORTCUTS.find(shortcut => shortcut.action === action)!.keys
   button.dataset.shortcut = action
   button.setAttribute('aria-keyshortcuts', keys.join(' '))
   button.title = `${button.title || button.textContent?.trim() || ''} (${shortcutLabels(action).join(' / ')})`
-  if (visible) {
-    const hint = document.createElement('kbd')
-    hint.className = 'shortcut-hint'
-    hint.setAttribute('aria-hidden', 'true')
-    hint.textContent = shortcutLabels(action)[0]!
-    button.append(hint)
-  }
 }
