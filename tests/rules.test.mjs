@@ -23,6 +23,7 @@ let GpuTimer
 let FishDeformation
 let pwa
 let drawCeremonyLight
+let lcdElectricity
 
 before(async () => {
   Object.defineProperty(globalThis, 'localStorage', {
@@ -41,6 +42,7 @@ before(async () => {
   benchmark = await server.ssrLoadModule('/src/lab/benchmark.ts')
   pwa = await server.ssrLoadModule('/src/pwa.ts')
   ;({ drawCeremonyLight } = await server.ssrLoadModule('/src/render/ceremony.ts'))
+  ;({ lcdElectricity } = await server.ssrLoadModule('/src/render/lcd-electricity.ts'))
   ;({ FishDeformation } = await server.ssrLoadModule('/src/lab/fish-motion.ts'))
   shape = await server.ssrLoadModule('/src/render/shape.ts')
   ;({ GpuTimer } = await server.ssrLoadModule('/src/lab/gpu-timer.ts'))
@@ -55,6 +57,40 @@ before(async () => {
 })
 
 beforeEach(() => storage.clear())
+
+test('LCD electricity stays on the cell grid at every phase and freezes with reduced motion', () => {
+  for (const sp of species) for (const cell of [2, 4, 6]) {
+    for (const time of [0, 0.05, 0.12, 0.5, 1.1]) {
+      const frame = lcdElectricity(127.8, 91.4, sp.body.length * 4.2, sp.body.depth, time, cell)
+      assert.equal(frame.x % cell, 0)
+      assert.equal(frame.y % cell, 0)
+      assert.equal(frame.dots.length, 4)
+      for (const dot of frame.dots) {
+        assert.equal(dot.x % cell, 0)
+        assert.equal(dot.y % cell, 0)
+        assert.equal(dot.size, cell - 1)
+      }
+    }
+    assert.deepEqual(
+      lcdElectricity(127.8, 91.4, 70, sp.body.depth, 0, cell, true),
+      lcdElectricity(127.8, 91.4, 70, sp.body.depth, 19, cell, true),
+    )
+  }
+  assert.notDeepEqual(lcdElectricity(100, 100, 60, 0.3, 0, 4), lcdElectricity(100, 100, 60, 0.3, 0.05, 4), 'normal electricity still flickers and trembles')
+})
+
+test('LCD interface and scene palettes remain monochrome in both day and night modes', async () => {
+  const manifest = JSON.parse(await readFile(new URL('../public/themes/lcd/manifest.json', import.meta.url), 'utf8'))
+  for (const palette of [manifest.palette, manifest.lightPalette, manifest.scene, manifest.lightScene]) {
+    for (const [name, value] of Object.entries(palette)) {
+      const hex = value.match(/^#([0-9a-f]{6})$/i)
+      const rgba = value.match(/^rgba?\(([0-9]+),\s*([0-9]+),\s*([0-9]+)/)
+      if (!hex && !rgba) continue
+      const [r, g, b] = hex ? [0, 2, 4].map(offset => parseInt(hex[1].slice(offset, offset + 2), 16)) : rgba.slice(1).map(Number)
+      assert.ok(g >= r && r >= b, `${name}: ${value} must stay within the green LCD palette`)
+    }
+  }
+})
 
 test('the new uncommon eel joins the uniform species pool without moving existing fish', () => {
   const pool = species.filter(s => s.tier === 2)

@@ -38,7 +38,8 @@ html, body {
 }
 
 :root[data-theme='lcd'] body {
-  background-image: radial-gradient(var(--border) 1px, transparent 1px);
+  /* Hard stops leave 2px square dots, without a rounded or feathered edge. */
+  background-image: linear-gradient(var(--bg) 14px, transparent 14px), linear-gradient(90deg, var(--border) 2px, transparent 2px);
   background-size: 16px 16px;
 }
 
@@ -713,6 +714,44 @@ table.help-matrix td:not(:first-child) { @apply whitespace-nowrap px-0.5; }
 .changelog-sources { @apply mt-4 text-xs text-[var(--muted)]; }
 .changelog-sources summary { @apply cursor-pointer w-fit py-1 hover:text-[var(--accent)]; }
 .changelog-sources p { @apply text-xs leading-6 text-[var(--muted)]; }
+
+/* LCD uses discrete state changes and hard edges throughout the UI. */
+:root[data-theme='lcd'] button,
+:root[data-theme='lcd'] .cell,
+:root[data-theme='lcd'] .bar > span,
+:root[data-theme='lcd'] .check-box,
+:root[data-theme='lcd'] .check-dot,
+:root[data-theme='lcd'] .toast.toast-out { transition: none; }
+:root[data-theme='lcd'] button:hover:not(:disabled) { filter: none; }
+:root[data-theme='lcd'] :focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+:root[data-theme='lcd'] button.danger-confirm { color: var(--panel); background: var(--text); }
+:root[data-theme='lcd'] .showcase-backdrop,
+:root[data-theme='lcd'] .showcase-card,
+:root[data-theme='lcd'] .help-modal,
+:root[data-theme='lcd'] .toast { animation: none; }
+:root[data-theme='lcd'] .toast.toast-out { transform: none; }
+:root[data-theme='lcd'] .book-detail { box-shadow: 4px 4px 0 var(--border); }
+:root[data-theme='lcd'] .bg-side { mask-image: none; }
+:root[data-theme='lcd'] .bg-float-slow,
+:root[data-theme='lcd'] .bg-float-mid,
+:root[data-theme='lcd'] .bg-sway { animation-timing-function: steps(8, end); }
+:root[data-theme='lcd'][data-immersive='on'] header.hud {
+  background: var(--panel);
+  backdrop-filter: none;
+  box-shadow: 4px 4px 0 var(--border);
+  transition: none;
+}
+:root[data-theme='lcd'] .changelog-release::before,
+:root[data-theme='lcd'] .changelog-current,
+:root[data-theme='lcd'] .changelog-release code,
+:root[data-theme='lcd'] .shortcut-guide kbd,
+:root[data-theme='lcd'] .cell .pick-order { border-radius: 0; }
+:root[data-theme='lcd'] .vol-slider { appearance: none; height: 16px; background: transparent; }
+:root[data-theme='lcd'] .vol-slider::-webkit-slider-runnable-track { height: 6px; border: 1px solid var(--border); background: var(--panel-2); }
+:root[data-theme='lcd'] .vol-slider::-webkit-slider-thumb { appearance: none; width: 14px; height: 14px; margin-top: -5px; border: 2px solid var(--text); border-radius: 0; background: var(--panel); }
+:root[data-theme='lcd'] .vol-slider::-moz-range-track { height: 4px; border: 1px solid var(--border); background: var(--panel-2); }
+:root[data-theme='lcd'] .vol-slider::-moz-range-thumb { width: 10px; height: 10px; border: 2px solid var(--text); border-radius: 0; background: var(--panel); }
+
 @media (prefers-reduced-motion: reduce) {
   .changelog-dialog { animation: none; }
 }

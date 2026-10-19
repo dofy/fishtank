@@ -16,7 +16,7 @@
     "--muted": "#7a9659",
     "--accent": "#c8eb96",
     "--accent-2": "#c8eb96",
-    "--danger": "#d88b8b",
+    "--danger": "#b8d88b",
     "--radius": "0px",
     "--font": "ui-monospace, 'SFMono-Regular', 'Courier New', monospace",
     "--cell-bg": "rgba(184,216,139,0.08)"

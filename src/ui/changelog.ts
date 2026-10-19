@@ -131,7 +131,7 @@ export function renderChangelogDialog(
         setActive(jump)
         body.scrollTo({
           top: target.offsetTop,
-          behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+          behavior: document.documentElement.dataset.theme === 'lcd' || window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
         })
       }
       releases.push({ article, jump })

@@ -3,6 +3,7 @@ import type { Renderer } from '../render/renderer'
 import type { Agent, SceneView } from '../render/scene'
 import { FishDeformation } from './fish-motion'
 import { sceneColorsFor } from '../render/theme'
+import { lcdElectricity } from '../render/lcd-electricity'
 import { NativeEnvironment } from './native-environment'
 import { GpuTimer } from './gpu-timer'
 
@@ -178,10 +179,17 @@ export class PixiTank {
         this.nodes.set(agent.fish.uid, node)
         this.fishLayer.addChild(node.mesh)
       }
-      this.animateFish(node, agent, view, dt, lcd, motion)
-      if ((agent.shockedTimer ?? 0) > 0 || (agent.dischargingTimer ?? 0) > 0) {
+      const electric = (agent.shockedTimer ?? 0) > 0 || (agent.dischargingTimer ?? 0) > 0
+      const cell = Math.max(2, renderer.manifest.cell ?? 4)
+      const lcdEffect = lcd && electric ? lcdElectricity(agent.x, agent.y, art.length, agent.species.body.depth, view.time, cell, view.reducedMotion || !motion) : null
+      this.animateFish(node, agent, view, dt, lcd, motion, cell)
+      if (lcdEffect) {
         this.hadSparks = true
-        const color = lcd ? sceneColorsFor(renderer.manifest, !!view.night).ink : '#b9f4ff'
+        node.mesh.position.set(lcdEffect.x, lcdEffect.y)
+        for (const dot of lcdEffect.dots) this.sparks.rect(dot.x, dot.y, dot.size, dot.size)
+        this.sparks.fill(sceneColorsFor(renderer.manifest, !!view.night).ink)
+      } else if (electric) {
+        this.hadSparks = true
         const strong = (agent.dischargingTimer ?? 0) > 0
         const radius = art.length * (strong ? 0.7 : 0.48)
         const phase = view.reducedMotion ? 0 : Math.floor(view.time * 14)
@@ -191,7 +199,7 @@ export class PixiTank {
           const y = agent.y + Math.sin(angle) * radius * 0.5
           this.sparks.moveTo(x, y).lineTo(x + 3, y - 5).lineTo(x + 6, y - 2).lineTo(x + 9, y - 7)
         }
-        this.sparks.stroke({ color, width: lcd ? 2 : 1.3, alpha: 0.8 })
+        this.sparks.stroke({ color: '#b9f4ff', width: 1.3, alpha: 0.8 })
       }
     }
     for (const [key, art] of this.textures) {
@@ -277,14 +285,14 @@ export class PixiTank {
     return { mesh, deformation: new FishDeformation(agent.species.body, art.length, art.width, art.height, art.pad, vertices.slice(), cols), facing: agent.dir, textureKey }
   }
 
-  private animateFish(node: FishNode, a: Agent, view: SceneView, dt: number, lcd: boolean, motion: boolean): void {
+  private animateFish(node: FishNode, a: Agent, view: SceneView, dt: number, lcd: boolean, motion: boolean, cell: number): void {
     const { mesh } = node
     const reduced = view.reducedMotion || !motion
     const shocked = (a.shockedTimer ?? 0) > 0
     const t = reduced ? 0 : view.time + a.phase
     node.facing += (a.dir - node.facing) * Math.min(1, dt * 12)
     mesh.scale.x = lcd || reduced ? a.dir : node.facing
-    mesh.position.set(lcd ? Math.round(a.x / 4) * 4 : a.x, lcd ? Math.round(a.y / 4) * 4 : a.y + (a.dropping || shocked || reduced ? 0 : Math.sin(t * 2) * 2.5))
+    mesh.position.set(lcd ? Math.round(a.x / cell) * cell : a.x, lcd ? Math.round(a.y / cell) * cell : a.y + (a.dropping || shocked || reduced ? 0 : Math.sin(t * 2) * 2.5))
     mesh.rotation = lcd ? 0 : (a.tilt ?? 0) * a.dir
     mesh.alpha = 1
     // LCD poses are sampled above. Frozen or shocked meshes upload only on transition.
