@@ -4,6 +4,36 @@
 
 ## v1.8.0 — 2026-10-20
 
+### 同日修订 r2
+
+| 项目 | 记录 |
+| --- | --- |
+| 部署时间 | 2026-10-20 17:14:09（Asia/Shanghai） |
+| 部署源代码提交 | `4a2cc2ce1ea4e8f78d4493960620ebf66d43035d` |
+| Cloudflare Deployment ID | `b595ab18-ab22-4141-a7b2-78191e6c92ea` |
+| Cloudflare Version ID | `e4ca669c-8a82-4249-90af-433d2e543d0d` |
+| 发布时流量 | 本次版本 100% |
+| Service Worker 缓存 | `fishtank-pwa-v1.8.0-r2` |
+
+- 发布 14 枚独立勋章及多枚挂载、鱼种/勋章分页、随机同种鱼群与浮游生物觅食，统一详情图标按钮与触屏布局。保留原有推荐配对、锁定保护和存档迁移/备份；修复锁定保存失败后的状态回滚，旧档元数据继续兼容。
+- 118 项测试、类型检查、构建与差异检查通过；最终构建验证 684 组响应式状态及四组完整玩法流程，另四组验证场景互动与临时绘图资源清理。完整范围见 [发布验收](RELEASE_VERIFICATION.md)。
+- 两域名各实测写实/LCD × PixiJS/Canvas，共八组：繁育 20→21、合成 21→12、锁定/解锁失败回滚、放生取消、锁定鱼展示、造景翻转、14 枚勋章挂取/保存失败回滚、非法导入拒绝、导入及刷新保存、帮助与日志。八组新版缓存激活后、资源缓存完整时离线重开均成功，手动 Canvas 未加载 GPU 渲染模块，无页面异常。
+- 另在两域名分别模拟 r1 Service Worker 升级至 r2，确认控制权切换、旧缓存清理和鱼群进度保留；新资源缓存完整后均可离线重开。
+- 两个域名分别模拟 WebGL 初始化失败，写实与 LCD 共四组均自动回退 Canvas，画面及推荐配对正常。两个域名全部 23 个部署文件与本地 SHA-256 一致，共 46/46。
+- 两域名保持 [fishtank.phpz.org](https://fishtank.phpz.org/) 与 [fish.yahaha.net](https://fish.yahaha.net/)，两者均保留 `?renderer=canvas`。未修改依赖及路由；使用本机已有 Wrangler 4.134.0 完成发布。手机为 Chromium 模拟，未做实体手机性能测量。
+
+主要资源 SHA-256：
+
+| 资源 | SHA-256 |
+| --- | --- |
+| `index.html` | `abf54b4e2232e17cd247d3a5680bbb9338d6c337393b4f1af3767ed3a06e274c` |
+| `sw.js` | `cb9fe83cd7b093a3d6dd9311d428fc2fe1b92074a0898d430a67e213b44f974e` |
+| `assets/pixi-presenter-CCBGrloP.js` | `159388043f0c3ad6ec514dbcb0d7e622175b29cec8183f6a616a96b324cfaad8` |
+| `assets/index-B2RT_Srd.css` | `fc0f769523faf9da018792213e9958167ba2293b237f4fa0dbd547afe6048e76` |
+| `assets/index-D6inlYAT.js` | `d860696fe73f2b207b66e1a07dddb48e648d592906123e2fe5bf31b2177277ba` |
+
+### 首次发布 r1
+
 | 项目 | 记录 |
 | --- | --- |
 | 部署时间 | 2026-10-20 15:10:57（Asia/Shanghai） |
