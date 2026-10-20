@@ -2,6 +2,33 @@
 
 发布约定：同一天的小修补合并覆盖当前版本，并归入同一条 CHANGELOG；较大的功能或体验更新再升级版本号。同版重新发布可单独递增 Service Worker 缓存修订号，两个自定义域名必须同时保留。
 
+## v1.8.0 — 2026-10-20
+
+| 项目 | 记录 |
+| --- | --- |
+| 部署时间 | 2026-10-20 15:10:57（Asia/Shanghai） |
+| 部署源代码提交 | `a0394fe8024d7176fc729367bec662a3358d602b` |
+| Cloudflare Deployment ID | `f8401965-0263-4b0b-a85f-02d111df48b4` |
+| Cloudflare Version ID | `e59bc510-0e0b-4918-8eec-4da02208146c` |
+| 发布时流量 | 本次版本 100% |
+| Service Worker 缓存 | `fishtank-pwa-v1.8.0-r1` |
+
+- 发布收集追踪与配对推荐、昵称/收藏/锁定、存档迁移与备份、六套布景、鱼景互动及六项永久收集纪念；统一卡片与跨页状态，优化触屏、横屏和矮窗口。星级、品阶及经验规则不变，schema v1 旧档继续兼容。
+- 125 项测试、类型检查、生产构建与差异检查通过。正式构建重跑 640 组响应式页面、120 组追踪/选中状态、完整存档与玩法流程、布景失败回滚、异步导入冲突、八组触控和四组鱼景渲染。完整范围见 [发布验收](RELEASE_VERIFICATION.md)。
+- 两域名各复测写实/LCD × PixiJS/Canvas，共八组，实际完成繁育 19→20、合成 20→11、收回/重新展示、布景保存/修改/恢复、纪念牌、锁定保护、目标品阶、导入预览/取消、帮助与日志。刷新后保留进度、目标及保护状态；Canvas 没有加载 GPU 模块，无页面异常或横向溢出。
+- 八组均确认新缓存激活，并在完成资源缓存后离线重开成功。另在两个域名分别模拟 WebGL 初始化失败，写实与 LCD 均自动回退 Canvas，画面及配对操作正常。两个域名全部 23 个部署文件与本地 SHA-256 一致，共 46/46。
+- 保留 [fishtank.phpz.org](https://fishtank.phpz.org/) 与 [fish.yahaha.net](https://fish.yahaha.net/)，以及各自的 [Canvas 原域名入口](https://fishtank.phpz.org/?renderer=canvas) / [Canvas 备用域名入口](https://fish.yahaha.net/?renderer=canvas)。手机验证使用 Chromium 视口与触控模拟，未做实体手机测试。
+
+主要资源 SHA-256：
+
+| 资源 | SHA-256 |
+| --- | --- |
+| `index.html` | `a55d70f3418dcac49a3bb06e5f3aadb754b8ae7996ce6b27ac1f16bbae5afaf2` |
+| `sw.js` | `c68d85add024140568e994687c60ee96df251edfece102ff9116797a175a547d` |
+| `assets/index-BRUHOJIS.css` | `b8948add12a55a3e40f9e0d3a6ec859613dee27c66b0126008ced6dd4736191f` |
+| `assets/index-Dq6WkoY3.js` | `f3ff9309d433502647507e40875a0c1b0eaa2a8ba81893097e0c679ca2608d93` |
+| `assets/pixi-presenter-CeEs757i.js` | `70661c5369c397f585cabec235c6d7d75747ff3f96d343a0a0494d1ea770403b` |
+
 ## v1.7.0 — 2026-10-19
 
 ### 同日修补：小鱼收回动画
