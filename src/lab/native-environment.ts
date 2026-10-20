@@ -312,8 +312,14 @@ export class NativeEnvironment {
       let g = this.foods.get(pellet.id)
       if (!g) {
         g = this.graphic(this.foodLayer)
-        if (lcd) g.rect(0, 0, c - 1, c - 1).fill(s.ink)
-        else g.circle(0, 0, 3.8).fill('#f59e0b').circle(-1, -1, 1.5).fill('#fef08a')
+        if (lcd) {
+          g.rect(0, 0, c - 1, c - 1)
+          if (pellet.kind === 'plankton') g.rect(-c, -c, c - 1, c - 1).rect(c, c, c - 1, c - 1)
+          g.fill(s.ink)
+        } else if (pellet.kind === 'plankton') {
+          g.moveTo(-3, 1).quadraticCurveTo(-9, -2, -8, -5).moveTo(2, 2).quadraticCurveTo(7, 5, 8, 2).stroke({color:'#90d9b5',width:1.2})
+          g.ellipse(0, 0, 4.5, 2.6).fill('#72cba4').circle(1, -0.8, 1.3).fill('#e0f6bd')
+        } else g.circle(0, 0, 3.8).fill('#f59e0b').circle(-1, -1, 1.5).fill('#fef08a')
         this.foods.set(pellet.id, g)
       }
       g.position.set(lcd ? Math.round(pellet.x / c) * c : pellet.x, lcd ? Math.round(pellet.y / c) * c : pellet.y)

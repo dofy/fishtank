@@ -59,15 +59,10 @@ export const CLOSE_ICON =
 // Match the existing 16px, theme-colored UI icon family; no bitmap or emoji assets.
 const actionSvg = (paths: string): string => `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${paths}</svg>`
 export const ACTION_ICONS = {
-  apply: actionSvg('<path d="m5 3 7 5-7 5V3Z"/>'),
+  place: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10v10h18V10M12 2v11m-4-4 4 4 4-4M6 16h12"/></svg>',
+  store: actionSvg('<path d="M2.5 9v4.5h11V9M8 2v8m-3-3 3 3 3-3"/>'),
   current: actionSvg('<circle cx="8" cy="8" r="5.5"/><path d="m5.3 8 1.8 1.8 3.6-3.6"/>'),
-  update: actionSvg('<path d="M3 2.5h8l2 2V13.5H3v-11Z"/><path d="M5 2.5v4h5v-4M5.5 13.5v-4h5v4"/>'),
-  rename: actionSvg('<path d="m3 10 7.5-7.5 3 3L6 13l-4 1 1-4ZM9 4l3 3"/>'),
   remove: actionSvg('<path d="M2.5 4.5h11M6 4.5V2.5h4v2M4 4.5l.7 9h6.6l.7-9M6.5 7v4M9.5 7v4"/>'),
-  restore: actionSvg('<path d="M5 3 2 6l3 3M2 6h7a4 4 0 0 1 0 8H7"/>'),
-  target: actionSvg('<circle cx="8" cy="8" r="4.5"/><circle cx="8" cy="8" r="1.2"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2"/>'),
-  modified: actionSvg('<path d="M8 2.5 14 13H2L8 2.5Z"/><path d="M8 6v3M8 11h.01"/>'),
-  custom: actionSvg('<path d="m8 2 6 3-6 3-6-3 6-3ZM2 8l6 3 6-3M2 11l6 3 6-3"/>'),
   lock: actionSvg('<rect x="3.5" y="7" width="9" height="7" rx="1"/><path d="M5.5 7V4.5a2.5 2.5 0 0 1 5 0V7M8 10v1.5"/>'),
   unlock: actionSvg('<rect x="3.5" y="7" width="9" height="7" rx="1"/><path d="M5.5 7V4.5a2.5 2.5 0 0 1 4.8-1M8 10v1.5"/>'),
   pin: actionSvg('<path d="m6 2 7 7M8 2l5 5-3 1-2 3-3-3 3-2V2ZM5 11l-3 3"/>'),

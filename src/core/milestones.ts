@@ -18,6 +18,14 @@ export const MILESTONES: readonly MilestoneDescriptor[] = [
   { id: 'grade-five', total: 1 },
   { id: 'variant-collector', total: 25 },
   { id: 'reef-explorer', total: SPECIES.length },
+  { id: 'reef-rookie', total: 5 },
+  { id: 'reef-naturalist', total: 15 },
+  { id: 'rare-encounter', total: 1 },
+  { id: 'legend-encounter', total: 1 },
+  { id: 'mythic-encounter', total: 1 },
+  { id: 'eel-family', total: SPECIES.filter(item => item.body.form === 'eel').length },
+  { id: 'color-palette', total: 5 },
+  { id: 'variant-master', total: 60 },
 ]
 
 export const MILESTONE_IDS: readonly MilestoneId[] = MILESTONES.map((item) => item.id)
@@ -83,6 +91,14 @@ export function milestoneProgress(state: GameState): MilestoneProgress[] {
     'grade-five': gradeFive,
     'variant-collector': Math.min(25, nonstarterVariants.length),
     'reef-explorer': known.species.size,
+    'reef-rookie': Math.min(5, nonstarterSpecies),
+    'reef-naturalist': Math.min(15, nonstarterSpecies),
+    'rare-encounter': SPECIES.some(sp => sp.tier === 3 && known.species.has(sp.id)) ? 1 : 0,
+    'legend-encounter': SPECIES.some(sp => sp.tier === 4 && known.species.has(sp.id)) ? 1 : 0,
+    'mythic-encounter': SPECIES.some(sp => sp.tier === 5 && known.species.has(sp.id)) ? 1 : 0,
+    'eel-family': SPECIES.filter(sp => sp.body.form === 'eel' && known.species.has(sp.id)).length,
+    'color-palette': Math.max(0, ...[...NONSTARTER_IDS].map(id => [1, 2, 3, 4, 5].filter(g => known.variants.has(`${id}:${g}`)).length)),
+    'variant-master': Math.min(60, nonstarterVariants.length),
   }
 
   return MILESTONES.map((item) => {
@@ -101,22 +117,17 @@ export function syncMilestones(state: GameState): void {
     if (progress.current >= progress.total && !unlocked.includes(progress.id)) unlocked.push(progress.id)
   }
 
-  const displayed = isMilestoneId(state.milestones?.displayed) &&
-    unlocked.includes(state.milestones.displayed)
-    ? state.milestones.displayed
-    : undefined
-  state.milestones = displayed === undefined ? { unlocked } : { unlocked, displayed }
+  const raw: unknown = state.milestones?.displayed
+  const ids = Array.isArray(raw) ? raw : typeof raw === 'string' ? [raw] : []
+  const displayed = [...new Set(ids.filter(isMilestoneId))].filter(id => unlocked.includes(id))
+  state.milestones = displayed.length ? { unlocked, displayed } : { unlocked }
 }
 
-/** Choose one unlocked commemorative plaque, or remove the current plaque. */
-export function setDisplayedMilestone(state: GameState, id: MilestoneId | undefined): boolean {
+/** Mount any number of earned medals. Invalid requests never replace existing choices. */
+export function setDisplayedMilestones(state: GameState, ids: readonly MilestoneId[]): boolean {
   syncMilestones(state)
-  if (id === undefined) {
-    delete state.milestones!.displayed
-    return true
-  }
-  if (!isMilestoneId(id) || !state.milestones!.unlocked.includes(id)) return false
-  state.milestones!.displayed = id
+  if (new Set(ids).size !== ids.length || ids.some(id => !isMilestoneId(id) || !state.milestones!.unlocked.includes(id))) return false
+  state.milestones = ids.length ? { unlocked: [...state.milestones!.unlocked], displayed: [...ids] } : { unlocked: [...state.milestones!.unlocked] }
   return true
 }
 
@@ -128,5 +139,9 @@ export function validMilestones(value: unknown): boolean {
   if (!metadata.unlocked.every(isMilestoneId)) return false
   if (new Set(metadata.unlocked).size !== metadata.unlocked.length) return false
   if (metadata.displayed === undefined) return true
-  return isMilestoneId(metadata.displayed) && metadata.unlocked.includes(metadata.displayed)
+  // Original saves stored one plaque as a string.
+  if (isMilestoneId(metadata.displayed)) return metadata.unlocked.includes(metadata.displayed)
+  return Array.isArray(metadata.displayed) && metadata.displayed.length <= MILESTONE_IDS.length &&
+    new Set(metadata.displayed).size === metadata.displayed.length &&
+    metadata.displayed.every(id => isMilestoneId(id) && (metadata.unlocked as unknown[]).includes(id))
 }

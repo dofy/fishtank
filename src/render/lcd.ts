@@ -47,6 +47,10 @@ export class LcdRenderer implements Renderer {
         const fx = Math.round(f.x / c) * c
         const fy = Math.round(f.y / c) * c
         ctx.fillRect(fx, fy, c - 1, c - 1)
+        if (f.kind === 'plankton') {
+          ctx.fillRect(fx - c, fy - c, c - 1, c - 1)
+          ctx.fillRect(fx + c, fy + c, c - 1, c - 1)
+        }
       }
     }
     for (const a of view.agents) this.agent(ctx, a, view.time, s, !!view.reducedMotion)

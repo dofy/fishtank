@@ -50,6 +50,8 @@ export interface Agent {
   sceneryCooldown?: number
   sceneryCount?: number
   puffTimer?: number
+  schoolCooldown?: number
+  schoolLeader?: { until: number; x: number; y: number }
 }
 
 export interface SplashEffect {
@@ -65,6 +67,9 @@ export interface FoodPellet {
   y: number
   vy: number
   seed: number
+  kind?: 'plankton'
+  age?: number
+  lifetime?: number
 }
 
 export interface DecorNode {
@@ -102,6 +107,7 @@ export class Scene {
   private decors: DecorNode[] = []
   private splashes: SplashEffect[] = []
   private foods: FoodPellet[] = []
+  private planktonIn = 10 + Math.random() * 8
   /** Current color index (0..6) for the 3 overhead lamps. */
   private lampColors: [number, number, number] = [1, 4, 1]
   private initialized = false
@@ -151,6 +157,7 @@ export class Scene {
         splashed: !shouldDrop,
         zapCooldown: 8 + Math.random() * 14,
         sceneryCooldown: 3 + seed % 6,
+        schoolCooldown: 3 + Math.random() * 6,
       })
     }
     for (const [uid, agent] of this.agents) {
@@ -315,14 +322,40 @@ export class Scene {
     for (const s of this.splashes) s.age += dt
     this.splashes = this.splashes.filter((s) => s.age < s.duration)
 
-    // Update sinking food pellets; remove once they touch the sand floor
+    // Plankton live only in this scene. At most three drift in between quiet intervals.
+    const swimmers = [...this.agents.values()].filter(a => !a.withdrawal && !a.dropping)
+    if (reducedMotion || !swimmers.length) {
+      this.foods = this.foods.filter(f => f.kind !== 'plankton')
+      this.planktonIn = Math.max(this.planktonIn, 8)
+    } else {
+      this.planktonIn -= dt
+      if (this.planktonIn <= 0) {
+        this.planktonIn = 18 + Math.random() * 24
+        const count = Math.min(1 + Math.floor(Math.random() * 3), 3 - this.foods.filter(f => f.kind === 'plankton').length)
+        const fish = swimmers[Math.floor(Math.random() * swimmers.length)]!
+        for (let i = 0; i < count; i++) this.foods.push({
+          id: nextPelletId++, kind: 'plankton', age: 0, lifetime: 16 + Math.random() * 8,
+          x: Math.min(Math.max(20, width - 20), Math.max(20, fish.x + (Math.random() - 0.5) * 150)),
+          y: Math.min(Math.max(36, height - 48), Math.max(36, fish.y + (Math.random() - 0.5) * 80)),
+          vy: (Math.random() - 0.5) * 5, seed: Math.random() * Math.PI * 2,
+        })
+      }
+    }
     const floorY = height - 18
     for (const f of this.foods) {
-      f.y += f.vy * dt
-      f.x += Math.sin(time * 2.6 + f.seed) * 7 * dt
-      f.x = Math.min(width - 14, Math.max(14, f.x))
+      if (f.kind === 'plankton') {
+        f.age = (f.age ?? 0) + dt
+        f.x += (Math.sin(time * 0.6 + f.seed) * 5 + 3) * dt
+        f.y += (f.vy + Math.cos(time * 1.2 + f.seed) * 3) * dt
+      } else {
+        f.y += f.vy * dt
+        f.x += Math.sin(time * 2.6 + f.seed) * 7 * dt
+      }
+      f.x = Math.min(Math.max(14, width - 14), Math.max(14, f.x))
     }
-    this.foods = this.foods.filter((f) => f.y < floorY)
+    this.foods = this.foods.filter(f => f.kind === 'plankton'
+      ? (f.age ?? 0) < (f.lifetime ?? 20) && f.y > 18 && f.y < floorY
+      : f.y < floorY)
 
     const minY = 28
     const maxY = Math.max(minY + 20, height - 44)
@@ -349,6 +382,7 @@ export class Scene {
         continue
       }
       a.sceneryCooldown = Math.max(0, (a.sceneryCooldown ?? 0) - dt)
+      a.schoolCooldown = Math.max(0, (a.schoolCooldown ?? 0) - dt)
       a.puffTimer = reducedMotion ? 0 : Math.max(0, (a.puffTimer ?? 0) - dt)
       if (reducedMotion || a.dropping || (a.shockedTimer ?? 0) > 0 || (a.scaredTimer ?? 0) > 0 || (a.dischargingTimer ?? 0) > 0) interruptScenery(a)
       if (a.eatCooldown && a.eatCooldown > 0) {
@@ -440,13 +474,15 @@ export class Scene {
       // 3. Spot and chase nearest sinking food pellet within detection range (if not on 9s satiety cooldown)
       let nearestFood: FoodPellet | null = null
       if (!a.eatCooldown || a.eatCooldown <= 0) {
-        let bestDist = 280
-        for (const f of this.foods) {
-          const d = Math.hypot(f.x - a.x, f.y - a.y)
-          if (d < bestDist) {
-            bestDist = d
-            nearestFood = f
+        // Player food takes priority over incidental plankton.
+        for (const kind of [undefined, 'plankton'] as const) {
+          let bestDist = kind === 'plankton' ? 180 : 280
+          for (const f of this.foods) {
+            if (f.kind !== kind) continue
+            const d = Math.hypot(f.x - a.x, f.y - a.y)
+            if (d < bestDist) { bestDist = d; nearestFood = f }
           }
+          if (nearestFood) break
         }
       }
 

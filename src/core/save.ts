@@ -8,7 +8,7 @@ import {
   gradeExpMultiplier,
 } from './balance'
 import { syncCollectionPreferences } from './collection'
-import { syncTankPresets, validTankPresets } from './presets'
+import { syncTankPresets, validTankPresets } from './legacy-presets'
 import {
   SAVE_VERSION,
   makeFish,

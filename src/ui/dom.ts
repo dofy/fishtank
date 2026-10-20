@@ -4,10 +4,18 @@ import { NOTE_INFO_ICON } from './icons'
 export function makeButton(
   text: string,
   onClick: (event: MouseEvent) => void,
+  iconSvg?: string,
 ): HTMLButtonElement {
   const b = document.createElement('button')
   b.type = 'button'
   b.textContent = text
+  if (iconSvg) {
+    const icon = document.createElement('span'); icon.className = 'ico'; icon.setAttribute('aria-hidden', 'true')
+    icon.innerHTML = iconSvg
+    const caption = document.createElement('span'); caption.className = 'button-label'; caption.textContent = text
+    b.dataset.iconLabel = 'true'
+    b.replaceChildren(icon, caption)
+  }
   b.addEventListener('click', onClick)
   return b
 }

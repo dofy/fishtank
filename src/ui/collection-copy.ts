@@ -1,21 +1,9 @@
 import type { Locale } from '../core/types'
 
 const zh = {
-  targetTitle: '下一条，想遇见谁？', targetEmpty: '选一条想收集的小鱼，也可以追踪某个品阶。',
-  targetSpecies: '目标鱼种', targetGrade: '目标品阶', chooseSpecies: '选择鱼种', anyGrade: '任意品阶',
-  grade: (n: number) => `品阶 ${n}`, tracking: '追踪中', completed: '已收集到', clearTarget: '取消追踪',
-  track: '追踪', planTarget: '为它配对', goalLabel: '配对目标',
-  goals: { species: '发现新种', variant: '发现新品阶', tier: '冲高星级', target: '追踪目标' },
-  newSpecies: '新鱼种', newVariant: '新品阶', targetChance: '目标', forecastTitle: '这次配对的发现机会',
-  forecastNote: '按当前图鉴计算，鱼种仍等概率抽取。', noTarget: '先去图鉴选一个目标。',
-  choosePair: '选好两条成年鱼，就能看到发现机会。', unreachable: '这对亲代暂时无法产出目标，试试其他星级的组合。',
-  targetDone: '目标已经达成，可以去图鉴追踪下一条。', noPair: '还没有两条可繁育的成年鱼，等它们准备好再来。',
-  noFavorites: '还没有收藏的小鱼，打开小鱼详情，把喜欢的留下吧。',
   releasePrompt: (name: string) => `放生「${name}」？小鱼会离开背包，图鉴记录保留。`,
-  manage: '照顾这条鱼', favorite: '收藏', favorited: '已收藏', favoritesOnly: '只看收藏',
+  manage: '管理这条鱼', unlock: '解除锁定',
   locked: '已锁定', lock: '锁定保护', unlocked: '未锁定', lockNote: '锁定后不会被合成或放生，仍可展示和繁育。',
-  unfavorite: '取消收藏', unlock: '解除锁定',
-  nickname: '小鱼昵称', nicknameHint: '最多 24 个字，留空恢复鱼种名', saveName: '保存昵称', nameSaved: '昵称已保存',
   export: '导出存档', import: '导入存档', restoreBackup: '恢复最近备份', restoreBeforeImport: '恢复导入前进度', saveTitle: '带上你的小鱼',
   saveNote: '导出后可在另一台设备或另一个域名导入。存档只保存在当前浏览器，各域名独立。',
   backupNote: '每隔一段时间保留一份本地备份；导入前会先备份当前进度，可单独恢复；重置会清除本地备份。',
@@ -26,26 +14,14 @@ const zh = {
   storageError: '浏览器没能保存进度，请检查存储空间或隐私设置后重试。',
   noBackup: '还没有可恢复的备份，先导出一份吧。', importDone: '小鱼们搬家完成，进度已恢复。',
   exportDone: '存档已导出，请保管好下载的文件。', protectedMaterial: '选中的鱼已锁定，请先解除保护。',
-  help: '在图鉴追踪鱼种或品阶，繁育时按目标推荐配对；给喜欢的小鱼起名、收藏或锁定。换设备前，可以在设置中导出存档，导入时先预览再确认。',
+  help: '锁定小鱼可防止合成或放生。换设备前，可以在设置中导出存档，导入时先预览再确认。',
 }
 
-type Copy = { [K in keyof typeof zh]: K extends 'goals' ? Record<keyof typeof zh.goals, string> : typeof zh[K] }
+type Copy = { [K in keyof typeof zh]: typeof zh[K] }
 const en: Copy = {
-  targetTitle: 'Who would you like to meet next?', targetEmpty: 'Pick a species, or track a particular grade.',
-  targetSpecies: 'Target species', targetGrade: 'Target grade', chooseSpecies: 'Choose a species', anyGrade: 'Any grade',
-  grade: n => `Grade ${n}`, tracking: 'Tracking', completed: 'Discovered', clearTarget: 'Stop tracking',
-  track: 'Track', planTarget: 'Find a pair', goalLabel: 'Pairing goal',
-  goals: { species: 'New species', variant: 'New grade', tier: 'Higher tiers', target: 'Tracked target' },
-  newSpecies: 'New species', newVariant: 'New grade', targetChance: 'Target', forecastTitle: 'Discovery chances for this pair',
-  forecastNote: 'Based on your book. Species remain equally likely within each tier.', noTarget: 'Choose a target in the Book first.',
-  choosePair: 'Choose two adult fish to see their discovery chances.', unreachable: 'This pair cannot produce the target. Try parents of different tiers.',
-  targetDone: 'Target complete! Choose your next discovery in the Book.', noPair: 'You need two adult fish with breeding uses. Check back when they are ready.',
-  noFavorites: 'No favorites yet. Open a fish’s details to keep it close.',
   releasePrompt: (name: string) => `Release ${name}? This fish will leave your collection. Your Book discoveries will remain.`,
-  manage: 'Care for this fish', favorite: 'Favorite', favorited: 'Favorited', favoritesOnly: 'Favorites only',
+  manage: 'Manage this fish', unlock: 'Unlock fish',
   locked: 'Locked', lock: 'Protect fish', unlocked: 'Unlocked', lockNote: 'Locked fish cannot be merged or released. They can still be displayed and bred.',
-  unfavorite: 'Remove favorite', unlock: 'Unlock fish',
-  nickname: 'Nickname', nicknameHint: 'Up to 24 characters; leave blank for the species name', saveName: 'Save name', nameSaved: 'Name saved',
   export: 'Export save', import: 'Import save', restoreBackup: 'Restore backup', restoreBeforeImport: 'Before last import', saveTitle: 'Take your fish with you',
   saveNote: 'Export to move to another device or domain. Progress is stored in this browser, separately for each domain.',
   backupNote: 'A recent local backup is kept periodically. You can restore the progress before your last import separately. Resetting clears local backups.',
@@ -56,7 +32,7 @@ const en: Copy = {
   storageError: 'The browser could not save your progress. Check storage space or privacy settings and try again.',
   noBackup: 'No backup is available yet. Export a save to keep a copy.', importDone: 'Your fish have moved in. Progress restored.',
   exportDone: 'Save exported. Keep the downloaded file somewhere safe.', protectedMaterial: 'A selected fish is locked. Remove its protection first.',
-  help: 'Track a species or grade in the Book, then find a pair for your goal. Name, favorite or protect individual fish. Export a save in Settings before changing devices; imports show a preview before you confirm.',
+  help: 'Lock fish to protect them from merging or release. Export a save in Settings before changing devices; imports show a preview before you confirm.',
 }
 
 export function collectionCopy(locale: Locale): Copy { return locale === 'zh' ? zh : en }

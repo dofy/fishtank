@@ -1,123 +1,21 @@
-import { forecastBreed, renameFish, setFishFavorite, setFishLocked, targetReached } from '../core/collection'
 import { exportSave, getSaveBackup, parseSaveImport } from '../core/save'
 import { speciesName } from '../core/i18n'
-import { SPECIES } from '../core/species'
-import type { BreedGoal, Fish, GameState, Grade, Locale } from '../core/types'
-import { heading, label, makeActionButton, makeButton, makeStatusIcon, note, scrollPanelTo } from './dom'
-import { ACTION_ICONS, CLOSE_ICON, HEART_SVG, TAB_ICONS } from './icons'
+import type { Fish, GameState, Locale } from '../core/types'
+import { heading, label, makeButton, note, scrollPanelTo } from './dom'
 import { collectionCopy } from './collection-copy'
+import { ACTION_ICONS } from './icons'
 
-type Change = () => void
 export function fishDisplayName(fish: Fish, locale: Locale): string {
-  return fish.nickname || speciesName(fish.speciesId, locale)
+  return speciesName(fish.speciesId, locale)
 }
 
-function selectField(text: string, id: string): [HTMLLabelElement, HTMLSelectElement] {
-  const wrap = document.createElement('label')
-  wrap.className = 'collection-field'
-  wrap.htmlFor = id
-  const select = document.createElement('select')
-  select.id = id
-  const control = document.createElement('span'); control.className = 'select-control'
-  control.append(select)
-  wrap.append(label(text, ''), control)
-  return [wrap, select]
-}
-function option(select: HTMLSelectElement, value: string, text: string): void {
-  const o = document.createElement('option'); o.value = value; o.textContent = text; select.append(o)
-}
-
-export function targetPanel(state: GameState, locale: Locale, change: Change, breed: Change): HTMLElement {
-  const c = collectionCopy(locale), box = document.createElement('div')
-  box.className = 'collection-target'
-  const intro = document.createElement('div'); intro.className = 'collection-target-intro'
-  intro.append(heading(c.targetTitle, 'h3'))
-  box.append(intro)
-  const fields = document.createElement('div'); fields.className = 'collection-fields'
-  const [speciesField, selectSpecies] = selectField(c.targetSpecies, 'collection-target-species')
-  option(selectSpecies, '', c.chooseSpecies)
-  for (const sp of SPECIES) option(selectSpecies, sp.id, `${sp.tier}★ ${speciesName(sp.id, locale)}`)
-  selectSpecies.value = state.collectionTarget?.speciesId ?? ''
-  selectSpecies.addEventListener('change', () => {
-    if (selectSpecies.value) state.collectionTarget = { speciesId: selectSpecies.value }
-    else delete state.collectionTarget
-    change()
-  })
-  fields.append(speciesField)
-  const target = state.collectionTarget
-  if (target) {
-    const sp = SPECIES.find(s => s.id === target.speciesId)!
-    if (sp.tier > 0) {
-      const [gradeField, selectGrade] = selectField(c.targetGrade, 'collection-target-grade')
-      gradeField.classList.add('collection-target-grade')
-      option(selectGrade, '', c.anyGrade)
-      for (let grade = 1; grade <= 5; grade++) option(selectGrade, String(grade), c.grade(grade))
-      selectGrade.value = target.grade ? String(target.grade) : ''
-      selectGrade.addEventListener('change', () => {
-        state.collectionTarget = { speciesId: target.speciesId, ...(selectGrade.value ? { grade: Number(selectGrade.value) as Grade } : {}) }
-        change()
-      })
-      fields.append(gradeField)
-    }
-    const status = makeStatusIcon(targetReached(state) ? ACTION_ICONS.current : ACTION_ICONS.target, targetReached(state) ? c.completed : c.tracking); status.classList.add('collection-status')
-    intro.append(status)
-    const clear = makeActionButton(CLOSE_ICON, c.clearTarget, () => { delete state.collectionTarget; change() })
-    const go = makeActionButton(TAB_ICONS.breed, c.planTarget, breed); go.classList.add('btn-secondary'); go.disabled = targetReached(state)
-    const actions = document.createElement('div'); actions.className = 'collection-target-actions'
-    actions.append(go, clear); fields.append(actions)
-  } else intro.append(label(c.targetEmpty, 'collection-hint'))
-  box.append(fields)
-  return box
-}
-
-export function breedingPlan(state: GameState, locale: Locale, selected: Fish[], change: Change, openBook: Change): HTMLElement {
-  const c = collectionCopy(locale), box = document.createElement('div'); box.className = 'breeding-plan'
-  const controls = document.createElement('div'); controls.className = 'breeding-controls'
-  const summary = document.createElement('div'); summary.className = 'breeding-summary'
-  const [field, select] = selectField(c.goalLabel, 'breeding-goal')
-  for (const goal of ['species', 'variant', 'tier', 'target'] as BreedGoal[]) option(select, goal, c.goals[goal])
-  select.value = state.breedGoal ?? 'species'
-  select.addEventListener('change', () => { state.breedGoal = select.value as BreedGoal; change() })
-  controls.append(field)
-  if (state.collectionTarget) {
-    const target = state.collectionTarget
-    const text = `${speciesName(target.speciesId, locale)}${target.grade ? ` · ${c.grade(target.grade)}` : ''}`
-    const link = makeButton(`${targetReached(state) ? '✓' : '◎'} ${text}`, openBook); link.className = 'target-link'
-    controls.append(link)
-  }
-  if (selected.length === 2) {
-    const forecast = forecastBreed(state, selected[0]!, selected[1]!)
-    const row = document.createElement('div'); row.className = 'discovery-chances'; row.setAttribute('aria-label', c.forecastTitle)
-    const metric = (text: string, chance: number): void => {
-      const item = document.createElement('span'), value = document.createElement('b')
-      value.textContent = `${(chance * 100).toFixed(1)}%`; item.append(label(text, ''), value); row.append(item)
-    }
-    metric(c.newSpecies, forecast.newSpeciesChance); metric(c.newVariant, forecast.newVariantChance)
-    if (state.collectionTarget) metric(c.targetChance, forecast.targetChance)
-    summary.append(row, label(c.forecastNote, 'collection-hint'))
-    if (state.breedGoal === 'target' && state.collectionTarget) summary.append(label(targetReached(state) ? c.targetDone : forecast.targetChance === 0 ? c.unreachable : '', 'collection-hint'))
-  } else summary.append(label(c.choosePair, 'collection-hint'))
-  if (state.breedGoal === 'target' && !state.collectionTarget) controls.append(makeButton(c.noTarget, openBook))
-  box.append(controls, summary)
-  return box
-}
-
-export function fishCare(state: GameState, fish: Fish, locale: Locale, change: Change): HTMLElement {
+export function fishCare(fish: Fish, locale: Locale, actions: HTMLElement, change: (locked: boolean) => void): HTMLElement {
   const c = collectionCopy(locale), box = document.createElement('div'); box.className = 'fish-care'
-  const form = document.createElement('form'); form.className = 'fish-name-form'
-  const input = document.createElement('input'); input.type = 'text'; input.id = 'fish-nickname'; input.value = fish.nickname ?? ''; input.maxLength = 48; input.placeholder = speciesName(fish.speciesId, locale)
-  const nameLabel = document.createElement('label'); nameLabel.htmlFor = input.id; nameLabel.textContent = c.nickname
-  input.setAttribute('aria-describedby', 'fish-nickname-hint')
-  const hint = label(c.nicknameHint, 'collection-hint'); hint.id = 'fish-nickname-hint'
-  const save = makeButton(c.saveName, () => undefined); save.type = 'submit'
-  form.append(nameLabel, input, save, hint)
-  form.addEventListener('submit', e => { e.preventDefault(); renameFish(state, fish.uid, input.value); change() })
-  const row = document.createElement('div'); row.className = 'fish-care-actions'
-  const favorite = makeActionButton(fish.favorite ? HEART_SVG.solid : HEART_SVG.outline, fish.favorite ? c.unfavorite : c.favorite, () => { setFishFavorite(state, fish.uid, !fish.favorite); change() })
-  favorite.setAttribute('aria-pressed', String(!!fish.favorite)); favorite.dataset.fishFavorite = fish.uid
-  const lock = makeActionButton(fish.locked ? ACTION_ICONS.lock : ACTION_ICONS.unlock, fish.locked ? c.unlock : c.lock, () => { setFishLocked(state, fish.uid, !fish.locked); change() })
+  const lock = makeButton(fish.locked ? c.unlock : c.lock, () => change(!fish.locked), fish.locked ? ACTION_ICONS.unlock : ACTION_ICONS.lock)
   lock.setAttribute('aria-pressed', String(!!fish.locked)); lock.dataset.fishLock = fish.uid
-  row.append(favorite, lock); box.append(form, row, label(c.lockNote, 'collection-hint'))
+  lock.className = 'fish-lock-toggle'
+  actions.append(lock)
+  box.append(actions, label(c.lockNote, 'collection-hint'))
   return box
 }
 

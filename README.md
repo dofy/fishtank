@@ -49,6 +49,7 @@ LCD 的结果标记、仪式光效、放电与眩晕均使用单色方格；界�
 - 除初始鱼外，每种鱼拥有 **品阶 1 至 品阶 5** 五种色相变种，高品阶不仅外观独特，还可提供最高 **2.0x 经验加成**。
 
 ### 💕 亲代配对繁育与 10 合 1 聚变合成
+- **推荐配对**：点击按钮或按 `A`，从可繁育的成年鱼中按星级、品阶、剩余次数优先自动选两条；同等条件下先选较早获得的鱼。也可手动选鱼，不设推荐目标。
 - **爱心繁育**：消耗 1 颗爱心（每 7 分钟自动恢复 1 颗，上限 5 颗）即可让两条成年鱼配对孵化后代。双亲星级越高，越容易孵化出高星级稀有鱼种；双亲品阶越高，后代遗传高品阶的概率越大。
 - **10 合 1 合成**：将 10 条低星级或繁育次数耗尽（`0/n`）的鱼进行聚变合成，**100% 升级为高一星级的新鱼**，并 **100% 继承 10 条材料鱼中的最高品阶**（支持一键自动按“1 高品阶 + 9 低品阶”最优策略选鱼）。
 - 完整繁育概率与等级数值表可查阅游戏内「帮助」面板或 [《游戏帮助与数值说明》](docs/BALANCE.md)。
@@ -62,32 +63,24 @@ LCD 的结果标记、仪式光效、放电与眩晕均使用单色方格；界�
 - 2★「高级」新增 **琥珀电鳗**，与 3★ 蓝弧电鳗共享放电彩蛋；初始鱼搭配 1★ 鱼也有机会繁育出它。同星级鱼种仍等概率抽取，星级与品阶规则不变。
 - 电鳗入缸后，30 秒内点它 6 次即可触发放电；也可能在游动时随机放电，让其他小鱼短暂眩晕，夜晚还会改变一盏顶灯的颜色。极光彩带鳗保持普通鳗鱼，不会触发放电。
 
-### 🎯 收集目标与珍藏
-- 在图鉴选择想遇见的鱼种，可进一步指定品阶；完成后保留达成标记。
-- 繁育页可按「发现新种 / 发现新品阶 / 冲高星级 / 追踪目标」推荐配对，显示基于当前图鉴的发现概率。推荐只改变选鱼方式，星级、品阶和同星级鱼种等概率规则不变。
-- 鱼缸卡片点击鱼图可展示或收回，右上角 ⓘ 打开个体详情，可起昵称、收藏、锁定或确认放生；昵称最多 24 个字符。收藏可筛选，锁定会阻止放生、手动合成和自动选材，仍可展示、喂食与繁育。
+### 🐠 珍藏与存档
+- 鱼缸卡片点击鱼图可展示或收回，右上角 ⓘ 打开个体详情，可锁定保护或确认放生。锁定会阻止放生、手动合成和自动选材，仍可展示、喂食与繁育。详情中的放置/收回与锁定并排显示，各有图标和文字；不再提供繁育/合成跳转、昵称或收藏；旧档的昵称与收藏数据仅兼容保留，不参与显示或操作。
 - 设置中可导出 JSON 存档，在另一设备或域名导入；先预览等级、鱼数与图鉴数，确认后替换，不合并。导入前自动备份当前进度；普通保存至多每五分钟轮转一次最近备份，可在设置中预览恢复，并单独恢复最近一次导入前的进度。重置游戏会清除本地备份，请提前导出。
 - 进度与备份仍保存在当前浏览器，各域名独立；导入支持当前导出文件和旧版原始存档，拒绝损坏或不兼容文件。单文件最多 5 MiB / 20,000 条鱼。v1.8.0 支持以上收集与存档工具。
-
-### 🪸 布景预设
-- 「装饰」页顶部可保存最多 **6 套布景**，记录展示鱼、造景位置与朝向、昼夜模式和夜间灯珠开关/频率。名字最多 24 个字符，可改名；更新和删除会先确认。
-- 当前布景与修改状态用图标标记，悬停可查看说明；调整后可更新保存或恢复原布景。刷新后仍保留状态，切换写实/LCD 或鱼群成长不会被算作修改。
-- 应用时只切换布置，不复制鱼，也不改变繁育、成长、经验或收藏保护。已不在背包或超出当前容量的小鱼、尚未解锁的造景会跳过并提示；保存时的空鱼缸也可恢复。写实与 LCD 共用预设，切换时保留当前视觉主题。
-- 预设随存档导出、导入与备份；旧存档无需升级。电鳗临时改变的射灯颜色不在预设范围内。
-- In Decor, save up to **6 named layouts** with displayed fish, decoration positions/orientations, day/night mode and rail-light animation settings. Missing fish and unavailable decorations are skipped. Layouts travel with save exports and backups; gameplay progress and the current visual theme stay unchanged.
-- Icons mark the current layout and unsaved edits; hover for descriptions. Update or restore edits, including after reload. Fish growth and visual theme changes do not count as layout edits.
 
 ### 🫧 鲜活的鱼缸互动
 - **点水投喂**：点击鱼缸空白水域可一颗颗撒下鱼食，附近的鱼会争相游来抢食，吃饱后欢快游开。
 - **受惊冲刺**：轻点正在游动的小鱼，它会受惊加速横穿鱼缸（鱼缸里还藏着意想不到的**隐藏彩蛋**等待发现）。
 - **轻轻收回**：收回时，小鱼会短暂游开并淡出；LCD 使用整格点阵消隐。背包和鱼缸空位立即更新，再次放入可取消退场，兼容 PixiJS、Canvas 及系统“减少动态效果”。
-- **鱼景互动**：海马靠近海草停歇，小鱼偶尔穿过石拱、与同种伙伴短暂结伴；点到河豚会让它短暂鼓起。移走或拖动对应造景会中断停留，投喂、受惊、放电和收鱼优先响应。仅改变观赏动作，不修改成长与繁育；减少动态效果会停用新增观赏行为和鼓起动画，写实/LCD 与 PixiJS/Canvas 均支持。
+- **鱼景互动**：海马靠近海草停歇，小鱼偶尔穿过石拱，同品种会随机聚成 **2–5 条的小鱼群**，游一阵后再散开；点到河豚会让它短暂鼓起。移走或拖动对应造景会中断停留，投喂、受惊、放电和收鱼优先响应。仅改变观赏动作，不修改成长与繁育；减少动态效果会停用新增观赏行为和鼓起动画，写实/LCD 与 PixiJS/Canvas 均支持。
+- **偶遇小点心**：浮游生物会间歇随水流出现，附近小鱼发现后会游过去吃掉。最多同时 3 只，没被发现也会自然消失；手动投喂优先，不增加经验或改变成长。
 - **全屏沉浸模式**：一键隐藏所有操作面板，将鱼缸铺满整个窗口；鼠标静置 3 秒后顶部状态栏自动半透明隐去。
 
-### 🏅 收集纪念
-- 图鉴新增 **6 项永久里程碑**：首次发现非初始鱼、收齐 1★ 鱼种、发现三种水母、首次获得品阶 5、收集 25 种非初始品阶外观、发现全部 29 种海洋生物。进度来自收集历史，没有限时或每日签到；小鱼被合成或放生后，已解锁的纪念仍保留。
-- 完成后可选择一块纪念牌展示在鱼缸角落，也可取下。纪念牌兼容写实/LCD、普通和沉浸模式，随存档导出、导入与备份保留；旧存档会按已有收集记录补齐进度，不会默认替玩家摆上牌匾。
-- Six permanent collection milestones unlock optional aquarium plaques. Scenic fish behavior and plaques are cosmetic: they add no currencies, penalties or changes to breeding odds.
+### 🏅 成就勋章
+- 图鉴内统一为「收藏」，分为「鱼种」与「勋章」两页，页签各自显示收集进度；品阶收集比例只在鱼种页显示。**14 项永久成就**覆盖鱼种收集、稀有星级、水母与鳗鱼家族、同种五品阶、25/60 种幻彩外观等，不设每日任务或期限。
+- 每项都有独立勋章图案，写实使用金属浮雕与彩带，LCD 使用独立单色点阵图形。可以单独挂取，也能一键挂上全部已获得的勋章，不占造景名额；手机同样支持多枚展示。
+- 已获得记录不会因放生或合成消失；挂载选择随存档导出、导入和备份保留。旧档按已有收集历史补齐新成就，原有单枚纪念牌会迁移为对应勋章，不自动挂上额外奖励。
+- Fourteen permanent achievements each have a distinct medal. The Book separates species and medals; hang all earned medals or choose them individually. Saves with a single old plaque migrate automatically. Schooling and drifting plankton are cosmetic and do not change breeding odds or progression.
 
 ### 🎵 氛围音效与三首原创背景音乐
 - 内置清脆的水滴、投喂、孵化、合成音效，以及三首可随时切换的轻音乐曲目：**《珊瑚礁 Lo-Fi》**、**《深海潮汐》**、**《液晶八音盒》**，支持独立调节音效与音乐音量。
@@ -103,7 +96,7 @@ LCD 的结果标记、仪式光效、放电与眩晕均使用单色方格；界�
 
 按 `H` / `?` 或点击底栏「帮助」，先看看游戏说明，再按需切换繁育概率、等级解锁、星级属性、品阶经验和快捷键。概率按双亲中较低的星级分组，等级表按等级段翻页，所有列和当前页数据都能完整阅读，无需横向滚动。小屏幕上，帮助、更新日志、繁育及合成结果使用满屏弹窗；底栏保留完整版本号，三个入口显示为旁边的图标，仍可悬停查看名称。桌面保留居中弹窗和文字入口。
 
-收集纪念按宽度使用三列、两列或单列进度清单。触屏控件至少 44px，输入字号至少 16px；短屏改为整页滚动并固定导航，切页、鱼类详情和导入预览会定位到可操作区域。写实/LCD 与 PixiJS/Canvas 共用响应式布局。
+勋章页按宽度使用四列、三列或两列陈列，鱼种页保持独立。触屏控件至少 44px，输入字号至少 16px；短屏改为整页滚动并固定导航，切页、鱼类详情和导入预览会定位到可操作区域。写实/LCD 与 PixiJS/Canvas 共用响应式布局。
 
 Open Help with `H` / `?` or the footer button. Start with the game guide, then browse breeding odds, level unlocks, tier stats, grade EXP and shortcuts. Tables use tier or level pages so every column fits without horizontal scrolling. Help, Changelog, breeding and merge results fill small screens. Three labeled icons sit beside the full version in the footer, with names available on hover and to screen readers. Desktop keeps centered dialogs and text links.
 
@@ -136,7 +129,7 @@ Available since v1.5.0. Use single keys without Ctrl or Cmd. The in-game Help an
 | `L` | 切换中英文 / Switch Chinese and English |
 | `H` / `?` | 打开帮助 / Open Help |
 | `U` | 打开更新日志 / Open Changelog |
-| `A` | 繁育页推荐配对，或合成页自动选鱼 / Best Pair on Breed, auto-select on Merge |
+| `A` | 繁育页推荐配对 / 合成页自动选材 / Best Pair on Breed, auto-select materials on Merge |
 | `C` | 清空当前繁育或合成选择 / Clear the current breeding or merge selection |
 | `Enter` | 执行已就绪的繁育或合成；收下已展示的小鱼 / Run a ready action, or collect a revealed result |
 | `Esc` | 关闭弹窗、取消确认、返回图鉴列表或退出沉浸 / Close overlay, cancel confirmation, leave book details, or exit immersive mode |
@@ -150,7 +143,7 @@ Available since v1.5.0. Use single keys without Ctrl or Cmd. The in-game Help an
 
 ## 界面组件 / UI components
 
-鱼群、繁育、合成、装饰、图鉴及品阶/个体预览统一使用 [`itemCard`](src/ui/item-card.ts)，样式集中在 [`item-card.css`](src/ui/item-card.css)。页面提供内容、状态与回调，组件统一处理选中态、状态栏、次要操作、键盘焦点和触屏尺寸；选中使用顶部色条与浅色底，追踪使用独立的虚线目标标记，两种状态可并存；通过 regular / compact / mini 三种密度适应不同位置。新增卡片应复用此组件，避免另写选中样式。
+鱼群、繁育、合成、装饰、图鉴及品阶/个体预览统一使用 [`itemCard`](src/ui/item-card.ts)，样式集中在 [`item-card.css`](src/ui/item-card.css)。页面提供内容、状态与回调，组件统一处理选中态、状态栏、次要操作、键盘焦点和触屏尺寸；选中使用顶部色条与浅色底；通过 regular / compact / mini 三种密度适应不同位置。新增卡片应复用此组件，避免另写选中样式。
 
 ---
 

@@ -638,6 +638,14 @@ export class RealisticRenderer implements Renderer {
 
   private foodPellet(ctx: CanvasRenderingContext2D, f: FoodPellet): void {
     ctx.save()
+    if (f.kind === 'plankton') {
+      ctx.translate(f.x, f.y)
+      ctx.strokeStyle = '#90d9b5'; ctx.lineWidth = 1.2
+      ctx.beginPath(); ctx.moveTo(-3, 1); ctx.quadraticCurveTo(-9, -2, -8, -5); ctx.moveTo(2, 2); ctx.quadraticCurveTo(7, 5, 8, 2); ctx.stroke()
+      ctx.fillStyle = '#72cba4'; ctx.beginPath(); ctx.ellipse(0, 0, 4.5, 2.6, -0.4, 0, Math.PI * 2); ctx.fill()
+      ctx.fillStyle = '#e0f6bd'; ctx.beginPath(); ctx.arc(1, -0.8, 1.3, 0, Math.PI * 2); ctx.fill()
+      ctx.restore(); return
+    }
     ctx.shadowColor = 'rgba(251, 191, 36, 0.55)'
     ctx.shadowBlur = 5
     ctx.fillStyle = '#f59e0b'

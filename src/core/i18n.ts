@@ -210,8 +210,6 @@ export interface Copy {
   bookNoSpecimens: string
   bookPlaceAction: string
   bookStoreAction: string
-  bookGoBreedAction: string
-  bookGoMergeAction: string
   bookVariantRate: (unlocked: number, total: number, pct: number) => string
   bookLockedMsg: (tierStr: string) => string
   bookNoteTitle: string
@@ -337,7 +335,7 @@ const ZH: Copy = {
   releasedMsg: (name) => `已放生 ${name}。`,
   tankNoteTitle: '鱼缸与互动指南',
   tankNote:
-    '【鱼群管理】点鱼图可展示或收回，右上角 ⓘ 可起名、收藏、锁定或放生。开局赠送 **3 条 ∞ 无限繁育次数** 的初始鱼。【水域互动】点击上方空白水域可投放鱼食，点击游动的鱼会让它受惊冲刺，按住已摆放的造景可直接左右拖拽调整位置！',
+    '【鱼群管理】点鱼图可展示或收回，右上角 ⓘ 可锁定保护或确认放生。开局赠送 **3 条 ∞ 无限繁育次数** 的初始鱼。【水域互动】点击上方空白水域可投放鱼食，点击游动的鱼会让它受惊冲刺，按住已摆放的造景可直接左右拖拽调整位置！',
   breedHeading: (picked) => `选择两条成年鱼进行繁育（已选 ${picked}/2）`,
   sortLabel: '排序：',
   sortInTank: '鱼缸优先',
@@ -399,16 +397,14 @@ const ZH: Copy = {
   decorNoteTitle: '造景摆放与夜晚灯光联动',
   decorNote:
     '【等级解锁】随鱼缸等级提升（**Lv.1–Lv.10**），可同时摆放槽位从 **3 件扩展至 12 件**，逐步解锁全部 **18 件海底造景与顶挂彩灯**。【自由布置】在上方鱼缸中直接按住造景即可左右拖动位置（最后拖动的装饰自动置于最前层），黑夜模式下顶灯与挂灯会自动点亮。',
-  bookHeading: '生物图鉴',
+  bookHeading: '收藏',
   bookOwnedBadge: (count) => `持有 x${count}`,
-  bookCompletion: (pct) => `图鉴完成度：${pct}%`,
+  bookCompletion: (pct) => `品阶收集 ${pct}%`,
   bookVariantsTitle: '品阶变种图鉴（点击切换预览）',
   bookSpecimensTitle: (count) => `当前持有个体：x${count}`,
   bookNoSpecimens: '当前背包中暂无该鱼种个体（可通过繁育或合成再次获得）。',
   bookPlaceAction: '放置',
   bookStoreAction: '收回',
-  bookGoBreedAction: '去繁育',
-  bookGoMergeAction: '去合成',
   bookVariantRate: (u, t, pct) => `变种发现率：${pct}% (${u}/${t})`,
   bookLockedMsg: (tierStr) => `该鱼种（${tierStr}）尚未解锁，可通过繁育或合成发现新品种！`,
   bookNoteTitle: '生物图鉴与品阶变种收集',
@@ -423,7 +419,7 @@ const ZH: Copy = {
   shortcutsBgm: '开关背景音乐',
   shortcutsSfx: '开关操作音效',
   shortcutsLocale: '切换中英文',
-  shortcutsAutoPick: '推荐配对 / 自动选鱼（当前页）',
+  shortcutsAutoPick: '繁育页推荐配对 / 合成页自动选材',
   shortcutsClear: '清空繁育 / 合成选择',
   shortcutsRun: '确认繁育 / 合成；收下小鱼',
   shortcutsEscape: '关闭 / 取消 / 返回 / 退出沉浸',
@@ -565,7 +561,7 @@ const EN: Copy = {
   releasedMsg: (name) => `Released ${name}.`,
   tankNoteTitle: 'Tank & Interaction Guide',
   tankNote:
-    '【Manage Fish】Click a fish to place or store it. Open ⓘ to name, favorite, protect or release it. You start with **3 ∞ infinite-use** starter fish. 【Tank Interactions】Click empty water to drop food pellets, click a swimming fish to startle it, or drag placed ornaments directly inside the tank!',
+    '【Manage Fish】Click a fish to place or store it. Open ⓘ to lock or confirm releasing it. You start with **3 ∞ infinite-use** starter fish. 【Tank Interactions】Click empty water to drop food pellets, click a swimming fish to startle it, or drag placed ornaments directly inside the tank!',
   breedHeading: (picked) => `Pick two adults (${picked}/2 selected)`,
   sortLabel: 'Sort:',
   sortInTank: 'In Tank',
@@ -631,14 +627,12 @@ const EN: Copy = {
     '【Level Unlocks】Leveling your aquarium (**Lv.1–Lv.10**) expands placement slots from **3 up to 12** and unlocks all **18 asymmetric floor ornaments & hanging lights**. 【Free Dragging】Drag any placed decoration directly inside the tank (last dragged item rises to the front layer); lights glow automatically in Night mode!',
   bookHeading: 'Collection',
   bookOwnedBadge: (count) => `Owned x${count}`,
-  bookCompletion: (pct) => `Catalog Completion: ${pct}%`,
+  bookCompletion: (pct) => `Grade variants ${pct}%`,
   bookVariantsTitle: 'Grade Variants (Click to preview)',
   bookSpecimensTitle: (count) => `Owned Specimens: x${count}`,
   bookNoSpecimens: 'No specimens of this species currently in your inventory (breed or merge to obtain another).',
   bookPlaceAction: 'Place',
   bookStoreAction: 'Store',
-  bookGoBreedAction: 'Breed',
-  bookGoMergeAction: 'Merge',
   bookVariantRate: (u, t, pct) => `Variant Discovery: ${pct}% (${u}/${t})`,
   bookLockedMsg: (tierStr) => `Undiscovered ${tierStr} species. Breed or merge fish to unlock it!`,
   bookNoteTitle: 'Encyclopedia & Grade Variants',
@@ -653,7 +647,7 @@ const EN: Copy = {
   shortcutsBgm: 'Toggle background music',
   shortcutsSfx: 'Toggle sound effects',
   shortcutsLocale: 'Switch Chinese / English',
-  shortcutsAutoPick: 'Best Pair / auto-select (current tab)',
+  shortcutsAutoPick: 'Best Pair on Breed / auto-select materials on Merge',
   shortcutsClear: 'Clear breeding / merge selection',
   shortcutsRun: 'Run a ready action / collect result',
   shortcutsEscape: 'Close / cancel / back / exit immersive',

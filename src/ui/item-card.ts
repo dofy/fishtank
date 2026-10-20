@@ -9,9 +9,6 @@ export interface ItemCardOptions {
   name?: string
   title?: string
   selected?: boolean
-  tracking?: boolean
-  /** Visible label for the active tracking action, separate from selection. */
-  trackingLabel?: string
   unavailable?: boolean
   density?: 'regular' | 'compact' | 'mini'
   count?: { text: string; title?: string }
@@ -44,7 +41,6 @@ export function itemCard(options: ItemCardOptions): HTMLElement {
   card.dataset.cardKey = options.key
   card.dataset.density = options.density ?? 'regular'
   card.dataset.selected = String(Boolean(options.selected))
-  card.dataset.tracking = String(Boolean(options.tracking))
   card.dataset.unavailable = String(Boolean(options.unavailable))
 
   if (options.density !== 'mini' || options.count || options.status?.length || options.action || options.order !== undefined) {
@@ -59,13 +55,6 @@ export function itemCard(options: ItemCardOptions): HTMLElement {
     header.append(status)
     if (options.action) {
       options.action.classList.add('item-card-action')
-      if (options.tracking) {
-        options.action.classList.add('item-card-tracking-action')
-        const badge = document.createElement('span'); badge.className = 'item-card-tracking-badge'
-        badge.append(...options.action.childNodes)
-        if (options.trackingLabel) badge.append(label(options.trackingLabel, 'item-card-tracking-label'))
-        options.action.append(badge)
-      }
       retainFocus(options.action, options.key, 'item-card-action')
       header.append(options.action)
     } else if (options.selected && options.order !== undefined) {

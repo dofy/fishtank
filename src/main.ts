@@ -2,7 +2,6 @@ import { sound, syncAudioConfig } from './core/audio'
 import { moveDecor, newGame, tick } from './core/game'
 import { load, save, saveImportedState, wipe } from './core/save'
 import { syncRailLightConfig } from './core/lighting'
-import { applyTankPreset } from './core/presets'
 import { species } from './core/species'
 import type { AudioConfig, ColorMode, DecorId, Locale } from './core/types'
 import { LcdRenderer } from './render/lcd'
@@ -109,24 +108,6 @@ async function main(): Promise<void> {
     },
     onFishWithdraw: (uid) => {
       originalScene.withdrawFish(uid, window.matchMedia('(prefers-reduced-motion: reduce)').matches)
-    },
-    onPresetApply: (id) => {
-      const previous = { tankUids: state.tankUids, placedDecor: state.placedDecor,
-        colorMode: state.colorMode, railLights: state.railLights, activeTankPresetId: state.activeTankPresetId }
-      const result = applyTankPreset(state, id)
-      if ('error' in result) return result
-      if (!save(state)) {
-        Object.assign(state, previous)
-        return { error: 'storage' }
-      }
-      const displayed = new Set(state.tankUids)
-      for (const uid of previous.tankUids ?? []) if (!displayed.has(uid)) {
-        originalScene.withdrawFish(uid, window.matchMedia('(prefers-reduced-motion: reduce)').matches)
-      }
-      night = resolveDarkMode(state.colorMode ?? 'auto')
-      applyTheme(manifest, night)
-      app.invalidatePortraits()
-      return result
     },
     onReset: () => {
       stateRevision++
@@ -304,7 +285,6 @@ async function main(): Promise<void> {
     if (!draggingDecorId) return
     draggingDecorId = null
     if (!lab?.observing) save(state)
-    app.updatePresetStatus()
     const pt = canvasCoords(event)
     const hover = scene.hitDecor(pt.x, pt.y, logicalHeight)
     scene.activeDecorId = hover

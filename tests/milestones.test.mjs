@@ -38,8 +38,8 @@ beforeEach(() => storage.clear())
 const clone = value => JSON.parse(JSON.stringify(value))
 const byId = (state, id) => milestones.milestoneProgress(state).find(item => item.id === id)
 
-test('defines exactly six stable milestones and a starter game has no unlocks', () => {
-  assert.deepEqual(milestones.MILESTONE_IDS, [
+test('retains six original ids and defines fourteen stable medals and a starter game has no unlocks', () => {
+  assert.deepEqual(milestones.MILESTONE_IDS.slice(0,6), [
     'first-friend',
     'tier-one',
     'jelly-family',
@@ -47,7 +47,7 @@ test('defines exactly six stable milestones and a starter game has no unlocks', 
     'variant-collector',
     'reef-explorer',
   ])
-  assert.equal(milestones.MILESTONES.length, 6)
+  assert.equal(milestones.MILESTONES.length, 14)
   const state = game.newGame(NOW, 'en')
   assert.ok(milestones.milestoneProgress(state).every(item => item.unlocked === false))
   assert.equal(byId(state, 'reef-explorer').current, 2)
@@ -104,10 +104,10 @@ test('sync is idempotent and a plaque can only use an unlocked unique id', () =>
   const once = clone(state.milestones)
   milestones.syncMilestones(state)
   assert.deepEqual(state.milestones, once)
-  assert.equal(milestones.setDisplayedMilestone(state, 'reef-explorer'), false)
-  assert.equal(milestones.setDisplayedMilestone(state, 'first-friend'), true)
-  assert.equal(state.milestones.displayed, 'first-friend')
-  assert.equal(milestones.setDisplayedMilestone(state, undefined), true)
+  assert.equal(milestones.setDisplayedMilestones(state, ['reef-explorer']), false)
+  assert.equal(milestones.setDisplayedMilestones(state, ['first-friend']), true)
+  assert.deepEqual(state.milestones.displayed, ['first-friend'])
+  assert.equal(milestones.setDisplayedMilestones(state, []), true)
   assert.equal(state.milestones.displayed, undefined)
 })
 
@@ -160,10 +160,56 @@ test('local load prunes corrupt milestone metadata without losing fish', () => {
 test('displayed plaque survives export and restore', () => {
   const state = game.newGame(NOW, 'en')
   game.recordVariant(state, 'copperband', 1)
-  assert.equal(milestones.setDisplayedMilestone(state, 'first-friend'), true)
+  assert.equal(milestones.setDisplayedMilestones(state, ['first-friend']), true)
   const restored = save.parseSaveImport(save.exportSave(state, NOW), NOW).state
   assert.deepEqual(restored.milestones, {
     unlocked: ['first-friend'],
-    displayed: 'first-friend',
+    displayed: ['first-friend'],
   })
+})
+
+
+test('all fourteen medals have reachable, distinct collection thresholds', () => {
+  const state = game.newGame(NOW, 'en')
+  for (const sp of species.SPECIES.filter(sp => sp.tier > 0)) for (const grade of [1,2,3,4,5]) game.recordVariant(state, sp.id, grade)
+  assert.equal(new Set(milestones.MILESTONE_IDS).size,14)
+  assert.ok(milestones.milestoneProgress(state).every(p => p.unlocked && p.current === p.total))
+  assert.equal(byId(state,'eel-family').total,3)
+  assert.equal(byId(state,'color-palette').current,5)
+  assert.equal(byId(state,'variant-master').current,60)
+  assert.equal(milestones.setDisplayedMilestones(state,milestones.MILESTONE_IDS),true)
+  const restored = save.parseSaveImport(save.exportSave(state,NOW),NOW).state
+  assert.deepEqual(restored.milestones.displayed,milestones.MILESTONE_IDS)
+})
+
+test('multi-medal display toggles independently and rejects duplicate or locked awards', () => {
+  const state = game.newGame(NOW,'en');game.recordVariant(state,'copperband',5)
+  assert.equal(milestones.setDisplayedMilestones(state,['first-friend','grade-five']),true)
+  const old = clone(state.milestones.displayed)
+  assert.equal(milestones.setDisplayedMilestones(state,['first-friend','reef-explorer']),false)
+  assert.deepEqual(state.milestones.displayed,old)
+  assert.equal(milestones.setDisplayedMilestones(state,['first-friend','first-friend']),false)
+  assert.deepEqual(state.milestones.displayed,old)
+  assert.equal(milestones.setDisplayedMilestones(state,['grade-five']),true)
+  assert.deepEqual(state.milestones.displayed,['grade-five'])
+  for(const displayed of [['first-friend','first-friend'],['reef-explorer'],42]){
+    const incoming=clone(state);incoming.milestones.displayed=displayed
+    assert.throws(()=>save.parseSaveImport(JSON.stringify(incoming),NOW),e=>e.code==='invalid-state')
+  }
+})
+
+test('legacy single-plaque saves migrate without mounting extra newly unlocked medals', () => {
+  const state=game.newGame(NOW,'en');game.recordVariant(state,'copperband',5)
+  state.milestones.displayed='first-friend'
+  const restored=save.parseSaveImport(JSON.stringify(state),NOW).state
+  assert.deepEqual(restored.milestones.displayed,['first-friend'])
+  assert.ok(restored.milestones.unlocked.includes('grade-five'))
+})
+
+test('full-grade medal requires five grades of one non-starter species', () => {
+  const state=game.newGame(NOW,'en')
+  for(const [i,sp]of species.SPECIES.filter(s=>s.tier===1).slice(0,5).entries())game.recordVariant(state,sp.id,i+1)
+  assert.equal(byId(state,'color-palette').current,1)
+  for(const grade of [1,2,3,4,5])game.recordVariant(state,'copperband',grade)
+  assert.equal(byId(state,'color-palette').unlocked,true)
 })

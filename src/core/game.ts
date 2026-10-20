@@ -140,7 +140,6 @@ export function newGame(now = Date.now(), locale: Locale = detectLocale()): Game
     level: 1,
     discovered: uniqueStarters,
     discoveredVariants: uniqueStarters.map((id) => variantKey(id, 1)),
-    breedGoal: 'species',
     theme: 'realistic',
     colorMode: 'auto',
     railLights: syncRailLightConfig(),

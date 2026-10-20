@@ -1,10 +1,10 @@
 import { itemCard } from './item-card'
-import { recommendPair } from '../core/collection'
 import { collectionCopy } from './collection-copy'
-import { breedingPlan, fishCare, fishDisplayName, saveTools, targetPanel } from './collection'
-import { presetCopy, presetTools, refreshPresetStatus } from './presets'
-import type { PresetApplyResult } from '../core/presets'
+import { fishCare, fishDisplayName, saveTools } from './collection'
 import { choosePlaque, milestoneCopy, milestonePanel } from './milestones'
+import { medalArt } from './medals'
+import { milestoneProgress } from '../core/milestones'
+import { setFishLocked } from '../core/collection'
 import { sound, syncAudioConfig } from '../core/audio'
 import { syncRailLightConfig } from '../core/lighting'
 import {
@@ -122,7 +122,6 @@ export interface AppHooks {
   onSave(): boolean
   onRestore(next: GameState): Promise<boolean>
   onFishWithdraw(uid: string): void
-  onPresetApply(id: string): PresetApplyResult
   onReset(): void
   themes: { id: string; name: string }[]
 }
@@ -154,9 +153,9 @@ export class App {
   private tab: Tab = 'tank'
   private breedPick: string[] = []
   private mergePick: string[] = []
-  private favoritesOnly = false
   private confirmingReset = false
   private confirmingReleaseUid: string | null = null
+  private bookPage: 'species' | 'medals' = 'species'
   private bookDetailSpeciesId: SpeciesId | null = null
   private bookDetailGrade: Grade = 1
   private bookSelectedUid: string | null = null
@@ -322,7 +321,7 @@ export class App {
   }
 
   setState(state: GameState): void {
-    this.favoritesOnly = false
+    this.bookPage = 'species'
     this.state = state
     this.breedPick = []
     this.mergePick = []
@@ -385,7 +384,6 @@ export class App {
    * Never replaces DOM nodes so button/card clicks are never interrupted.
    */
   updateTimers(now = Date.now()): void {
-    this.updatePresetStatus()
     const s = this.state
     const heartEl = this.hud.querySelector<HTMLElement>('[data-heart-timer]')
     if (heartEl) {
@@ -401,11 +399,6 @@ export class App {
     }
   }
 
-  updatePresetStatus(): void {
-    const box = this.body.querySelector<HTMLElement>('.tank-presets')
-    if (box) refreshPresetStatus(box, this.state, this.locale)
-  }
-
   render(now = Date.now()): void {
     document.documentElement.lang = this.locale === 'zh' ? 'zh-CN' : 'en'
     this.renderHud(now)
@@ -413,11 +406,14 @@ export class App {
     this.renderBody(now)
     this.renderFooter()
     this.renderShowcase()
-    const id = this.state.milestones?.displayed
+    const ids = this.state.milestones?.displayed ?? []
     const c = milestoneCopy(this.locale)
-    this.plaque.hidden = !id
-    this.plaque.textContent = id ? c.entries[id].plaque : ''
-    this.plaque.setAttribute('aria-label', id ? `${c.plaqueLabel}: ${c.entries[id].plaque}` : c.plaqueLabel)
+    this.plaque.hidden = ids.length === 0
+    this.plaque.replaceChildren(...ids.map(id => {
+      const item = document.createElement('span'); item.className = 'tank-medal'; item.dataset.medalId = id
+      item.title = c.entries[id].title; item.append(medalArt(id)); return item
+    }))
+    this.plaque.setAttribute('aria-label', `${c.plaqueLabel}: ${ids.map(id => c.entries[id].title).join('、')}`)
   }
 
   private renderHud(now: number): void {
@@ -569,16 +565,22 @@ export class App {
     this.body.replaceChildren(...nodes)
   }
 
-  private collectionChanged(): void {
-    const focusedId = document.activeElement instanceof HTMLElement ? document.activeElement.id : ''
+  private collectionChanged(fish: Fish, locked: boolean): void {
+    const previous = fish.locked
+    setFishLocked(this.state, fish.uid, locked)
     this.confirmingReleaseUid = null
-    if (!this.hooks.onSave()) this.say(collectionCopy(this.locale).storageError, 'bad')
+    if (!this.hooks.onSave()) {
+      if (previous === undefined) delete fish.locked
+      else fish.locked = previous
+      this.say(collectionCopy(this.locale).storageError, 'bad')
+    }
     this.render()
-    if (focusedId) document.getElementById(focusedId)?.focus()
+    this.body.querySelector<HTMLButtonElement>(`[data-fish-lock="${fish.uid}"]`)?.focus({ preventScroll: true })
   }
 
   private openFishCare(fish: Fish): void {
     this.tab = 'book'
+    this.bookPage = 'species'
     this.bookDetailSpeciesId = fish.speciesId
     this.bookSelectedUid = fish.uid
     this.bookDetailGrade = fish.grade
@@ -586,15 +588,6 @@ export class App {
     const detail = this.body.querySelector<HTMLElement>('.book-detail')
     scrollPanelTo(this.body, detail ?? this.body)
     if (detail) { detail.tabIndex = -1; detail.focus({ preventScroll: true }) }
-  }
-
-  private recommendForGoal(): void {
-    const c = collectionCopy(this.locale)
-    if (this.state.breedGoal === 'target' && !this.state.collectionTarget) { this.tab = 'book'; this.render(); return }
-    const best = recommendPair(this.state, this.state.breedGoal ?? 'species', Date.now())
-    if (!best) { this.say(c.noPair, 'bad'); return }
-    this.breedPick = [...best.uids]
-    this.render()
   }
 
   // ---------------------------------------------------------------- tank
@@ -630,14 +623,7 @@ export class App {
 
     const grid = document.createElement('div')
     grid.className = 'fish-grid item-grid'
-    const favoriteToggle = makeActionButton(this.favoritesOnly ? HEART_SVG.solid : HEART_SVG.outline, collectionCopy(this.locale).favoritesOnly, () => {
-      this.favoritesOnly = !this.favoritesOnly
-      this.render()
-    })
-    favoriteToggle.classList.add('favorites-toggle')
-    favoriteToggle.setAttribute('aria-pressed', String(this.favoritesOnly))
-    headRow.append(favoriteToggle)
-    const sorted = sortTankFish(this.state.fish.filter(f => !this.favoritesOnly || f.favorite), currentSort, tankIds)
+    const sorted = sortTankFish(this.state.fish, currentSort, tankIds)
     for (const fish of sorted) {
       const inTank = tankIds.has(fish.uid)
       grid.append(
@@ -666,7 +652,6 @@ export class App {
         }),
       )
     }
-    if (this.favoritesOnly && sorted.length === 0) grid.append(note(collectionCopy(this.locale).noFavorites))
     return [headRow, grid, note(c.tankNote, c.tankNoteTitle, TAB_ICONS.tank)]
   }
 
@@ -767,7 +752,10 @@ export class App {
         return
       }
       sound.play('select')
-      this.recommendForGoal()
+      const best = sortBreedCandidates(eligible, 'tier', now)
+      this.breedPick = [best[0]!.uid, best[1]!.uid]
+      this.say('')
+      this.render(now)
     })
     bestPairBtn.className = 'btn-secondary'
     bestPairBtn.setAttribute('aria-disabled', String(eligible.length < 2))
@@ -786,8 +774,6 @@ export class App {
       row.append(clear)
     }
 
-    actionBar.append(breedingPlan(this.state, this.locale, a && b ? [a, b] : [],
-      () => this.collectionChanged(), () => { this.tab = 'book'; this.render() }))
     actionBar.append(row)
     if (a && b) {
       actionBar.append(this.oddsTable(a.tier, b.tier))
@@ -1036,11 +1022,7 @@ export class App {
     const placedIds = new Set(placedList.map((d) => d.id))
     const cap = decorCapacity(this.state)
     const prog = decorProgress(this.state)
-    const out: Node[] = [presetTools(this.state, this.locale, {
-      save: () => this.hooks.onSave(),
-      apply: id => this.hooks.onPresetApply(id),
-      notice: (text, kind) => this.say(text, kind),
-    }), heading(c.decorHeading(placedIds.size, cap, prog.unlocked, prog.total))]
+    const out: Node[] = [heading(c.decorHeading(placedIds.size, cap, prog.unlocked, prog.total))]
 
     const grid = document.createElement('div')
     grid.className = 'fish-grid'
@@ -1114,27 +1096,50 @@ export class App {
     headRow.className = 'panel-head'
     const prog = collectionProgress(this.state)
     headRow.append(
-      heading(`${c.bookHeading} (${prog.owned} / ${prog.total})`),
-      label(c.bookCompletion(pctStr), 'sort-label'),
+      heading(c.bookHeading),
     )
+    if (this.bookPage === 'species') headRow.append(label(c.bookCompletion(pctStr), 'sort-label'))
     out.push(headRow)
-    if (!this.bookDetailSpeciesId) out.push(milestonePanel(this.state, this.locale, id => {
-      const c = milestoneCopy(this.locale)
-      const ok = choosePlaque(this.state, id, () => this.hooks.onSave())
-      this.say(ok ? c.saved : c.storage, ok ? 'good' : 'bad')
-      this.render()
-      this.body.querySelector<HTMLButtonElement>(`[data-milestone-equip="${id}"]`)?.focus({ preventScroll: true })
-    }))
-    out.push(targetPanel(this.state, this.locale, () => this.collectionChanged(), () => {
-      this.state.breedGoal = 'target'
-      this.hooks.onSave()
-      this.tab = 'breed'
-      this.recommendForGoal()
-      this.render()
-    }))
-
+    const pages = document.createElement('div'); pages.className = 'book-pages'; pages.setAttribute('role', 'tablist')
+    pages.setAttribute('aria-label', this.locale === 'zh' ? '图鉴分页' : 'Book pages')
+    const medals = milestoneProgress(this.state)
+    const earned = medals.filter(p => p.unlocked).length
+    for (const [id, text, count] of [
+      ['species', this.locale === 'zh' ? '鱼种' : 'Species', `${prog.owned}/${prog.total}`],
+      ['medals', this.locale === 'zh' ? '勋章' : 'Medals', `${earned}/${medals.length}`],
+    ] as const) {
+      const button = makeButton(text, () => {
+        this.bookPage = id; this.bookDetailSpeciesId = null; this.render()
+        scrollPanelTo(this.body, this.body)
+        this.body.querySelector<HTMLButtonElement>(`[data-book-page="${id}"]`)?.focus({ preventScroll: true })
+      })
+      const progress = document.createElement('span'); progress.className = 'book-page-count'; progress.textContent = count
+      button.append(progress)
+      button.setAttribute('aria-label', `${text} ${count}`)
+      button.id = `book-tab-${id}`; button.setAttribute('aria-controls', 'book-page-content'); button.dataset.bookPage = id; button.setAttribute('role', 'tab'); button.setAttribute('aria-selected', String(this.bookPage === id)); button.tabIndex = this.bookPage === id ? 0 : -1
+      button.addEventListener('keydown', event => {
+        if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return
+        event.preventDefault()
+        const next = event.key === 'Home' ? 'species' : event.key === 'End' ? 'medals' : id === 'species' ? 'medals' : 'species'
+        this.body.querySelector<HTMLButtonElement>(`[data-book-page="${next}"]`)?.click()
+      })
+      pages.append(button)
+    }
+    out.push(pages)
+    if (this.bookPage === 'medals') {
+      const panel = milestonePanel(this.state, this.locale, id => {
+        const c = milestoneCopy(this.locale), ok = choosePlaque(this.state, id, () => this.hooks.onSave())
+        this.say(ok ? c.saved : c.storage, ok ? 'good' : 'bad'); this.render()
+        const trigger = this.body.querySelector<HTMLButtonElement>(id === 'all' || id === 'none' ? `[data-medals="${id}"]` : `[data-milestone-equip="${id}"]`)
+        const focusTarget = trigger && !trigger.disabled ? trigger : this.body.querySelector<HTMLButtonElement>('[data-book-page="medals"]')
+        focusTarget?.focus({ preventScroll: true })
+      })
+      panel.id = 'book-page-content'; panel.setAttribute('role', 'tabpanel'); panel.setAttribute('aria-labelledby', 'book-tab-medals'); out.push(panel)
+      return out
+    }
     const layout = document.createElement('div')
     layout.className = `book-layout${this.bookDetailSpeciesId ? ' with-detail' : ''}`
+    layout.id = 'book-page-content'; layout.setAttribute('role', 'tabpanel'); layout.setAttribute('aria-labelledby', 'book-tab-species')
 
     if (this.bookDetailSpeciesId) {
       const detailSp = SPECIES.find((s) => s.id === this.bookDetailSpeciesId)
@@ -1155,23 +1160,12 @@ export class App {
         : (Math.max(1, ...discoveredGradesFor(this.state, sp.id)) as Grade)
       const isActive = this.bookDetailSpeciesId === sp.id
 
-      const tracking = this.state.collectionTarget?.speciesId === sp.id
-      const track = makeActionButton(ACTION_ICONS.target, `${tracking ? collectionCopy(this.locale).tracking : collectionCopy(this.locale).track}: ${speciesName(sp.id, this.locale)}`, event => {
-        event.stopPropagation()
-        if (this.state.collectionTarget?.speciesId === sp.id) return
-        this.state.collectionTarget = { speciesId: sp.id }
-        this.collectionChanged()
-        this.body.querySelector<HTMLButtonElement>(`[data-species="${sp.id}"] .item-card-main`)?.focus({ preventScroll: true })
-      })
-      track.dataset.trackSpecies = sp.id
-      track.disabled = tracking
-      track.setAttribute('aria-pressed', String(tracking))
       const cell = itemCard({
-        key: `species:${sp.id}`, selected: isActive, tracking, trackingLabel: collectionCopy(this.locale).tracking, unavailable: !owned,
+        key: `species:${sp.id}`, selected: isActive, unavailable: !owned,
         label: owned ? speciesName(sp.id, this.locale) : c.bookLockedMsg(`${stars(sp.tier)} ${tierName(sp.tier, this.locale)}`),
         name: owned ? speciesName(sp.id, this.locale) : '???',
         portrait: this.cardPortrait(sp, sp.tier, owned ? bestOwnedGrade : 1, !owned),
-        meta: this.tierMetaLine(sp.tier), action: track,
+        meta: this.tierMetaLine(sp.tier),
         count: owned ? { text: `×${ownedCopies.length}` } : undefined,
         onActivate: () => {
           if (owned) {
@@ -1272,7 +1266,7 @@ export class App {
       previewMeta.append(this.tierMetaLine(sp.tier, displayGrade))
     }
 
-    // Action bar for the selected specimen (Place/Store + Quick Jump to Breed/Merge)
+    // Place or store the selected specimen.
     const actionsRow = document.createElement('div')
     actionsRow.className = 'book-detail-actions'
     if (activeSpecimen) {
@@ -1296,39 +1290,16 @@ export class App {
           this.say(c.tankDisplayFullMsg(cap), 'bad')
         }
         this.render()
-      })
+      }, inTank ? ACTION_ICONS.store : ACTION_ICONS.place)
       placeBtn.className = 'btn-primary'
       actionsRow.append(placeBtn)
 
-      if (activeSpecimen.tier === 0 || activeSpecimen.uses > 0) {
-        const goBreed = makeButton(c.bookGoBreedAction, () => {
-          sound.play('click')
-          this.tab = 'breed'
-          if (isAdult(activeSpecimen, now) && !this.breedPick.includes(activeSpecimen.uid)) {
-            this.breedPick = [...this.breedPick, activeSpecimen.uid].slice(-2)
-          }
-          this.render()
-        })
-        goBreed.className = 'btn-secondary'
-        actionsRow.append(goBreed)
-      }
-
-      if (activeSpecimen.tier > 0 && activeSpecimen.tier < 5 && !activeSpecimen.locked) {
-        const goMerge = makeButton(c.bookGoMergeAction, () => {
-          sound.play('click')
-          this.tab = 'merge'
-          this.render()
-        })
-        goMerge.className = 'btn-secondary'
-        actionsRow.append(goMerge)
-      }
     }
 
     const care = activeSpecimen
-      ? fishCare(this.state, activeSpecimen, this.locale, () => this.collectionChanged())
+      ? fishCare(activeSpecimen, this.locale, actionsRow, locked => this.collectionChanged(activeSpecimen, locked))
       : document.createDocumentFragment()
     if (activeSpecimen && activeSpecimen.tier > 0 && !activeSpecimen.locked) care.append(this.fishReleaseControl(activeSpecimen))
-    if (activeSpecimen?.nickname) previewMeta.prepend(label(activeSpecimen.nickname, 'fish-nickname'))
 
     // Grade Variant Color Swatches (1 for starter fish, 5 for regular species)
     const unlockedGrades = new Set(discoveredGradesFor(this.state, sp.id))
@@ -1394,7 +1365,6 @@ export class App {
       top,
       previewWrap,
       previewMeta,
-      actionsRow,
       care,
       varTitle,
       varRow,
@@ -1857,7 +1827,7 @@ export class App {
       li.append(title, text)
       ul.append(li)
     }
-    guideContent.append(ul, note(collectionCopy(this.locale).help), note(presetCopy(this.locale).help), note(milestoneCopy(this.locale).help))
+    guideContent.append(ul, note(collectionCopy(this.locale).help), note(milestoneCopy(this.locale).help))
 
     // Section 2: Breeding Probability Matrix
     matrixContent.append(heading(c.helpMatrixTitle, 'h3'))
@@ -2454,7 +2424,6 @@ export class App {
     const details = opts.manage ? makeActionButton(NOTE_INFO_ICON, cc.manage, () => this.openFishCare(fish)) : undefined
     if (details) details.dataset.fishCare = fish.uid
     const marks: Node[] = []
-    if (fish.favorite) marks.push(makeStatusIcon(HEART_SVG.solid, cc.favorited))
     if (fish.locked) marks.push(makeStatusIcon(ACTION_ICONS.lock, cc.locked))
     const card = itemCard({
       key: `fish:${fish.uid}`, selected: opts.selected, unavailable: opts.locked,

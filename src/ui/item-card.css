@@ -24,12 +24,6 @@
 :root[data-theme] .item-card .item-card-header > button.item-card-action:hover,
 :root[data-theme] .item-card .item-card-header > button.item-card-action:focus-visible { color: var(--accent); background: var(--panel); border-color: var(--border); }
 :root[data-theme] .item-card .item-card-header > button.item-card-action[aria-pressed='true'] { opacity: 1; color: var(--accent); background: transparent; border-color: transparent; cursor: default; }
-/* Tracking belongs to the target badge; selection belongs to the card shell. */
-:root[data-theme] .item-card .item-card-header > button.item-card-action.item-card-tracking-action { width: auto; min-width: 0; padding-inline: 5px; color: var(--accent-2); background: transparent; border-color: transparent; opacity: 1; cursor: default; }
-.item-card-tracking-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 5px; border: 1px dashed currentColor; border-radius: 4px; font-size: 10px; font-weight: 600; line-height: 14px; white-space: nowrap; }
-.item-card-tracking-label { color: var(--text); }
-.item-card-tracking-badge .ico { width: 14px; height: 14px; }
-:root[data-theme='lcd'] .item-card-tracking-badge { border-radius: 0; }
 :root[data-theme] .item-card[data-density='compact'] > button.item-card-main[aria-pressed] { grid-template-rows: 52px 30px auto; padding-inline: 6px; }
 .item-card[data-density='compact'] .item-card-art { height: 52px; }
 .item-card[data-density='compact'] .item-card-art canvas { width: 96px !important; height: 52px !important; }

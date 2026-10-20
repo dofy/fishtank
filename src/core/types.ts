@@ -128,9 +128,9 @@ export interface Fish {
   birthExp?: number
   /** True once its maturation EXP has been banked. */
   expBanked: boolean
-  /** Optional player-assigned display name. */
+  /** Legacy nickname retained for save compatibility; unused by gameplay/UI. */
   nickname?: string
-  /** Bookmarked fish. Independent of protection from destructive actions. */
+  /** Legacy favorite retained for save compatibility; unused by gameplay/UI. */
   favorite?: boolean
   /** Protected from synthesis and release, while remaining breedable. */
   locked?: boolean
@@ -140,6 +140,7 @@ export type Locale = 'zh' | 'en'
 export type ColorMode = 'auto' | 'light' | 'dark'
 export type FishSort = 'inTank' | 'tier' | 'grade' | 'uses' | 'acquired'
 export type BgmTrackId = 'lofi' | 'tide' | 'chiptune'
+/** Legacy recommendation preference, retained only for save compatibility. */
 export type BreedGoal = 'species' | 'variant' | 'tier' | 'target'
 export type MilestoneId =
   | 'first-friend'
@@ -148,14 +149,23 @@ export type MilestoneId =
   | 'grade-five'
   | 'variant-collector'
   | 'reef-explorer'
+  | 'reef-rookie'
+  | 'reef-naturalist'
+  | 'rare-encounter'
+  | 'legend-encounter'
+  | 'mythic-encounter'
+  | 'eel-family'
+  | 'color-palette'
+  | 'variant-master'
 
 export interface MilestoneState {
   /** Permanently unlocked milestone ids, in unlock order. */
   unlocked: MilestoneId[]
-  /** Optional commemorative plaque shown in the aquarium. */
-  displayed?: MilestoneId
+  /** All mounted medals; legacy saves with a single string are migrated on load. */
+  displayed?: MilestoneId[]
 }
 
+/** Legacy tracked target, retained only for save compatibility. */
 export interface CollectionTarget {
   speciesId: SpeciesId
   grade?: Grade
@@ -184,7 +194,7 @@ export interface RailLightConfig {
   frequency: number
 }
 
-/** A display-only snapshot. Fish are referenced by UID, never duplicated. */
+/** Legacy layout metadata retained for save compatibility only. */
 export interface TankPreset {
   id: string
   name: string
@@ -201,9 +211,9 @@ export interface GameState {
   tankUids?: string[]
   /** Decorations currently placed on the bottom of the aquarium tank. */
   placedDecor?: PlacedDecor[]
-  /** Up to six saved aquarium layouts, independent of the visual theme. */
+  /** Legacy presets: preserved on import/export, no longer exposed in gameplay. */
   tankPresets?: TankPreset[]
-  /** Last saved/applied layout; edits are compared with its currently available contents. */
+  /** Legacy active-layout reference; never applied to the current aquarium. */
   activeTankPresetId?: string
   /** Filter and auto-select settings on the Merge tab. */
   mergeFilter?: MergeFilter
@@ -224,9 +234,9 @@ export interface GameState {
   discoveredVariants?: string[]
   /** Permanent collection milestone history and optional displayed plaque. */
   milestones?: MilestoneState
-  /** Optional species or species-grade collection objective. */
+  /** Legacy tracked target; not exposed or used by gameplay. */
   collectionTarget?: CollectionTarget
-  /** Preferred objective for breeding recommendations. */
+  /** Legacy recommendation preference; not exposed or used by gameplay. */
   breedGoal?: BreedGoal
   theme: string
   colorMode?: ColorMode

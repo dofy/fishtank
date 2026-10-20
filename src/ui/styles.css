@@ -149,9 +149,11 @@ header.hud {
 }
 .pixi-stage { position: relative; flex-shrink: 0; width: 100%; min-width: 0; isolation: isolate; }
 .tank-shell { position: relative; flex-shrink: 0; width: 100%; min-width: 0; }
-.tank-plaque { position: absolute; right: 12px; bottom: 12px; z-index: 3; pointer-events: none; max-width: calc(100% - 24px); padding: 4px 8px; color: var(--text); background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); font-size: 11px; line-height: 1.4; overflow-wrap: anywhere; }
+.tank-plaque { position: absolute; right: 8px; bottom: 7px; z-index: 3; pointer-events: none; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 2px; max-width: calc(100% - 16px); }
 .tank-plaque[hidden] { display: none; }
-.tank-plaque::before { content: '◇ '; color: var(--accent); }
+.tank-medal { display: block; width: 26px; height: 32px; }
+.tank-medal .medal-art { width: 100%; height: 100%; }
+@media (max-width: 640px) { .tank-medal { width: 18px; height: 22px; } }
 :root[data-immersive='on'] .tank-shell { flex: 1 1 auto; height: 100dvh; }
 .pixi-canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; pointer-events: none; border-radius: var(--radius); }
 .pixi-canvas[hidden] { display: none; }
@@ -261,6 +263,9 @@ button.btn-secondary {
 :root[data-theme='lcd'] button.btn-primary[aria-disabled='true'] { background: var(--panel-2); color: var(--muted); }
 
 button.icon-btn { @apply inline-flex items-center gap-1.5; }
+button[data-icon-label] { display: inline-flex; align-items: center; justify-content: center; gap: 8px; line-height: 1.3; }
+button[data-icon-label] > .ico { width: 16px; height: 16px; flex: 0 0 16px; }
+button[data-icon-label] > .button-label { display: block; }
 button.danger-confirm {
   @apply text-white font-bold;
   background: linear-gradient(180deg, color-mix(in srgb, var(--danger) 88%, #fff), color-mix(in srgb, var(--danger) 82%, #000));
@@ -397,8 +402,9 @@ button.book-close-btn svg {
   border-radius: var(--radius);
 }
 .book-preview-meta { @apply flex flex-col items-center gap-0.5 text-center; }
-.book-detail-actions { @apply flex flex-wrap justify-center gap-1.5; }
-.book-detail-actions > button { @apply flex-1 min-w-[80px] py-1.5 px-2.5 text-xs; }
+.book-detail-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.book-detail-actions > button { min-width: 0; min-height: 44px; padding: 6px 8px; font-size: 12px; white-space: nowrap; }
+.book-detail-actions button[data-icon-label] > .ico { width: 18px; height: 18px; flex-basis: 18px; }
 .variant-strip { @apply grid grid-cols-5 gap-[5px]; }
 .specimen-grid { @apply grid grid-cols-3 gap-1.5 max-h-[196px] overflow-y-auto pr-0.5; }
 .specimen-grid > .note { @apply col-span-full m-0 py-1.5; }
@@ -841,44 +847,10 @@ table.help-matrix td:not(:first-child) { @apply whitespace-nowrap px-0.5; }
   to { transform: rotate(1.6deg) scaleY(1.01); }
 }
 
-/* Collection tools use the current reef / LCD palette and keep the fish in view. */
-.collection-target { display: grid; grid-template-columns: minmax(180px, 220px) minmax(0, 1fr); align-items: center; gap: 8px 16px; padding: 10px 12px; margin-bottom: 12px; border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: var(--radius); background: var(--cell-bg); }
-.collection-target-intro { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; min-width: 0; }
-.collection-target h3 { margin: 0; font-size: 13px; line-height: 1.5; }
-.collection-target-intro > .collection-hint { flex-basis: 100%; }
-.collection-target-grade { flex: 0 0 112px; }
-.collection-target-actions { display: flex; align-items: center; gap: 6px; }
-.collection-target-actions > button { min-height: 36px; padding: 6px 10px; font-size: 12px; line-height: 20px; white-space: nowrap; }
-.collection-fields { display: flex; flex-wrap: wrap; align-items: end; gap: 8px; }
-.collection-field { display: grid; min-width: 0; gap: 4px; font-size: 11px; color: var(--muted); }
-.collection-field:first-child { flex: 1 1 160px; }
-.collection-field select, .fish-name-form input { min-width: 0; width: 100%; min-height: 36px; padding: 7px 9px; font: inherit; font-size: 12px; color: var(--text); background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); }
-.collection-field select:focus-visible, .fish-name-form input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.collection-field select option { color: var(--text); background: var(--panel); }
+/* Fish care and save tools share the reef / LCD palette. */
 .collection-hint { margin: 0; font-size: 11px; line-height: 1.6; color: var(--muted); overflow-wrap: anywhere; }
-.collection-status { font-size: 11px; line-height: 1.5; color: var(--accent); }
-.breeding-actions { grid-template-columns: fit-content(55%) minmax(0, 1fr); grid-template-areas: 'controls buttons' 'summary summary' 'odds odds'; align-items: center; column-gap: 12px; row-gap: 6px; }
-.breeding-plan { display: contents; }
-.breeding-controls { grid-area: controls; min-width: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; }
-.breeding-controls .collection-field { display: flex; flex: 0 1 auto; align-items: center; gap: 8px; }
-.breeding-controls .collection-field > span:first-child { flex: 0 0 auto; }
-.breeding-controls .select-control { width: 170px; }
-.breeding-summary { grid-area: summary; min-width: 0; display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 16px; }
-.breeding-summary .collection-hint:empty { display: none; }
-.breeding-actions > .action-buttons { grid-area: buttons; justify-content: flex-start; width: auto; gap: 6px; }
-.breeding-actions > .odds { grid-area: odds; }
-button.target-link { max-width: 100%; white-space: normal; font-size: 11px; box-shadow: none; }
-.discovery-chances { display: flex; flex-wrap: wrap; gap: 6px 14px; }
-.discovery-chances > span { display: inline-flex; align-items: baseline; gap: 6px; font-size: 11px; color: var(--muted); }
-.discovery-chances b { color: var(--accent); font-size: 15px; font-variant-numeric: tabular-nums; }
-.fish-care { display: grid; gap: 8px; padding: 10px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
-.fish-name-form { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; }
-.fish-name-form > label, .fish-name-form > .collection-hint { grid-column: 1 / -1; }
-.fish-name-form > label { font-size: 12px; }
-.fish-name-form > button { font-size: 11px; padding: 6px 8px; }
-.fish-care-actions { display: flex; flex-wrap: wrap; gap: 6px; }
-.fish-care-actions button { flex: 1; min-height: 36px; font-size: 12px; }
-.fish-nickname { font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
+.breeding-actions { grid-template-columns: minmax(0, 1fr); }
+.fish-care { display: grid; gap: 8px; padding: 0 0 10px; border-bottom: 1px solid var(--border); }
 .save-tools { grid-column: 1 / -1; }
 .save-status { margin: 0; font-size: 12px; color: var(--accent); overflow-wrap: anywhere; }
 .save-status:empty { display: none; }
@@ -888,15 +860,8 @@ button.target-link { max-width: 100%; white-space: normal; font-size: 11px; box-
 .save-comparison { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px 14px; margin: 0; font-size: 12px; line-height: 1.6; }
 .save-comparison dt { color: var(--muted); }
 .save-comparison dd { margin: 0; overflow-wrap: anywhere; }
-:root[data-theme='lcd'] .collection-field select, :root[data-theme='lcd'] .fish-name-form input { border-width: 2px; }
-:root[data-theme='lcd'] .collection-target { border-left-width: 4px; }
 @media (max-width: 640px) {
-  .collection-target { padding: 10px; }
-  .collection-target .collection-field:first-child { flex-basis: 120px; }
-  .collection-target-actions { flex: 1 0 100%; }
-  .collection-target-actions > button { flex: 1; min-height: 40px; }
-  .collection-field select, .fish-name-form input { min-height: 40px; font-size: 16px; }
-  .fish-care-actions button, .save-tools > .row > button { min-height: 40px; }
+  .save-tools > .row > button { min-height: 40px; }
   .save-preview { padding: 10px; }
 }
 .fish-grid > .note { grid-column: 1 / -1; }
@@ -911,94 +876,46 @@ button.target-link { max-width: 100%; white-space: normal; font-size: 11px; box-
 
 .save-preview:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-.select-control { position: relative; display: block; min-width: 0; }
-.collection-field .select-control select { appearance: none; -webkit-appearance: none; padding-inline: 10px 32px; }
-.select-control::after { content: ''; position: absolute; inset-inline-end: 13px; top: 50%; width: 7px; height: 7px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: translateY(-70%) rotate(45deg); pointer-events: none; }
-@media (max-width: 760px) {
-  .breeding-actions { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'controls' 'buttons' 'summary' 'odds'; row-gap: 8px; }
-  .breeding-controls .collection-field { flex: 1 1 220px; }
-  .breeding-controls .select-control { flex: 1; width: auto; }
-  .breeding-actions > .action-buttons { justify-content: flex-start; }
-}
-@media (max-width: 900px) {
-  .collection-target { grid-template-columns: minmax(0, 1fr); gap: 6px; }
-  .collection-target-intro > .collection-hint { flex-basis: auto; }
-}
 @media (max-width: 640px) {
   .breeding-actions > .action-buttons > button { flex: 1 1 88px; min-width: 0; min-height: 40px; white-space: normal; }
   .breeding-actions > .action-buttons > button.btn-primary { flex: 1.5 1 160px; }
 }
-@media (forced-colors: active) {
-  .collection-field .select-control select { appearance: auto; -webkit-appearance: auto; }
-  .select-control::after { display: none; }
-}
 
-/* Saved arrangements stay compact above the existing decoration inventory. */
-.tank-presets { display: grid; gap: 8px; padding: 10px; margin-bottom: 12px; background: var(--cell-bg); border: 1px solid var(--border); border-radius: var(--radius); }
-.tank-presets h3 { margin: 0; font-size: 13px; }
-.preset-header { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 16px; }
-.preset-intro { flex: 1 1 250px; min-width: 0; display: grid; gap: 3px; }
-.preset-title-row, .preset-name-row { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 8px; min-width: 0; }
-.preset-state { font-size: 11px; color: var(--muted); }
-.preset-state[data-modified='true'] { color: var(--accent); font-weight: 600; }
-.preset-current { color: var(--accent); font-size: 10px; font-weight: 600; white-space: nowrap; }
-.preset-save-form { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
-.preset-header > .preset-save-form { flex: 1 1 360px; }
-.preset-header .preset-save-form input { flex-basis: 140px; max-width: none; }
-.preset-save-form label { font-size: 11px; color: var(--muted); }
-.preset-save-form input, .preset-rename-form input { flex: 1 1 140px; min-width: 0; max-width: 260px; min-height: 36px; padding: 7px 9px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--panel); color: var(--text); font: inherit; font-size: 12px; }
-.tank-presets input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.tank-presets button { min-height: 36px; padding: 6px 10px; font-size: 11px; box-shadow: none; }
-.preset-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 12px; padding: 0; margin: 0; list-style: none; }
-.preset-entry { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px 8px; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius); min-width: 0; }
-.preset-entry.is-current { border-color: var(--accent); }
-.preset-info { flex: 1 1 120px; display: grid; gap: 2px; min-width: 0; }
-.preset-info strong { font-size: 12px; overflow-wrap: anywhere; }
-.preset-name-row { flex-wrap: nowrap; }
-.preset-name-row strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.preset-current { flex-shrink: 0; }
-.preset-counts { display: flex; align-items: center; flex-wrap: wrap; gap: 3px 6px; }
-.preset-counts .ico { width: 12px; height: 12px; }
-.preset-actions, .preset-rename-form { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; min-width: 0; }
-.preset-actions { position: relative; justify-content: flex-end; }
-.preset-action-footprint { display: contents; visibility: hidden; }
-.preset-confirm-actions { position: absolute; inset-block-start: 0; inset-inline-end: 0; display: flex; gap: 6px; max-width: 100%; }
-.preset-rename-form { width: 100%; grid-column: 1 / -1; }
-.preset-confirm-text { grid-column: 1 / -1; }
-@media (max-width: 900px) {
-  .preset-list { grid-template-columns: minmax(0, 1fr); }
-  .preset-header { align-items: flex-start; }
-}
-@media (max-width: 640px) {
-  .preset-save-form label { flex-basis: 100%; }
-  .preset-save-form input, .preset-rename-form input { min-height: 40px; font-size: 16px; }
-  .tank-presets button { min-height: 40px; }
-  .preset-actions { grid-column: 1 / -1; }
-  .preset-actions button { flex: 1 1 auto; }
-  .preset-confirm-actions { width: 100%; }
-  .preset-rename-form input { flex-basis: 100%; max-width: none; }
-}
 
-.milestone-panel { display: grid; gap: 6px; padding: 10px; margin-bottom: 10px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--cell-bg); }
-.milestone-header { display: flex; align-items: baseline; flex-wrap: wrap; gap: 3px 12px; }
-.milestone-panel h3 { margin: 0; font-size: 13px; }
-.milestone-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 14px; margin: 0; padding: 0; list-style: none; }
-.milestone-entry { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px 8px; padding: 7px 0; border-top: 1px solid var(--border); min-width: 0; }
-.milestone-info { min-width: 0; display: grid; gap: 3px; }
-.milestone-title-row { display: flex; align-items: center; gap: 6px; }
-.milestone-title-row strong { flex: 1; min-width: 0; }
-.milestone-info strong { font-size: 12px; overflow-wrap: anywhere; }
-.milestone-info .collection-hint { display: block; line-height: 1.4; }
-.milestone-progress { font-size: 11px; color: var(--accent); white-space: nowrap; }
+/* A separate medal drawer keeps the species grid close to its navigation. */
+.book-pages { display: flex; gap: 5px; margin: 0 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+.book-pages button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 36px; padding: 6px 14px; box-shadow: none; font-size: 12px; white-space: nowrap; }
+.book-page-count { font-size: 11px; font-variant-numeric: tabular-nums; opacity: 0.8; }
+.book-pages [aria-selected='true'] { color: var(--panel); background: var(--accent); border-color: var(--accent); }
+.milestone-panel { min-width: 0; }
+.milestone-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
+.milestone-header h3 { font-size: 14px; margin: 0 0 4px; }
+.milestone-header .collection-hint { max-width: 48ch; }
+.medal-bulk-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.medal-bulk-actions button { min-height: 36px; padding: 6px 10px; font-size: 11px; box-shadow: none; }
+.milestone-list { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; }
+.milestone-entry { min-width: 0; padding: 8px 10px 10px; display: grid; grid-template-rows: auto 1fr 3px; gap: 6px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--cell-bg); }
+.milestone-entry.is-displayed { border-color: var(--accent); box-shadow: inset 0 3px 0 var(--accent); }
+:root[data-theme] button.medal-select { display: grid; justify-items: center; align-content: start; gap: 3px; padding: 4px 0; width: 100%; min-height: 126px; border: 0; background: transparent; box-shadow: none; color: var(--text); opacity: 1; transform: none; filter: none; white-space: normal; }
+.medal-select strong { font-size: 12px; line-height: 1.3; text-align: center; min-height: 2.6em; display: grid; align-content: center; }
+.medal-state { font-size: 10px; color: var(--muted); }
+.is-displayed .medal-state { color: var(--accent); font-weight: 700; }
+.milestone-entry > .collection-hint { font-size: 10px; line-height: 1.4; text-align: center; }
+.medal-art { display: inline-block; width: 64px; height: 78px; flex-shrink: 0; --medal-metal: #eed69a; --medal-edge: #b28d4c; --medal-ink: #675128; --medal-shine: #fff5d8; }
+.medal-art svg { display: block; width: 100%; height: 100%; }
+.medal-art .medal-pixel { display: none; }
+[data-earned='false'] .medal-art { --medal-metal: var(--panel); --medal-edge: var(--border); --medal-ink: var(--muted); --medal-shine: var(--border); --medal-ribbon: var(--border) !important; }
 .milestone-meter { appearance: none; display: block; width: 100%; height: 3px; border: 0; border-radius: 0; background: var(--border); color: var(--accent); }
 .milestone-meter::-webkit-progress-bar { background: var(--border); }
 .milestone-meter::-webkit-progress-value { background: var(--accent); }
 .milestone-meter::-moz-progress-bar { background: var(--accent); }
-.milestone-entry.is-displayed strong { color: var(--accent); }
-.milestone-entry button { justify-self: end; box-shadow: none; }
-.milestone-entry button:disabled { background: transparent; border-color: transparent; box-shadow: none; }
-@media (max-width: 900px) { .milestone-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 599px) { .milestone-list { grid-template-columns: minmax(0, 1fr); } }
+:root[data-theme='lcd'] .medal-vector { display: none; }
+:root[data-theme='lcd'] .medal-pixel { display: block; }
+:root[data-theme='lcd'] .medal-art { color: var(--text); }
+:root[data-theme='lcd'] [data-earned='false'] .medal-art { color: var(--muted); }
+:root[data-theme='lcd'] .book-pages [aria-selected='true'] { background: var(--text); color: var(--panel); }
+@media (max-width: 900px) { .milestone-list { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 599px) { .milestone-list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; } .milestone-header { align-items: start; } .medal-art { width: 56px; height: 68px; } .book-pages button { flex: 1; min-width: 0; padding-inline: 8px; } }
 
 /* Secondary actions share a stable footprint and remain legible in both palettes. */
 button.icon-action { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; width: 36px; min-width: 36px; height: 36px; min-height: 36px; padding: 0; line-height: 1; }
@@ -1006,18 +923,9 @@ button.icon-action .ico { width: 16px; height: 16px; }
 .icon-status { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; vertical-align: middle; }
 .icon-status[hidden] { display: none; }
 .icon-status .ico { width: 15px; height: 15px; }
-.preset-actions { min-width: 194px; }
-.preset-confirm-actions .icon-action { flex-shrink: 0; }
-.preset-confirm-actions > button:not(.icon-action) { white-space: nowrap; }
-.fish-care-actions { justify-content: flex-start; }
 .milestone-entry button.icon-action { grid-column: auto; }
 @media (max-width: 640px) {
   button.icon-action { width: 44px; min-width: 44px; height: 44px; min-height: 44px; }
-  .preset-actions > .icon-action { flex: 1 1 0; }
-  .preset-confirm-actions .icon-action { flex: 0 0 44px; }
-  .preset-confirm-actions > button:not(.icon-action) { flex: 1 1 auto; min-width: 0; }
-  .collection-target-actions { flex: 0 0 auto; }
-  .collection-target-actions > .icon-action { flex: 0 0 auto; }
 }
 
 /* A tablet can be wide and still be operated by touch. Size controls by input,
@@ -1034,8 +942,6 @@ button.icon-action .ico { width: 16px; height: 16px; }
   input:not([type='range']):not([type='file']), select { font-size: 16px; }
   .vol-slider { min-height: 44px; }
   .help-tabs button, .help-parent-tiers button, .help-level-pages button { white-space: normal; line-height: 1.25; }
-  .preset-confirm-actions > button:not(.icon-action) { flex: 1 1 auto; }
-  .preset-confirm-actions .icon-action { flex: 0 0 44px; }
 }
 @media (max-width: 480px) {
   .help-parent-tiers { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -1055,9 +961,8 @@ button.icon-action .ico { width: 16px; height: 16px; }
 button.fish-release-button { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); background: transparent; box-shadow: none; border-color: transparent; }
 button.fish-release-button:hover { color: var(--text); border-color: var(--border); }
 @media (max-width: 640px) {
-  .tank-panel-head { display: grid; grid-template-columns: minmax(0, 1fr) 44px; gap: 6px; }
+  .tank-panel-head { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
   .tank-panel-head h2 { grid-column: 1; grid-row: 1; }
-  .tank-panel-head .favorites-toggle { grid-column: 2; grid-row: 1; }
   .tank-panel-head .sort-bar { grid-column: 1 / -1; grid-row: 2; }
 }
 

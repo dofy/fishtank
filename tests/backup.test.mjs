@@ -118,7 +118,7 @@ test('normalizes imported collection metadata without discarding valid values', 
   assert.equal(parsed.state.fish[0].favorite, true)
   assert.equal(parsed.state.fish[0].locked, true)
   assert.equal(parsed.state.collectionTarget, undefined)
-  assert.equal(parsed.state.breedGoal, 'species')
+  assert.equal(parsed.state.breedGoal, undefined)
 })
 
 test('rejects invalid protected metadata instead of silently clearing it', () => {

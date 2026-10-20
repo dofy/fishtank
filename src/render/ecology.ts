@@ -8,10 +8,14 @@ export interface SceneryVisit {
   age: number
   stage: 'approach' | 'pause' | 'pass'
   direction: 1 | -1
+  slot?: number
+  duration?: number
 }
 
 export function interruptScenery(a: Agent): void {
   delete a.scenery
+  delete a.schoolLeader
+  a.schoolCooldown = Math.max(a.schoolCooldown ?? 0, 10)
   a.sceneryCooldown = Math.max(a.sceneryCooldown ?? 0, 5)
 }
 
@@ -51,33 +55,58 @@ export function updateScenery(
   const minY = 28, maxY = Math.max(48, height - 44)
   const clampX = (x: number): number => Math.min(width - minX, Math.max(minX, x))
   const clampY = (y: number): number => Math.min(maxY, Math.max(minY, y))
+  if (a.schoolLeader && a.schoolLeader.until <= time) interruptScenery(a)
+  if (!a.scenery && !a.schoolLeader && (a.schoolCooldown ?? 0) <= 0 && Math.random() < dt * 0.18) {
+    const peers = agents.filter(other => other.fish.speciesId === a.fish.speciesId &&
+      available(other) && !other.scenery && !other.schoolLeader && (other.schoolCooldown ?? 0) <= 0)
+    if (peers.length > 1) {
+      // Pick without replacement, so no follower can ever lead its own leader.
+      const shuffled = [...peers]
+      for (let i = shuffled.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [shuffled[i], shuffled[j]] = [shuffled[j]!, shuffled[i]!] }
+      const members = shuffled.slice(0, Math.min(5, 2 + Math.floor(Math.random() * 4)))
+      const leader = members[0]!, duration = 8 + Math.random() * 6
+      leader.schoolLeader = { until: time + duration, x: clampX(width * (0.15 + Math.random() * 0.7)), y: clampY(height * (0.3 + Math.random() * 0.4)) }
+      for (const [i, fish] of members.slice(1).entries()) fish.scenery = {
+        kind: 'school', targetId: leader.fish.uid, age: 0, stage: 'approach', direction: leader.dir, slot: i + 1, duration,
+      }
+    }
+  }
+  if (a.schoolLeader) {
+    const school = a.schoolLeader
+    if (Math.hypot(school.x - a.x, school.y - a.y) < 12) {
+      school.x = clampX(width - school.x); school.y = clampY(height * (0.28 + Math.random() * 0.4))
+    }
+    const dx = school.x - a.x, dy = school.y - a.y, distance = Math.hypot(dx, dy) || 1
+    const step = Math.min(distance, a.speed * 0.8 * dt)
+    if (Math.abs(dx) > 3) a.dir = dx > 0 ? 1 : -1
+    a.x = clampX(a.x + dx / distance * step); a.y = clampY(a.y + dy / distance * step)
+    a.phase += dt; a.tilt = Math.max(-0.12, Math.min(0.12, dy / (Math.abs(dx) + 20) * 0.08))
+    return true
+  }
   if (!a.scenery) {
     if ((a.sceneryCooldown ?? 0) > 0) return false
     const seed = hashString(a.fish.uid) + (a.sceneryCount ?? 0)
     const form = a.species.body.form ?? 'fish'
     const kelp = decors.find(d => d.item.id === 'kelp' && !d.active)
     const arch = decors.find(d => d.item.id === 'arch' && !d.active)
-    const partner = form === 'fish' ? agents.find(other => other !== a &&
-      other.fish.speciesId === a.fish.speciesId && other.fish.uid < a.fish.uid &&
-      available(other) && !other.scenery && Math.hypot(other.x - a.x, other.y - a.y) < 220) : undefined
     const small = form === 'fish' && a.species.body.length <= 14 && a.species.body.depth < 0.72
     if (form === 'seahorse' && kelp) a.scenery = { kind: 'rest', targetId: kelp.item.id, age: 0, stage: 'approach', direction: a.dir }
-    else if (partner && (!arch || seed % 2 === 0)) a.scenery = { kind: 'school', targetId: partner.fish.uid, age: 0, stage: 'approach', direction: partner.dir }
     else if (small && arch && Math.abs(arch.x - a.x) < Math.min(width * 0.6, 340)) a.scenery = { kind: 'arch', targetId: arch.item.id, age: 0, stage: 'approach', direction: a.x < arch.x ? 1 : -1 }
     else { a.sceneryCooldown = 4 + seed % 5; return false }
     a.sceneryCount = (a.sceneryCount ?? 0) + 1
   }
   const visit = a.scenery
   visit.age += dt
-  if (visit.age > (visit.kind === 'rest' ? 18 : 12)) { interruptScenery(a); return false }
+  if (visit.age > (visit.kind === 'rest' ? 18 : visit.duration ?? 12)) { interruptScenery(a); return false }
   let x: number, y: number, speed = Math.max(22, a.speed * 1.35)
   if (visit.kind === 'school') {
     const partner = agents.find(other => other.fish.uid === visit.targetId)
-    if (!partner || !available(partner) || partner.scenery || visit.age > 7) { interruptScenery(a); return false }
+    if (!partner || !available(partner) || !partner.schoolLeader || partner.schoolLeader.until <= time) { interruptScenery(a); return false }
     a.dir = partner.dir
-    const distance = (a.species.body.length * 4.2 * a.scale) * 0.85 + 15
+    const slot = visit.slot ?? 1, row = Math.ceil(slot / 2)
+    const distance = Math.min(a.species.body.length * 4.2 * a.scale * 0.85 + 15, width * 0.13) * row
     x = clampX(partner.x - partner.dir * distance)
-    y = clampY(partner.y + (hashString(a.fish.uid) % 2 ? 12 : -12))
+    y = clampY(partner.y + (slot % 2 ? 1 : -1) * (10 + row * 7))
     speed = Math.min(a.speed * 2, Math.max(a.speed, Math.hypot(x - a.x, y - a.y)))
   } else {
     const decor = decors.find(d => d.item.id === visit.targetId && !d.active)
