@@ -1,7 +1,8 @@
 import { sound, syncAudioConfig } from './core/audio'
 import { moveDecor, newGame, tick } from './core/game'
-import { load, save, wipe } from './core/save'
+import { load, save, saveImportedState, wipe } from './core/save'
 import { syncRailLightConfig } from './core/lighting'
+import { applyTankPreset } from './core/presets'
 import { species } from './core/species'
 import type { AudioConfig, ColorMode, DecorId, Locale } from './core/types'
 import { LcdRenderer } from './render/lcd'
@@ -44,6 +45,7 @@ async function main(): Promise<void> {
   const root = document.getElementById('app')
   if (!root) throw new Error('#app container missing')
 
+  let stateRevision = 0
   let state = load(Date.now())
   sound.configure(syncAudioConfig(state.audio))
   let manifest = await safeLoadTheme(state.theme)
@@ -86,12 +88,48 @@ async function main(): Promise<void> {
       save(state)
     },
     onSave: () => {
-      save(state)
+      return save(state)
+    },
+    onRestore: async (next) => {
+      const revision = ++stateRevision
+      const nextManifest = await safeLoadTheme(next.theme)
+      // Reset or a newer confirmed restore takes precedence over delayed loads.
+      if (revision !== stateRevision) return false
+      next.theme = nextManifest.id
+      if (!saveImportedState(next, state)) return false
+      state = next
+      manifest = nextManifest
+      night = resolveDarkMode(state.colorMode ?? 'auto')
+      sound.configure(syncAudioConfig(state.audio))
+      applyTheme(manifest, night)
+      renderer = makeRenderer(manifest)
+      app.setState(state)
+      app.setRenderer(renderer)
+      return true
     },
     onFishWithdraw: (uid) => {
       originalScene.withdrawFish(uid, window.matchMedia('(prefers-reduced-motion: reduce)').matches)
     },
+    onPresetApply: (id) => {
+      const previous = { tankUids: state.tankUids, placedDecor: state.placedDecor,
+        colorMode: state.colorMode, railLights: state.railLights, activeTankPresetId: state.activeTankPresetId }
+      const result = applyTankPreset(state, id)
+      if ('error' in result) return result
+      if (!save(state)) {
+        Object.assign(state, previous)
+        return { error: 'storage' }
+      }
+      const displayed = new Set(state.tankUids)
+      for (const uid of previous.tankUids ?? []) if (!displayed.has(uid)) {
+        originalScene.withdrawFish(uid, window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+      }
+      night = resolveDarkMode(state.colorMode ?? 'auto')
+      applyTheme(manifest, night)
+      app.invalidatePortraits()
+      return result
+    },
     onReset: () => {
+      stateRevision++
       const currentLocale = state.locale
       const currentColorMode = state.colorMode ?? 'auto'
       const currentAudio = syncAudioConfig(state.audio)
@@ -266,6 +304,7 @@ async function main(): Promise<void> {
     if (!draggingDecorId) return
     draggingDecorId = null
     if (!lab?.observing) save(state)
+    app.updatePresetStatus()
     const pt = canvasCoords(event)
     const hover = scene.hitDecor(pt.x, pt.y, logicalHeight)
     scene.activeDecorId = hover

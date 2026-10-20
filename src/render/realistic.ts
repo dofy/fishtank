@@ -1,6 +1,7 @@
 import type { DecorItem, Grade, Tier } from '../core/types'
 import type { DecorPortraitRequest, PortraitRequest, Renderer } from './renderer'
 import type { Agent, DecorNode, FoodPellet, SceneView, SplashEffect } from './scene'
+import { foregroundDecor, pufferAmount } from './ecology'
 import { drawRailBeads } from './rail-lights'
 import { withdrawalOpacity, withdrawalScale } from './withdrawal'
 import { decorLayers, elongatedProfile, eyeAt, fishPath, hashString, patternBands, patternSpots } from './shape'
@@ -130,11 +131,13 @@ export class RealisticRenderer implements Renderer {
     this.plankton(ctx, w, h, view.time, night)
     this.sandFloor(ctx, w, h, s, night, view.lampColors)
 
-    for (const d of view.decors) this.decorNode(ctx, d, h, view.time, s, night)
+    const foreground = foregroundDecor(view)
+    for (const d of view.decors) if (!foreground.has(d.item.id)) this.decorNode(ctx, d, h, view.time, s, night)
     if (view.foods) {
       for (const f of view.foods) this.foodPellet(ctx, f)
     }
-    for (const a of view.agents) this.agent(ctx, a, view.time)
+    for (const a of view.agents) this.agent(ctx, a, view.time, !!view.reducedMotion)
+    for (const d of view.decors) if (foreground.has(d.item.id)) this.decorNode(ctx, d, h, view.time, s, night)
     if (view.splashes) {
       for (const sp of view.splashes) this.splash(ctx, sp)
     }
@@ -674,7 +677,7 @@ export class RealisticRenderer implements Renderer {
     ctx.restore()
   }
 
-  private agent(ctx: CanvasRenderingContext2D, a: Agent, t: number): void {
+  private agent(ctx: CanvasRenderingContext2D, a: Agent, t: number, reducedMotion = false): void {
     const len = a.species.body.length * 4.2 * a.scale
     const shocked = (a.shockedTimer ?? 0) > 0
     const discharging = (a.dischargingTimer ?? 0) > 0
@@ -685,7 +688,8 @@ export class RealisticRenderer implements Renderer {
     ctx.globalAlpha *= withdrawalOpacity(a.withdrawal)
     ctx.translate(a.x + jitterX, a.y + bobY)
     const retreatScale = withdrawalScale(a.withdrawal)
-    ctx.scale(a.dir * retreatScale, retreatScale)
+    const puff = pufferAmount(a, reducedMotion)
+    ctx.scale(a.dir * retreatScale * (1 + puff * 0.1), retreatScale * (1 + puff * 0.28))
     if (a.tilt) ctx.rotate(a.tilt)
     ctx.translate(-len / 2, 0)
     this.body(ctx, a.species.body, len, a.fish.grade, a.fish.tier, a.fish.speciesId, a.withdrawal?.reducedMotion ? 0 : t + a.phase)

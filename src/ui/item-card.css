@@ -1,0 +1,62 @@
+/* ItemCard owns its shell and selection; page layouts only choose grid and density. */
+.fish-grid.item-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+.item-card { position: relative; min-width: 0; overflow: hidden; border: 1px solid var(--border); border-radius: var(--radius); background: var(--cell-bg); color: var(--text); }
+.item-card[data-selected='true'] { border-color: var(--accent); box-shadow: inset 0 3px 0 var(--accent); background: var(--panel-2); }
+.item-card:has(:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+.item-card-header { display: flex; align-items: center; justify-content: space-between; height: 32px; padding: 0 2px 0 10px; }
+.item-card-status { display: flex; align-items: center; gap: 6px; }
+.item-card-status .icon-status { color: var(--accent); }
+.item-card-count { font-size: 11px; line-height: 1; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--muted); }
+.item-card-order { display: inline-grid; place-items: center; min-width: 24px; height: 20px; margin-right: 6px; padding-inline: 3px; border: 1px solid var(--accent); border-radius: 4px; background: var(--panel); color: var(--accent); font-size: 11px; font-weight: 700; line-height: 1; }
+/* Native button semantics stay intact, while the outer shell owns its appearance. */
+:root[data-theme] .item-card > button.item-card-main[aria-pressed] { display: grid; grid-template-rows: 64px 30px auto; align-content: start; align-items: center; justify-items: center; gap: 2px; width: 100%; margin: 0; padding: 0 8px 10px; border: 0; border-radius: 0; background: transparent; color: inherit; box-shadow: none; opacity: 1; transform: none; filter: none; font-family: inherit; text-shadow: none; white-space: normal; }
+.item-card > button.item-card-main:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }
+.item-card-main > * { pointer-events: none; }
+.item-card-art { position: relative; display: grid; place-items: center; width: 100%; height: 64px; }
+.item-card-art canvas { width: 128px !important; height: 72px !important; max-width: 100%; object-fit: contain; }
+.item-card .name { height: 30px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; width: 100%; font-size: 12px; line-height: 15px; font-weight: 600; text-align: center; overflow-wrap: anywhere; }
+.item-card .meta { max-width: 100%; font-size: 11px; line-height: 15px; font-weight: 400; color: var(--muted); text-align: center; }
+.item-card-marks { position: absolute; left: 10px; top: 38px; display: flex; flex-direction: column; gap: 5px; color: var(--accent); }
+.item-card-marks .ico { width: 12px; height: 12px; }
+.item-card[data-unavailable='true'] .name, .item-card[data-unavailable='true'] .meta { opacity: .6; }
+.item-card-main[aria-disabled='true'] { cursor: not-allowed; }
+:root[data-theme] .item-card .item-card-header > button.item-card-action { width: 32px; min-width: 32px; height: 32px; min-height: 32px; margin: 0 0 0 auto; padding: 0; background: transparent; color: var(--muted); border: 1px solid transparent; border-radius: 50%; box-shadow: none; transform: none; filter: none; }
+:root[data-theme] .item-card .item-card-header > button.item-card-action:hover,
+:root[data-theme] .item-card .item-card-header > button.item-card-action:focus-visible { color: var(--accent); background: var(--panel); border-color: var(--border); }
+:root[data-theme] .item-card .item-card-header > button.item-card-action[aria-pressed='true'] { opacity: 1; color: var(--accent); background: transparent; border-color: transparent; cursor: default; }
+/* Tracking belongs to the target badge; selection belongs to the card shell. */
+:root[data-theme] .item-card .item-card-header > button.item-card-action.item-card-tracking-action { width: auto; min-width: 0; padding-inline: 5px; color: var(--accent-2); background: transparent; border-color: transparent; opacity: 1; cursor: default; }
+.item-card-tracking-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 5px; border: 1px dashed currentColor; border-radius: 4px; font-size: 10px; font-weight: 600; line-height: 14px; white-space: nowrap; }
+.item-card-tracking-label { color: var(--text); }
+.item-card-tracking-badge .ico { width: 14px; height: 14px; }
+:root[data-theme='lcd'] .item-card-tracking-badge { border-radius: 0; }
+:root[data-theme] .item-card[data-density='compact'] > button.item-card-main[aria-pressed] { grid-template-rows: 52px 30px auto; padding-inline: 6px; }
+.item-card[data-density='compact'] .item-card-art { height: 52px; }
+.item-card[data-density='compact'] .item-card-art canvas { width: 96px !important; height: 52px !important; }
+.item-card[data-density='mini'] .item-card-header { height: 24px; padding-left: 5px; }
+.item-card[data-density='mini'] .item-card-count { font-size: 10px; }
+.item-card[data-density='mini'] .item-card-status { gap: 3px; }
+.item-card[data-density='mini'] .item-card-status .ico { width: 12px; height: 12px; }
+:root[data-theme] .item-card[data-density='mini'] > button.item-card-main[aria-pressed] { grid-template-rows: 40px auto; padding: 2px 3px 6px; }
+.item-card[data-density='mini'] .item-card-art { height: 40px; }
+.item-card[data-density='mini'] .item-card-art canvas { width: 72px !important; height: 40px !important; }
+.item-card[data-density='mini'] .meta { font-size: 10px; line-height: 13px; }
+.item-card[data-density='mini'] .item-card-marks { left: 4px; top: 28px; gap: 2px; }
+.item-card-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; text-shadow: 0 1px 3px rgba(0, 0, 0, .85); }
+.item-card-overlay .cd-clock { width: 18px; height: 18px; color: #cbd5e1; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .8)); }
+.item-card-overlay .timer { font-size: 12px; font-weight: 800; color: white; font-variant-numeric: tabular-nums; }
+:root[data-theme='lcd'] .item-card, :root[data-theme='lcd'] .item-card-order { border-radius: 0; }
+:root[data-theme='lcd'] .item-card[data-selected='true'] { background: var(--cell-bg); }
+:root[data-theme='lcd'] .item-card .item-card-header > button.item-card-action { border-radius: 0; }
+:root[data-theme='lcd'] .item-card-overlay { text-shadow: none; background: rgba(156, 173, 116, .72); }
+:root[data-theme='lcd'][data-mode='dark'] .item-card-overlay { background: rgba(27, 38, 21, .75); }
+:root[data-theme='lcd'] .item-card-overlay .cd-clock, :root[data-theme='lcd'] .item-card-overlay .timer { color: var(--text); filter: none; }
+@media (hover: hover) { .item-card:hover { border-color: var(--accent); } }
+@media (max-width: 720px) { .fish-grid.item-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 480px) { .fish-grid.item-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px), (pointer: coarse) {
+  .item-card-header { height: 44px; }
+  :root[data-theme] .item-card .item-card-header > button.item-card-action { width: 44px; min-width: 44px; height: 44px; min-height: 44px; }
+  .item-card-marks { top: 48px; }
+  .item-card[data-density='mini'] .item-card-marks { top: 28px; }
+}

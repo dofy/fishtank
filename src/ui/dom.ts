@@ -12,6 +12,41 @@ export function makeButton(
   return b
 }
 
+const iconLabels = new WeakMap<HTMLElement, { svg: string; text: string }>()
+
+/** Both tooltip and accessible name stay descriptive when the visible label is an icon. */
+export function setIconLabel(el: HTMLElement, svgHtml: string, text: string): void {
+  const previous = iconLabels.get(el)
+  if (previous?.text === text && previous.svg === svgHtml) return
+  const icon = document.createElement('span'); icon.className = 'ico'; icon.setAttribute('aria-hidden', 'true')
+  icon.innerHTML = svgHtml
+  el.replaceChildren(icon); el.title = text; el.setAttribute('aria-label', text)
+  iconLabels.set(el, { svg: svgHtml, text })
+}
+
+export function makeActionButton(svgHtml: string, text: string, action: (event: MouseEvent) => void): HTMLButtonElement {
+  const button = makeButton('', action); button.className = 'icon-action'
+  setIconLabel(button, svgHtml, text)
+  return button
+}
+
+export function makeStatusIcon(svgHtml: string, text: string): HTMLSpanElement {
+  const status = document.createElement('span'); status.className = 'icon-status'; status.setAttribute('role', 'img')
+  setIconLabel(status, svgHtml, text)
+  return status
+}
+
+/** Short screens scroll the app; taller screens retain the panel's own scroller. */
+export function scrollPanelTo(panel: HTMLElement, target: HTMLElement = panel, behavior: ScrollBehavior = 'auto'): void {
+  const app = panel.closest<HTMLElement>('#app')
+  const outer = app && getComputedStyle(panel).overflowY === 'visible'
+  const scroller = outer ? app : panel
+  const nav = outer ? app.querySelector('nav') : null
+  const inset = outer ? (nav ? nav.getBoundingClientRect().height + (parseFloat(getComputedStyle(nav).top) || 0) : 0) + 8 : 12
+  const top = !outer && target === panel ? 0 : scroller.scrollTop + target.getBoundingClientRect().top - scroller.getBoundingClientRect().top - inset
+  scroller.scrollTo({ top: Math.max(0, top), behavior })
+}
+
 export function makeIconButton(
   svgHtml: string,
   text: string,
@@ -168,10 +203,6 @@ export function label(text: string, className: string): HTMLElement {
   el.className = className
   el.textContent = text
   return el
-}
-
-export function count(text: string): HTMLElement {
-  return label(text, 'count')
 }
 
 export function th(text: string): HTMLElement {

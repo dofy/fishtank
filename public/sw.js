@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fishtank-pwa-v1.7.0-r10'
+const CACHE_NAME = 'fishtank-pwa-v1.8.0-r1'
 const PRECACHE_URLS = [
   '/',
   '/index.html',

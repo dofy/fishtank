@@ -10,6 +10,8 @@ export interface PortraitRequest {
   dim?: boolean
   /** LCD departure density, used only by transient GPU fish textures. */
   visibility?: number
+  /** Quantized puffer inflation, for LCD's native opaque silhouettes. */
+  puffLevel?: number
 }
 
 export interface DecorPortraitRequest {

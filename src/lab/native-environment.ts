@@ -6,6 +6,7 @@ import { decorLayers, hashString } from '../render/shape'
 import { lampPositions, sceneColorsFor, spriteFor, type ThemeManifest } from '../render/theme'
 import { NativeLcd } from './native-lcd'
 import { VectorPath } from './vector-path'
+import { foregroundDecor } from '../render/ecology'
 
 const LAMP_COLORS = ['#fb7185', '#facc15', '#fb923c', '#34d399', '#38bdf8', '#818cf8', '#c084fc']
 const BULB_COLORS = ['#fecdd3', '#fef08a', '#fed7aa', '#a7f3d0', '#bae6fd', '#c7d2fe', '#e9d5ff']
@@ -26,6 +27,7 @@ interface Decoration {
 export class NativeEnvironment {
   readonly back = new Container()
   readonly decors = new Container()
+  readonly foreground = new Container()
   readonly interactions = new Graphics()
   readonly front = new Container()
   private key = ''
@@ -224,11 +226,17 @@ export class NativeEnvironment {
 
   private updateDecor(view: SceneView, manifest: ThemeManifest, time: number): void {
     const live = new Set(view.decors.map(d => d.item.id))
+    const foreground = foregroundDecor(view)
     for (const [id, decor] of this.decorations) if (!live.has(id)) { this.destroyDecor(decor); this.decorations.delete(id) }
     const lcd = manifest.renderer === 'lcd', c = Math.max(2, manifest.cell ?? 4), night = !!view.night
+    let normalIndex = 0, foregroundIndex = 0
     for (const node of view.decors) {
       let decor = this.decorations.get(node.item.id)
       if (!decor) { decor = this.makeDecor(node, manifest, night); this.decorations.set(node.item.id, decor) }
+      const parent = foreground.has(node.item.id) ? this.foreground : this.decors
+      const index = parent === this.foreground ? foregroundIndex++ : normalIndex++
+      if (decor.root.parent !== parent) parent.addChildAt(decor.root, index)
+      else if (parent.getChildIndex(decor.root) !== index) parent.setChildIndex(decor.root, index)
       const { item } = node
       const top = item.mount === 'top'
       decor.root.position.set(lcd ? Math.round(node.x / c) * c : node.x, lcd ? top ? Math.round((c * 2 + item.height) / c) * c : Math.round((view.height - c * 4) / c) * c : top ? 4 + item.height : view.height - 14)
@@ -258,6 +266,8 @@ export class NativeEnvironment {
       decor.art.visible = !image
       if (decor.override) decor.override.scale.x = Math.abs(decor.override.scale.x) * node.flip
     }
+    // Match Canvas: ordinary decorations, then food, then passing fish and arch frames.
+    if (this.foodLayer.parent === this.decors) this.decors.setChildIndex(this.foodLayer, this.decors.children.length - 1)
   }
 
   private makeDecor(node: DecorNode, manifest: ThemeManifest, night: boolean): Decoration {
@@ -333,7 +343,7 @@ export class NativeEnvironment {
     this.panel?.destroy()
     this.panel = null
     this.foodLayer.removeChildren().forEach(child => child.destroy())
-    for (const parent of [this.back, this.decors, this.front]) for (const child of parent.removeChildren()) if (child !== this.foodLayer) child.destroy({ children: true })
+    for (const parent of [this.back, this.decors, this.foreground, this.front]) for (const child of parent.removeChildren()) if (child !== this.foodLayer) child.destroy({ children: true })
     for (const context of this.contexts) if (!context.destroyed) context.destroy()
     this.contexts.clear(); this.decorations.clear(); this.foods.clear()
     for (const array of [this.bubbles, this.plankton, ...this.schools, this.kelps, this.beams, this.bulbs, this.pools, this.beads, this.waves]) array.length = 0
@@ -346,6 +356,6 @@ export class NativeEnvironment {
     this.clear()
     for (const gradient of this.gradients) gradient.destroy()
     this.gradients.clear(); this.gradientCache.clear()
-    this.back.destroy(); this.decors.destroy(); this.front.destroy(); this.foodLayer.destroy(); this.interactions.destroy({ context: true })
+    this.back.destroy(); this.decors.destroy(); this.foreground.destroy(); this.front.destroy(); this.foodLayer.destroy(); this.interactions.destroy({ context: true })
   }
 }

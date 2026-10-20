@@ -19,6 +19,7 @@ import {
 import { defaultAudioConfig } from './audio'
 import { detectLocale } from './i18n'
 import { syncRailLightConfig } from './lighting'
+import { syncMilestones } from './milestones'
 import { Rng, rng as defaultRng } from './rng'
 import {
   DECORATIONS,
@@ -86,7 +87,12 @@ export function variantKey(speciesId: SpeciesId, grade: Grade): string {
   return `${speciesId}:${grade}`
 }
 
-export function recordVariant(state: GameState, speciesId: SpeciesId, grade: Grade): boolean {
+export function recordVariant(
+  state: GameState,
+  speciesId: SpeciesId,
+  grade: Grade,
+  syncMilestoneHistory = true,
+): boolean {
   if (!Array.isArray(state.discoveredVariants)) {
     state.discoveredVariants = []
   }
@@ -94,6 +100,7 @@ export function recordVariant(state: GameState, speciesId: SpeciesId, grade: Gra
   const isNew = !state.discoveredVariants.includes(key)
   if (isNew) state.discoveredVariants.push(key)
   if (!state.discovered.includes(speciesId)) state.discovered.push(speciesId)
+  if (isNew && syncMilestoneHistory) syncMilestones(state)
   return isNew
 }
 
@@ -133,6 +140,7 @@ export function newGame(now = Date.now(), locale: Locale = detectLocale()): Game
     level: 1,
     discovered: uniqueStarters,
     discoveredVariants: uniqueStarters.map((id) => variantKey(id, 1)),
+    breedGoal: 'species',
     theme: 'realistic',
     colorMode: 'auto',
     railLights: syncRailLightConfig(),
@@ -329,13 +337,17 @@ export function tierOdds(a: Tier, b: Tier): [number, number, number, number, num
   return odds
 }
 
-function rollGrade(parentGradeAvg: number, random: Rng): Grade {
+/** Grade-roll weights for a pair with the given average parent grade. */
+export function gradeOdds(parentGradeAvg: number): number[] {
   const bias = GRADE_PARENT_BIAS * (parentGradeAvg - 1)
-  const weights = ([1, 2, 3, 4, 5] as Grade[]).map((g) => {
+  return ([1, 2, 3, 4, 5] as Grade[]).map((g) => {
     const base = GRADE_WEIGHTS[g]
     return Math.max(0.01, base * (1 + bias * (g - 1)) ** 1)
   })
-  return (random.weighted(weights) + 1) as Grade
+}
+
+function rollGrade(parentGradeAvg: number, random: Rng): Grade {
+  return (random.weighted(gradeOdds(parentGradeAvg)) + 1) as Grade
 }
 
 function rollUses(tier: Tier, random: Rng): number {
@@ -404,7 +416,7 @@ export function breed(
   return { child, tier, novel, expGained: immediateExp }
 }
 
-export type SynthError = 'wrong-count' | 'max-tier' | 'starter-material'
+export type SynthError = 'wrong-count' | 'max-tier' | 'starter-material' | 'locked-material'
 
 /**
  * Consume ten fish (tiers 1..4) to mint one fish a tier higher.
@@ -424,6 +436,9 @@ export function synthesize(
     .map((uid) => state.fish.find((f) => f.uid === uid))
     .filter((f): f is Fish => Boolean(f))
   if (picked.length !== SYNTHESIS_INPUT_COUNT) return { error: 'wrong-count' }
+  if (picked.some((f) => f.locked === true)) {
+    return { error: 'locked-material' }
+  }
   if (picked.some((f) => f.tier === 0)) {
     return { error: 'starter-material' }
   }
@@ -456,7 +471,7 @@ export function synthesize(
 /** Release a fish. Mirrors selling, minus an economy we do not simulate. */
 export function release(state: GameState, uid: string): boolean {
   const fish = state.fish.find((f) => f.uid === uid)
-  if (!fish || fish.tier === 0) return false
+  if (!fish || fish.tier === 0 || fish.locked === true) return false
   const before = state.fish.length
   state.fish = state.fish.filter((f) => f.uid !== uid)
   syncTank(state)
@@ -484,6 +499,7 @@ export function filterMergeCandidates(state: GameState): Fish[] {
   const tierSet = new Set(filter.tiers)
   return state.fish.filter((f) => {
     if (f.tier === 0 || f.tier >= 5) return false
+    if (f.locked === true) return false
     if (!tierSet.has(f.tier)) return false
     if (filter.zeroUsesOnly && f.uses > 0) return false
     if (filter.excludeInTank && tankSet.has(f.uid)) return false

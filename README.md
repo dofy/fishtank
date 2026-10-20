@@ -37,7 +37,7 @@ LCD 的结果标记、仪式光效、放电与眩晕均使用单色方格；界�
 
 **Fishtank** 是一款灵感源自 Steam 桌面放置游戏《[PC FISH: Taskbar Aquarium](https://store.steampowered.com/app/4842670/PC_FISH_Taskbar_Aquarium/?l=tchinese)》的网页端放置养成水族箱。无需注册登录、即开即玩，既可以在工作间隙体验配对繁育与全图鉴收集的乐趣，也可以一键切换至**全屏沉浸模式**，伴随轻柔的海洋白噪音与 Lo-Fi 音乐作为桌面生态屏保。
 
-当前版本 **v1.7.0**。版本更新记录见 [CHANGELOG](CHANGELOG.md)，完整玩法与数值见 [游戏帮助](docs/BALANCE.md)。
+当前版本 **v1.8.0**。版本更新记录见 [CHANGELOG](CHANGELOG.md)，完整玩法与数值见 [游戏帮助](docs/BALANCE.md)。
 
 ---
 
@@ -55,18 +55,39 @@ LCD 的结果标记、仪式光效、放电与眩晕均使用单色方格；界�
 
 ### 🪸 18 件可拖拽海底造景与昼夜灯光系统
 - 随着鱼缸等级从 **Lv.1 提升至 Lv.10**，鱼缸展示容量与装饰摆放槽位同步从 **3 个扩展至 12 个**，逐步解锁翠绿海草、鹿角珊瑚、沉船宝箱、海底城堡、深海神像以及星芒吊灯、霓虹水母灯等 **18 件非对称造景**。
-- **自由拖拽布置**：直接在鱼缸画面中按住任意装饰即可左右拖动调整位置，打造独一无二的海底景观。
+- **自由拖拽布置**：直接在鱼缸画面中按住任意装饰即可左右拖动调整位置；已摆放造景可通过卡片右上角的图标左右翻转。
 - **自动 / 日间 / 黑夜模式**：黑夜模式下，鱼缸顶部的氛围射灯与顶挂彩灯会自动点亮，向深海水域投射柔和的体积光束。
 
 ### ⚡ 更早遇见电鳗
 - 2★「高级」新增 **琥珀电鳗**，与 3★ 蓝弧电鳗共享放电彩蛋；初始鱼搭配 1★ 鱼也有机会繁育出它。同星级鱼种仍等概率抽取，星级与品阶规则不变。
 - 电鳗入缸后，30 秒内点它 6 次即可触发放电；也可能在游动时随机放电，让其他小鱼短暂眩晕，夜晚还会改变一盏顶灯的颜色。极光彩带鳗保持普通鳗鱼，不会触发放电。
 
+### 🎯 收集目标与珍藏
+- 在图鉴选择想遇见的鱼种，可进一步指定品阶；完成后保留达成标记。
+- 繁育页可按「发现新种 / 发现新品阶 / 冲高星级 / 追踪目标」推荐配对，显示基于当前图鉴的发现概率。推荐只改变选鱼方式，星级、品阶和同星级鱼种等概率规则不变。
+- 鱼缸卡片点击鱼图可展示或收回，右上角 ⓘ 打开个体详情，可起昵称、收藏、锁定或确认放生；昵称最多 24 个字符。收藏可筛选，锁定会阻止放生、手动合成和自动选材，仍可展示、喂食与繁育。
+- 设置中可导出 JSON 存档，在另一设备或域名导入；先预览等级、鱼数与图鉴数，确认后替换，不合并。导入前自动备份当前进度；普通保存至多每五分钟轮转一次最近备份，可在设置中预览恢复，并单独恢复最近一次导入前的进度。重置游戏会清除本地备份，请提前导出。
+- 进度与备份仍保存在当前浏览器，各域名独立；导入支持当前导出文件和旧版原始存档，拒绝损坏或不兼容文件。单文件最多 5 MiB / 20,000 条鱼。v1.8.0 支持以上收集与存档工具。
+
+### 🪸 布景预设
+- 「装饰」页顶部可保存最多 **6 套布景**，记录展示鱼、造景位置与朝向、昼夜模式和夜间灯珠开关/频率。名字最多 24 个字符，可改名；更新和删除会先确认。
+- 当前布景与修改状态用图标标记，悬停可查看说明；调整后可更新保存或恢复原布景。刷新后仍保留状态，切换写实/LCD 或鱼群成长不会被算作修改。
+- 应用时只切换布置，不复制鱼，也不改变繁育、成长、经验或收藏保护。已不在背包或超出当前容量的小鱼、尚未解锁的造景会跳过并提示；保存时的空鱼缸也可恢复。写实与 LCD 共用预设，切换时保留当前视觉主题。
+- 预设随存档导出、导入与备份；旧存档无需升级。电鳗临时改变的射灯颜色不在预设范围内。
+- In Decor, save up to **6 named layouts** with displayed fish, decoration positions/orientations, day/night mode and rail-light animation settings. Missing fish and unavailable decorations are skipped. Layouts travel with save exports and backups; gameplay progress and the current visual theme stay unchanged.
+- Icons mark the current layout and unsaved edits; hover for descriptions. Update or restore edits, including after reload. Fish growth and visual theme changes do not count as layout edits.
+
 ### 🫧 鲜活的鱼缸互动
 - **点水投喂**：点击鱼缸空白水域可一颗颗撒下鱼食，附近的鱼会争相游来抢食，吃饱后欢快游开。
 - **受惊冲刺**：轻点正在游动的小鱼，它会受惊加速横穿鱼缸（鱼缸里还藏着意想不到的**隐藏彩蛋**等待发现）。
 - **轻轻收回**：收回时，小鱼会短暂游开并淡出；LCD 使用整格点阵消隐。背包和鱼缸空位立即更新，再次放入可取消退场，兼容 PixiJS、Canvas 及系统“减少动态效果”。
+- **鱼景互动**：海马靠近海草停歇，小鱼偶尔穿过石拱、与同种伙伴短暂结伴；点到河豚会让它短暂鼓起。移走或拖动对应造景会中断停留，投喂、受惊、放电和收鱼优先响应。仅改变观赏动作，不修改成长与繁育；减少动态效果会停用新增观赏行为和鼓起动画，写实/LCD 与 PixiJS/Canvas 均支持。
 - **全屏沉浸模式**：一键隐藏所有操作面板，将鱼缸铺满整个窗口；鼠标静置 3 秒后顶部状态栏自动半透明隐去。
+
+### 🏅 收集纪念
+- 图鉴新增 **6 项永久里程碑**：首次发现非初始鱼、收齐 1★ 鱼种、发现三种水母、首次获得品阶 5、收集 25 种非初始品阶外观、发现全部 29 种海洋生物。进度来自收集历史，没有限时或每日签到；小鱼被合成或放生后，已解锁的纪念仍保留。
+- 完成后可选择一块纪念牌展示在鱼缸角落，也可取下。纪念牌兼容写实/LCD、普通和沉浸模式，随存档导出、导入与备份保留；旧存档会按已有收集记录补齐进度，不会默认替玩家摆上牌匾。
+- Six permanent collection milestones unlock optional aquarium plaques. Scenic fish behavior and plaques are cosmetic: they add no currencies, penalties or changes to breeding odds.
 
 ### 🎵 氛围音效与三首原创背景音乐
 - 内置清脆的水滴、投喂、孵化、合成音效，以及三首可随时切换的轻音乐曲目：**《珊瑚礁 Lo-Fi》**、**《深海潮汐》**、**《液晶八音盒》**，支持独立调节音效与音乐音量。
@@ -81,6 +102,8 @@ LCD 的结果标记、仪式光效、放电与眩晕均使用单色方格；界�
 ## 📖 游戏内帮助 / In-game Help
 
 按 `H` / `?` 或点击底栏「帮助」，先看看游戏说明，再按需切换繁育概率、等级解锁、星级属性、品阶经验和快捷键。概率按双亲中较低的星级分组，等级表按等级段翻页，所有列和当前页数据都能完整阅读，无需横向滚动。小屏幕上，帮助、更新日志、繁育及合成结果使用满屏弹窗；底栏保留完整版本号，三个入口显示为旁边的图标，仍可悬停查看名称。桌面保留居中弹窗和文字入口。
+
+收集纪念按宽度使用三列、两列或单列进度清单。触屏控件至少 44px，输入字号至少 16px；短屏改为整页滚动并固定导航，切页、鱼类详情和导入预览会定位到可操作区域。写实/LCD 与 PixiJS/Canvas 共用响应式布局。
 
 Open Help with `H` / `?` or the footer button. Start with the game guide, then browse breeding odds, level unlocks, tier stats, grade EXP and shortcuts. Tables use tier or level pages so every column fits without horizontal scrolling. Help, Changelog, breeding and merge results fill small screens. Three labeled icons sit beside the full version in the footer, with names available on hover and to screen readers. Desktop keeps centered dialogs and text links.
 
@@ -122,6 +145,12 @@ Available since v1.5.0. Use single keys without Ctrl or Cmd. The in-game Help an
 - 输入框、滑条、下拉菜单和输入法组字期间暂停快捷键；弹窗打开时暂停后台操作，避免误触。聚焦按钮时，`Enter` 保留按钮原有操作。
 - 长按不会重复触发快捷键，Ctrl / Cmd / Alt 组合键不受影响。放生和重置没有全局执行快捷键。
 - Tab switching leaves immersive mode. Context actions apply only to the current page and require a ready action. Inputs and IME composition pause shortcuts; overlays block background actions. Native button activation and browser modifier shortcuts remain available. Held keys do not repeat shortcuts; release and reset have no global execution shortcut.
+
+---
+
+## 界面组件 / UI components
+
+鱼群、繁育、合成、装饰、图鉴及品阶/个体预览统一使用 [`itemCard`](src/ui/item-card.ts)，样式集中在 [`item-card.css`](src/ui/item-card.css)。页面提供内容、状态与回调，组件统一处理选中态、状态栏、次要操作、键盘焦点和触屏尺寸；选中使用顶部色条与浅色底，追踪使用独立的虚线目标标记，两种状态可并存；通过 regular / compact / mini 三种密度适应不同位置。新增卡片应复用此组件，避免另写选中样式。
 
 ---
 

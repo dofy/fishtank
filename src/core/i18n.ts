@@ -329,7 +329,7 @@ const ZH: Copy = {
   tankHeading: (placed, cap, total) =>
     `我的鱼群（鱼缸展示 ${placed}/${cap} · 背包共 ${total} 条）`,
   releaseBtn: '放生',
-  confirmReleaseBtn: '确认',
+  confirmReleaseBtn: '确认放生',
   placedMsg: (name, placed, cap) => `已将 ${name} 放入鱼缸展示（${placed}/${cap}）。`,
   removedFromTankMsg: (name, placed, cap) => `已将 ${name} 收回背包（鱼缸 ${placed}/${cap}）。`,
   tankDisplayFullMsg: (cap) =>
@@ -337,7 +337,7 @@ const ZH: Copy = {
   releasedMsg: (name) => `已放生 ${name}。`,
   tankNoteTitle: '鱼缸与互动指南',
   tankNote:
-    '【鱼群管理】点击卡片可将鱼放入鱼缸展示或收回背包（开局赠送 **3 条 ∞ 无限繁育次数** 的初始鱼）。【水域互动】点击上方空白水域可投放鱼食，点击游动的鱼会让它受惊冲刺，按住已摆放的造景可直接左右拖拽调整位置！',
+    '【鱼群管理】点鱼图可展示或收回，右上角 ⓘ 可起名、收藏、锁定或放生。开局赠送 **3 条 ∞ 无限繁育次数** 的初始鱼。【水域互动】点击上方空白水域可投放鱼食，点击游动的鱼会让它受惊冲刺，按住已摆放的造景可直接左右拖拽调整位置！',
   breedHeading: (picked) => `选择两条成年鱼进行繁育（已选 ${picked}/2）`,
   sortLabel: '排序：',
   sortInTank: '鱼缸优先',
@@ -557,7 +557,7 @@ const EN: Copy = {
   tankHeading: (placed, cap, total) =>
     `Your fish (${placed}/${cap} in tank · ${total} owned)`,
   releaseBtn: 'Release',
-  confirmReleaseBtn: 'Confirm',
+  confirmReleaseBtn: 'Release fish',
   placedMsg: (name, placed, cap) => `Placed ${name} in the tank (${placed}/${cap}).`,
   removedFromTankMsg: (name, placed, cap) => `Removed ${name} from the tank (${placed}/${cap}).`,
   tankDisplayFullMsg: (cap) =>
@@ -565,7 +565,7 @@ const EN: Copy = {
   releasedMsg: (name) => `Released ${name}.`,
   tankNoteTitle: 'Tank & Interaction Guide',
   tankNote:
-    '【Manage Fish】Click a card to place or store fish in the tank (starts with **3 ∞ infinite-use** starter fish). 【Tank Interactions】Click empty water to drop food pellets, click a swimming fish to startle it, or drag placed ornaments directly inside the tank!',
+    '【Manage Fish】Click a fish to place or store it. Open ⓘ to name, favorite, protect or release it. You start with **3 ∞ infinite-use** starter fish. 【Tank Interactions】Click empty water to drop food pellets, click a swimming fish to startle it, or drag placed ornaments directly inside the tank!',
   breedHeading: (picked) => `Pick two adults (${picked}/2 selected)`,
   sortLabel: 'Sort:',
   sortInTank: 'In Tank',

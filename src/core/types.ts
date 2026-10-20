@@ -128,12 +128,38 @@ export interface Fish {
   birthExp?: number
   /** True once its maturation EXP has been banked. */
   expBanked: boolean
+  /** Optional player-assigned display name. */
+  nickname?: string
+  /** Bookmarked fish. Independent of protection from destructive actions. */
+  favorite?: boolean
+  /** Protected from synthesis and release, while remaining breedable. */
+  locked?: boolean
 }
 
 export type Locale = 'zh' | 'en'
 export type ColorMode = 'auto' | 'light' | 'dark'
 export type FishSort = 'inTank' | 'tier' | 'grade' | 'uses' | 'acquired'
 export type BgmTrackId = 'lofi' | 'tide' | 'chiptune'
+export type BreedGoal = 'species' | 'variant' | 'tier' | 'target'
+export type MilestoneId =
+  | 'first-friend'
+  | 'tier-one'
+  | 'jelly-family'
+  | 'grade-five'
+  | 'variant-collector'
+  | 'reef-explorer'
+
+export interface MilestoneState {
+  /** Permanently unlocked milestone ids, in unlock order. */
+  unlocked: MilestoneId[]
+  /** Optional commemorative plaque shown in the aquarium. */
+  displayed?: MilestoneId
+}
+
+export interface CollectionTarget {
+  speciesId: SpeciesId
+  grade?: Grade
+}
 
 export interface AudioConfig {
   sfxEnabled: boolean
@@ -158,6 +184,16 @@ export interface RailLightConfig {
   frequency: number
 }
 
+/** A display-only snapshot. Fish are referenced by UID, never duplicated. */
+export interface TankPreset {
+  id: string
+  name: string
+  tankUids: string[]
+  placedDecor: PlacedDecor[]
+  colorMode: ColorMode
+  railLights: RailLightConfig
+}
+
 export interface GameState {
   version: number
   fish: Fish[]
@@ -165,6 +201,10 @@ export interface GameState {
   tankUids?: string[]
   /** Decorations currently placed on the bottom of the aquarium tank. */
   placedDecor?: PlacedDecor[]
+  /** Up to six saved aquarium layouts, independent of the visual theme. */
+  tankPresets?: TankPreset[]
+  /** Last saved/applied layout; edits are compared with its currently available contents. */
+  activeTankPresetId?: string
   /** Filter and auto-select settings on the Merge tab. */
   mergeFilter?: MergeFilter
   /** Preferred sort order on the Tank tab. */
@@ -182,6 +222,12 @@ export interface GameState {
   discovered: SpeciesId[]
   /** Variant keys (`${speciesId}:${grade}`) ever owned, for the 5-grade variant catalog. */
   discoveredVariants?: string[]
+  /** Permanent collection milestone history and optional displayed plaque. */
+  milestones?: MilestoneState
+  /** Optional species or species-grade collection objective. */
+  collectionTarget?: CollectionTarget
+  /** Preferred objective for breeding recommendations. */
+  breedGoal?: BreedGoal
   theme: string
   colorMode?: ColorMode
   railLights?: RailLightConfig

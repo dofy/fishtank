@@ -7,6 +7,8 @@ import { lcdElectricity } from '../render/lcd-electricity'
 import { lcdWithdrawalDensity, withdrawalOpacity, withdrawalScale } from '../render/withdrawal'
 import { NativeEnvironment } from './native-environment'
 import { GpuTimer } from './gpu-timer'
+import { pufferAmount, pufferLevel } from '../render/ecology'
+import { lcdTextureBounds } from '../render/lcd-grid'
 
 const vertex = `
 precision highp float;
@@ -110,7 +112,7 @@ export class PixiTank {
     this.app.canvas.setAttribute('aria-hidden', 'true')
     this.app.canvas.addEventListener('webglcontextlost', this.onContextLost)
     this.app.canvas.addEventListener('webglcontextrestored', this.onContextRestored)
-    this.water.addChild(this.environment.back, this.environment.decors, this.fishLayer, this.sparks, this.environment.interactions, this.environment.front)
+    this.water.addChild(this.environment.back, this.environment.decors, this.fishLayer, this.environment.foreground, this.sparks, this.environment.interactions, this.environment.front)
     this.app.stage.addChild(this.water)
     this.gpuTimer = new GpuTimer((this.app.renderer as WebGLRenderer).gl)
     for (let i = 0; i < 28; i++) {
@@ -166,14 +168,15 @@ export class PixiTank {
     for (const agent of view.agents) {
       // Each dissolving LCD fish owns one tiny texture. Living copies keep
       // sharing their normal art, and progress never creates a new cache key.
-      const key = `${agent.species.id}:${agent.fish.grade}:${agent.fish.tier}:${agent.scale}${lcd && agent.withdrawal ? `:withdraw:${agent.fish.uid}` : ''}`
+      const puff = lcd ? pufferLevel(agent, view.reducedMotion || !motion) : 0
+      const key = `${agent.species.id}:${agent.fish.grade}:${agent.fish.tier}:${agent.scale}${lcd && agent.withdrawal ? `:withdraw:${agent.fish.uid}` : ''}${puff ? `:puff:${puff}` : ''}`
       const visibility = lcd ? lcdWithdrawalDensity(agent.withdrawal) : 1
       used.add(key)
-      const art = this.textures.get(key) ?? this.bake(renderer, agent, key, visibility)
+      const art = this.textures.get(key) ?? this.bake(renderer, agent, key, visibility, puff)
       if (lcd && (art.visibility !== visibility || (motion && !view.reducedMotion && Math.abs(view.time - art.lastPose) >= 1 / 8))) {
         const ctx = art.canvas.getContext('2d')!
         ctx.clearRect(-art.pad, -art.height / 2, art.width, art.height)
-        renderer.fishFrame(ctx, art.length, { species: agent.species, grade: agent.fish.grade, tier: agent.fish.tier, visibility }, view.reducedMotion || agent.withdrawal?.reducedMotion || !motion ? 0 : view.time + agent.phase)
+        renderer.fishFrame(ctx, art.length, { species: agent.species, grade: agent.fish.grade, tier: agent.fish.tier, visibility, puffLevel: puff }, view.reducedMotion || agent.withdrawal?.reducedMotion || !motion ? 0 : view.time + agent.phase)
         art.texture.source.update()
         art.lastPose = view.time
         art.visibility = visibility
@@ -245,13 +248,14 @@ export class PixiTank {
     return performance.now() - started
   }
 
-  private bake(renderer: Renderer, agent: Agent, key: string, visibility: number): FishTexture {
+  private bake(renderer: Renderer, agent: Agent, key: string, visibility: number, puff: number): FishTexture {
     const length = agent.species.body.length * 4.2 * agent.scale
-    const pad = 18
-    const width = Math.ceil(length + pad * 2)
-    // Full fins, jelly streamers, shadows and curved tails must stay inside the texture.
-    const height = Math.ceil(Math.max(length * 1.65, 76) + pad * 2)
     const lcd = renderer.manifest.renderer === 'lcd'
+    const bounds = lcd ? lcdTextureBounds(length, Math.max(2, renderer.manifest.cell ?? 4)) : null
+    const pad = bounds?.pad ?? 18
+    const width = bounds?.width ?? Math.ceil(length + pad * 2)
+    // Full fins, jelly streamers, shadows and curved tails must stay inside the texture.
+    const height = bounds?.height ?? Math.ceil(Math.max(length * 1.65, 76) + pad * 2)
     const r = lcd ? 1 : 2
     const canvas = document.createElement('canvas')
     canvas.width = width * r
@@ -259,7 +263,7 @@ export class PixiTank {
     const ctx = canvas.getContext('2d')!
     ctx.scale(r, r)
     ctx.translate(pad, height / 2)
-    renderer.fishFrame(ctx, length, { species: agent.species, tier: agent.fish.tier, grade: agent.fish.grade, visibility }, 0)
+    renderer.fishFrame(ctx, length, { species: agent.species, tier: agent.fish.tier, grade: agent.fish.grade, visibility, puffLevel: puff }, 0)
     const texture = new Texture({ source: new CanvasSource({ resource: canvas, resolution: r, scaleMode: lcd ? 'nearest' : 'linear' }) })
     const art = { texture, length, width, height, pad, canvas, lastPose: -Infinity, visibility }
     this.textures.set(key, art)
@@ -298,7 +302,8 @@ export class PixiTank {
     const t = reduced ? 0 : view.time + a.phase
     node.facing += (a.dir - node.facing) * Math.min(1, dt * 12)
     const retreatScale = lcd ? 1 : withdrawalScale(a.withdrawal)
-    mesh.scale.set((lcd || reduced ? a.dir : node.facing) * retreatScale, retreatScale)
+    const puff = lcd ? 0 : pufferAmount(a, !!reduced)
+    mesh.scale.set((lcd || reduced ? a.dir : node.facing) * retreatScale * (1 + puff * 0.1), retreatScale * (1 + puff * 0.28))
     mesh.position.set(lcd ? Math.round(a.x / cell) * cell : a.x, lcd ? Math.round(a.y / cell) * cell : a.y + (a.dropping || shocked || reduced || a.withdrawal ? 0 : Math.sin(t * 2) * 2.5))
     mesh.rotation = lcd ? 0 : (a.tilt ?? 0) * a.dir
     mesh.alpha = lcd ? 1 : withdrawalOpacity(a.withdrawal)

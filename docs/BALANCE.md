@@ -1,8 +1,8 @@
-# Balance & Game Data Guide / 游戏帮助与数值说明 (`v1.7.0`)
+# Balance & Game Data Guide / 游戏帮助与数值说明 (`v1.8.0`)
 
-Keyboard shortcuts were added in `v1.5.0`; see [Keyboard Shortcuts](../README.md#keyboard-shortcuts) or the in-game Help (`H` / `?`). v1.7.0 changes aquarium rendering only; tier and grade rules remain unchanged.
+Keyboard shortcuts were added in `v1.5.0`; see [Keyboard Shortcuts](../README.md#keyboard-shortcuts) or the in-game Help (`H` / `?`). v1.8.0 adds collection tools, saved layouts, scenery interactions and milestones; tier and grade odds remain unchanged.
 
-`v1.5.0` 新增键盘快捷键，完整按键见 [README 快捷键说明](../README.md#keyboard-shortcuts)，也可按 `H` / `?` 打开游戏内帮助。v1.7.0 仅调整鱼缸渲染，保留原有星级、品阶与存档规则。
+`v1.5.0` 新增键盘快捷键，完整按键见 [README 快捷键说明](../README.md#keyboard-shortcuts)，也可按 `H` / `?` 打开游戏内帮助。v1.8.0 新增收集工具、布景预设、鱼景互动与收集纪念，保留原有星级、品阶概率与旧档兼容。
 
 In-game Help opens on the game guide. Dedicated tabs show breeding, levels, tier stats, grade EXP and shortcuts. Breeding rows are grouped by the lower parent tier (`0★` = starter); level rows use level-range pages. All table columns fit without horizontal scrolling, and small screens use a full-screen dialog.
 
@@ -11,6 +11,28 @@ In-game Help opens on the game guide. Dedicated tabs show breeding, levels, tier
 This document details the gameplay mechanics, progression curves, and breeding probabilities for **Fishtank**, modeled on [PC FISH: Taskbar Aquarium](https://store.steampowered.com/app/4842670/PC_FISH_Taskbar_Aquarium/).
 
 本文档详细说明 **Fishtank** 的核心玩法机制、升级容量曲线与繁育概率矩阵（数值参考 Steam《[PC FISH: Taskbar Aquarium](https://store.steampowered.com/app/4842670/PC_FISH_Taskbar_Aquarium/?l=tchinese)》）。
+
+### v1.8.0：收集目标与进度保护 / Collection and save tools
+
+- 配对推荐按现有星级概率、同星级鱼种等概率和品阶权重计算。「新品阶」包含任意未发现的鱼种＋品阶组合；目标品阶要求精确匹配，不是达到或超过该品阶。预测不消耗随机数，也不改变抽取概率。
+- 已完成目标仍显示达成状态，可取消或换目标；锁定鱼仍可繁育。收藏独立于锁定，仅用于筛选；锁定才阻止合成和放生，自动选材也会跳过。
+- 存档导入只在确认替换后写入；失败保留原进度，替换前自动备份；「恢复导入前进度」独立保留，不会因后续普通备份轮转而失去入口。较晚的导入确认或重置会取消仍在加载主题的旧导入。备份与主存档同属当前浏览器、当前域名，不能抵御浏览器数据清除；导出文件可用于跨设备迁移。重置会同时清除两份本地备份。
+- Recommendations calculate existing tier, uniform species, and grade odds without consuming RNG. A grade target requires that exact grade. Favorites and protection are independent; protected fish remain breedable. Import previews do not write progress. Confirmed imports replace the collection after backing it up, and local backups are removed on reset.
+
+### v1.8.0：布景预设 / Saved layouts
+
+- 在「装饰」保存最多 6 套预设，名称最多 24 个 Unicode 字符。保存展示鱼 UID、造景位置与朝向、昼夜偏好、夜间灯珠动态开关与频率；不保存鱼体游动位置、成长快照或电鳗临时改变的灯色。写实与 LCD 共用预设，应用时保留当前视觉主题。
+- 应用会按当前背包、等级容量和造景解锁状态筛选，跳过缺失个体及不可用造景，保留预设本身以供以后更新；不会生成替代鱼，也不改变鱼群、爱心、经验、成长、收藏或锁定。空布局仍保持为空，覆盖和删除会先确认。
+- 预设随存档、导入和本地备份保存。旧存档可缺少此可选字段；导入会拒绝超量、重复 ID、非法造景坐标等损坏数据，允许引用已不存在的小鱼。保存失败时回滚本次预设操作和应用布局。
+- Save up to 6 display-only layouts. Applying resolves current ownership, capacity and unlocks, without recreating fish or restoring gameplay progress. Presets remain independent of the visual theme and are included in exports and backups.
+
+### v1.8.0：鱼景互动与收集纪念 / Scenery interactions and milestones
+
+- 海马可在海草旁停歇，小型鱼可穿过石拱，同种鱼可短暂跟游；观赏动作有冷却和超时，造景被拖动、移除或伙伴离缸会中断。投喂、受惊、眩晕、放电与收鱼优先；所有行为状态留在场景内，不写入存档、不结算经验。减少动态效果会关闭新增观赏行为与河豚鼓起。
+- 河豚被点击时约 1.8 秒恢复原形。写实使用轻微体积变化，LCD 使用四档不透明点阵轮廓；两套渲染共享行为和石拱遮挡关系。
+- 6 项永久里程碑：发现首个非初始鱼种、全部 1★ 鱼种、全部三种水母、任意非初始鱼的品阶 5、25 种非初始品阶外观、全部 29 种鱼种。历史记录与现存个体可作为证据；旧存档只有鱼种记录时不推断曾有品阶 5。已解锁记录不随放生或合成减少。
+- 每项解锁一块可选纪念牌，最多展示一块，不影响任何数值或造景槽位。纪念牌不属于布景预设；切换预设仍保留当前选择。可随存档导出、导入和备份保存；保存失败恢复原选择，重置会清除纪念与选择。
+- All new behaviors and rewards are cosmetic. Collection milestones have no deadline or claim cost; exact-grade milestones require actual variant evidence. Earned milestones persist after a specimen leaves the inventory.
 
 ### v1.7.0：鱼缸渲染 / Aquarium rendering
 

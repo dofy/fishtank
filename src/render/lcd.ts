@@ -1,6 +1,7 @@
 import type { BodyShape, DecorItem, Grade, Tier } from '../core/types'
 import type { DecorPortraitRequest, PortraitRequest, Renderer } from './renderer'
 import type { Agent, DecorNode, SceneView, SplashEffect } from './scene'
+import { foregroundDecor, pufferBody, pufferLevel } from './ecology'
 import { decorLayers, eyeAt, fishPath, hashString, patternBands, patternSpots } from './shape'
 import { type SceneColors, type ThemeManifest, lampPositions, sceneColorsFor, spriteFor } from './theme'
 import { drawRailBeads } from './rail-lights'
@@ -37,7 +38,8 @@ export class LcdRenderer implements Renderer {
     this.waterline(ctx, w, view.time, s)
     this.floor(ctx, w, h, s)
 
-    for (const d of view.decors) this.decorNode(ctx, d, h, view.time, s, night)
+    const foreground = foregroundDecor(view)
+    for (const d of view.decors) if (!foreground.has(d.item.id)) this.decorNode(ctx, d, h, view.time, s, night)
     if (view.foods) {
       const c = this.cell
       ctx.fillStyle = s.ink
@@ -47,7 +49,8 @@ export class LcdRenderer implements Renderer {
         ctx.fillRect(fx, fy, c - 1, c - 1)
       }
     }
-    for (const a of view.agents) this.agent(ctx, a, view.time, s)
+    for (const a of view.agents) this.agent(ctx, a, view.time, s, !!view.reducedMotion)
+    for (const d of view.decors) if (foreground.has(d.item.id)) this.decorNode(ctx, d, h, view.time, s, night)
     if (view.splashes) {
       for (const sp of view.splashes) this.splash(ctx, sp, s)
     }
@@ -293,7 +296,7 @@ export class LcdRenderer implements Renderer {
     }
   }
 
-  private agent(ctx: CanvasRenderingContext2D, a: Agent, t: number, s: SceneColors): void {
+  private agent(ctx: CanvasRenderingContext2D, a: Agent, t: number, s: SceneColors, reducedMotion = false): void {
     const len = a.species.body.length * 4.2 * a.scale
     const c = this.cell
     const shocked = (a.shockedTimer ?? 0) > 0
@@ -304,11 +307,11 @@ export class LcdRenderer implements Renderer {
     ctx.save()
     ctx.translate(x, y)
     if (a.dir === -1) {
-      ctx.translate(len, 0)
+      ctx.translate(Math.round(len / c) * c, 0)
       ctx.scale(-1, 1)
     }
     if (a.withdrawal) clipLcdWithdrawal(ctx, len, len * a.species.body.depth, c, lcdWithdrawalDensity(a.withdrawal))
-    this.body(ctx, a.species.body, len, a.fish.grade, a.fish.tier, a.fish.speciesId, s, a.withdrawal?.reducedMotion ? 0 : t + a.phase)
+    this.body(ctx, pufferBody(a.species.body, pufferLevel(a, reducedMotion)), len, a.fish.grade, a.fish.tier, a.fish.speciesId, s, a.withdrawal?.reducedMotion ? 0 : t + a.phase)
     if (shocked || discharging) {
       const h = len * a.species.body.depth
       ctx.fillStyle = s.ink
@@ -329,7 +332,7 @@ export class LcdRenderer implements Renderer {
       ctx.save()
       clipLcdWithdrawal(ctx, length, length * req.species.body.depth, this.cell, req.visibility!)
     }
-    this.body(ctx, req.species.body, length, req.grade, req.tier, req.species.id, s, phase)
+    this.body(ctx, pufferBody(req.species.body, req.puffLevel ?? 0), length, req.grade, req.tier, req.species.id, s, phase)
     if (clipped) ctx.restore()
   }
 
@@ -390,7 +393,7 @@ export class LcdRenderer implements Renderer {
     if (grade > 1) {
       ctx.fillStyle = s.accent
       for (let i = 0; i < grade - 1; i++) {
-        ctx.fillRect(len * 0.3 + i * c * 1.5, -height * 0.1, c - 1, c - 1)
+        ctx.fillRect(Math.round((len * 0.3 + i * c * 1.5) / c) * c, Math.round(-height * 0.1 / c) * c, c - 1, c - 1)
       }
     }
 

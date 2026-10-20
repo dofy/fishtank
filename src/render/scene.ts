@@ -3,6 +3,7 @@ import { decorItem } from '../core/species'
 import type { DecorId, DecorItem, Fish, GameState, RailLightConfig, Species } from '../core/types'
 import { hashString } from './shape'
 import { withdrawalEase, type Withdrawal } from './withdrawal'
+import { interruptScenery, updateScenery, type SceneryVisit } from './ecology'
 
 export interface Agent {
   fish: Fish
@@ -44,6 +45,11 @@ export interface Agent {
   zapCooldown?: number
   /** Visual-only retreat after being returned to the backpack. */
   withdrawal?: Withdrawal
+  /** Transient visits to decorations or a same-species companion. Never saved. */
+  scenery?: SceneryVisit
+  sceneryCooldown?: number
+  sceneryCount?: number
+  puffTimer?: number
 }
 
 export interface SplashEffect {
@@ -144,6 +150,7 @@ export class Scene {
         vy: shouldDrop ? dropVy : 0,
         splashed: !shouldDrop,
         zapCooldown: 8 + Math.random() * 14,
+        sceneryCooldown: 3 + seed % 6,
       })
     }
     for (const [uid, agent] of this.agents) {
@@ -176,6 +183,8 @@ export class Scene {
     a.scaredTimer = 0
     a.clickTimestamps = []
     a.tilt = 0
+    interruptScenery(a)
+    a.puffTimer = 0
     return true
   }
 
@@ -226,6 +235,8 @@ export class Scene {
   ): 'scared' | 'zapped' | false {
     const a = this.agents.get(uid)
     if (!a || a.dropping || a.withdrawal) return false
+    interruptScenery(a)
+    if (a.species.body.silhouette === 'spiky-puffer') a.puffTimer = 1.8
 
     // Track clicks within a 30s sliding window; 6 clicks on an electric eel triggers immediate discharge
     const recent = (a.clickTimestamps ?? []).filter((ts) => now - ts <= 30_000)
@@ -277,6 +288,8 @@ export class Scene {
       if (other.fish.uid === eel.fish.uid || other.dropping || other.withdrawal) continue
       other.shockedTimer = 3.0
       other.scaredTimer = 0
+      interruptScenery(other)
+      other.puffTimer = 0
     }
     // When lamps are lit in night mode, randomly switch one of the 3 overhead lamps to a new color from the 7-color palette
     if (night) {
@@ -316,6 +329,7 @@ export class Scene {
 
     let activeCount = 0
     for (const a of this.agents.values()) if (!a.withdrawal) activeCount++
+    const companions = [...this.agents.values()]
     for (const a of this.agents.values()) {
       if (a.withdrawal) {
         const exit = a.withdrawal
@@ -334,6 +348,9 @@ export class Scene {
         }
         continue
       }
+      a.sceneryCooldown = Math.max(0, (a.sceneryCooldown ?? 0) - dt)
+      a.puffTimer = reducedMotion ? 0 : Math.max(0, (a.puffTimer ?? 0) - dt)
+      if (reducedMotion || a.dropping || (a.shockedTimer ?? 0) > 0 || (a.scaredTimer ?? 0) > 0 || (a.dischargingTimer ?? 0) > 0) interruptScenery(a)
       if (a.eatCooldown && a.eatCooldown > 0) {
         a.eatCooldown = Math.max(0, a.eatCooldown - dt)
       }
@@ -434,6 +451,7 @@ export class Scene {
       }
 
       if (nearestFood) {
+        interruptScenery(a)
         const dx = nearestFood.x - a.x
         const dy = nearestFood.y - a.y
         const dist = Math.hypot(dx, dy) || 1
@@ -466,6 +484,8 @@ export class Scene {
         a.y = Math.min(maxY, Math.max(minY, a.y))
         continue
       }
+
+      if (updateScenery(a, companions, this.decors, width, height, dt, time, reducedMotion)) continue
 
       // 4. Normal species-specific locomotion
       const form = a.species.body.form ?? 'fish'
