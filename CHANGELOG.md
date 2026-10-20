@@ -1,6 +1,6 @@
 # 更新日志 / Changelog
 
-[详细规则](docs/BALANCE.md) · [验证记录](docs/RELEASE_VERIFICATION.md) · [部署记录](docs/DEPLOYMENTS.md)
+[详细规则](docs/BALANCE.md) · [部署与验证记录](docs/DEPLOYMENTS.md)
 
 ## [1.8.0] - 2026-10-20
 
