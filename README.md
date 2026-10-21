@@ -131,7 +131,8 @@ Available since v1.5.0. Use single keys without Ctrl or Cmd. The in-game Help an
 | `U` | 打开更新日志 / Open Changelog |
 | `A` | 繁育页推荐配对 / 合成页自动选材 / Best Pair on Breed, auto-select materials on Merge |
 | `C` | 清空当前繁育或合成选择 / Clear the current breeding or merge selection |
-| `R` / `Enter` | R 执行已就绪的繁育或合成、收下小鱼；Enter 优先操作当前聚焦按钮 / R runs a ready action or collects a result; Enter activates a focused control first |
+| `R` | 执行已就绪的繁育或合成，收下已展示的小鱼 / Run ready breeding or merge, or collect a revealed fish |
+| `Enter` | 操作当前聚焦控件；无控件焦点时执行就绪动作或收下小鱼 / Activate the focused control; otherwise run a ready action or collect a result |
 | `Esc` | 关闭弹窗、取消确认、返回图鉴列表或退出沉浸 / Close overlay, cancel confirmation, leave book details, or exit immersive mode |
 
 - 切换 Tab 会自动退出沉浸模式；`A`、`C` 和开始繁育/合成的 `R` / `Enter` 只作用于当前操作页，未就绪的操作不会执行。

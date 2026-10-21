@@ -701,7 +701,7 @@ export class App {
     const row = document.createElement('div')
     row.className = 'action-buttons'
     const canBreed = Boolean(a && b && this.state.hearts > 0)
-    const go = makeButton(`${c.breedBtn(this.breedPick.length)} · R`, () => {
+    const go = makeButton(c.breedBtn, () => {
       const clickNow = Date.now()
       if (this.state.hearts <= 0) {
         const wait = formatClock(Math.max(0, this.state.nextHeartAt - clickNow))
@@ -844,7 +844,7 @@ export class App {
     const row = document.createElement('div')
     row.className = 'action-buttons'
     const ready = this.mergePick.length === SYNTHESIS_INPUT_COUNT
-    const go = makeButton(c.mergeBtn(this.mergePick.length, SYNTHESIS_INPUT_COUNT), () => {
+    const go = makeButton(c.mergeBtn, () => {
       if (this.mergePick.length !== SYNTHESIS_INPUT_COUNT) {
         this.say(
           c.synthError('wrong-count', SYNTHESIS_INPUT_COUNT, this.mergePick.length),
@@ -1837,19 +1837,25 @@ export class App {
       locale: c.shortcutsLocale, help: c.helpBtn, changelog: c.changelogBtn,
       autoPick: c.shortcutsAutoPick, clear: c.shortcutsClear, run: c.shortcutsRun, escape: c.shortcutsEscape,
     }
-    for (const shortcut of SHORTCUTS) {
+    // R is the context action; Enter gives focused controls priority. Explain them separately.
+    const guideShortcuts = SHORTCUTS.flatMap(shortcut => shortcut.action === 'run'
+      ? [{ ...shortcut, keys: ['r'] }, { ...shortcut, keys: ['Enter'] }]
+      : [shortcut])
+    for (const shortcut of guideShortcuts) {
+      const isEnter = shortcut.action === 'run' && shortcut.keys[0] === 'Enter'
       const row = document.createElement('div')
       row.className = 'shortcut-item'
-      row.dataset.shortcutGuide = shortcut.action
+      row.dataset.shortcutGuide = isEnter ? 'enter' : shortcut.action
       const keys = document.createElement('dt')
       keys.className = 'shortcut-keys'
-      for (const [index, key] of shortcutLabels(shortcut.action).entries()) {
+      const labels = shortcut.action === 'run' ? [isEnter ? 'Enter' : 'R'] : shortcutLabels(shortcut.action)
+      for (const [index, key] of labels.entries()) {
         if (index) keys.append(' / ')
         const badge = document.createElement('kbd')
         badge.textContent = key
         keys.append(badge)
       }
-      const description = shortcut.action.startsWith('tab-')
+      const description = isEnter ? c.shortcutsEnter : shortcut.action.startsWith('tab-')
         ? c.tabs[shortcut.action.slice(4) as Tab]
         : descriptions[shortcut.action as keyof typeof descriptions]
       const text = document.createElement('dd')

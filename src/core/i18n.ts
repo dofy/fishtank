@@ -158,7 +158,7 @@ export interface Copy {
   breedNoteTitle: string
   breedNote: string
   pairingCol: string
-  breedBtn: (picked: number) => string
+  breedBtn: string
   clearBtn: string
   hatchedMsg: (
     name: string,
@@ -186,7 +186,7 @@ export interface Copy {
   mergeAutoPickedMsg: (picked: number, total: number) => string
   mergeAlreadyFullMsg: (total: number) => string
   mergeNothingToClearMsg: string
-  mergeBtn: (picked: number, total: number) => string
+  mergeBtn: string
   mergedMsg: (name: string, starsStr: string, tierStr: string) => string
   mergeNoteTitle: string
   mergeNote: string
@@ -226,6 +226,7 @@ export interface Copy {
   shortcutsAutoPick: string
   shortcutsClear: string
   shortcutsRun: string
+  shortcutsEnter: string
   shortcutsEscape: string
   shortcutsNote: string
   shortcutsCloseHelp: string
@@ -349,7 +350,7 @@ const ZH: Copy = {
   breedNote:
     '【爱心消耗】每次繁育消耗 **1 颗爱心**（每 **7 分钟** 恢复 1 颗，上限 5 颗）。【星级与品阶】双亲星级组合决定子代 **1★–5★** 产出概率，双亲品阶越高越易孵化出高品阶后代（最高 **2.0x EXP**）。【鱼种抽取】确定星级后，从该星级的全部鱼种中**等概率抽取**，不偏向亲代鱼种，仍可能遇到老朋友。【次数与经验】初始鱼拥有 **∞ 无限次数**（冷却 3 分钟），子代鱼拥有 **1–5 次** 繁育次数；孵化与成年时各获得一半经验。',
   pairingCol: '亲代组合',
-  breedBtn: (picked) => `开始繁育 · 消耗 1 爱心 (${picked}/2)`,
+  breedBtn: '开始繁育',
   clearBtn: '清空选择',
   hatchedMsg: (name, starsStr, tierStr, grade, expGained, novel) =>
     `孵化出 ${name}（${starsStr} ${tierStr} · 品阶 ${grade}），获得 +${expGained} EXP！${novel ? ' 解锁新图鉴！' : ''}`,
@@ -366,7 +367,7 @@ const ZH: Copy = {
   mergeFilterZeroUses: '只显示/选择剩余繁育次数为 0 的鱼',
   mergeFilterExcludeTank: '排除已放置于鱼缸中的鱼',
   mergeTierTitle: '鱼种稀有度条件',
-  mergeAutoPickBtn: '按条件自动选择 10 条',
+  mergeAutoPickBtn: '自动选材',
   mergeEmptyByFilter: '当前筛选条件下没有符合要求的鱼（可取消勾选“只显示剩余繁育次数为 0”或勾选更多稀有度）。',
   mergeAutoPickedMsg: (picked, total) =>
     picked >= total
@@ -376,7 +377,7 @@ const ZH: Copy = {
         : '当前筛选条件下没有可自动选择的鱼。',
   mergeAlreadyFullMsg: (total) => `已选满 ${total} 条材料鱼，可直接点击“开始合成”或先取消已选鱼。`,
   mergeNothingToClearMsg: '当前没有已选中的合成材料鱼。',
-  mergeBtn: (picked, total) => `开始合成 (${picked}/${total})`,
+  mergeBtn: '开始合成',
   mergedMsg: (name, starsStr, tierStr) => `合成成功：获得 ${name}（${starsStr} ${tierStr}）！`,
   mergeNoteTitle: '10 合 1 聚变合成技巧',
   mergeNote:
@@ -421,7 +422,8 @@ const ZH: Copy = {
   shortcutsLocale: '切换中英文',
   shortcutsAutoPick: '繁育页推荐配对 / 合成页自动选材',
   shortcutsClear: '清空繁育 / 合成选择',
-  shortcutsRun: 'R：执行已就绪的繁育 / 合成、收下小鱼；Enter：当前按钮操作',
+  shortcutsRun: '执行已就绪的繁育 / 合成，或收下已展示的小鱼',
+  shortcutsEnter: '操作当前聚焦控件；无控件焦点时执行就绪动作或收下小鱼',
   shortcutsEscape: '关闭 / 取消 / 返回 / 退出沉浸',
   shortcutsNote: '直接按单键即可，切换 Tab 会退出沉浸。输入框、滑条、下拉菜单和输入法组字时暂停快捷键，弹窗内暂停后台操作；鼠标选鱼后按 R 可直接繁育；聚焦按钮时 Enter 保留原有操作。长按不会重复触发快捷键，Ctrl / Cmd / Alt 组合键保留浏览器功能。',
   shortcutsCloseHelp: '关闭帮助',
@@ -576,7 +578,7 @@ const EN: Copy = {
   breedNote:
     '【Heart Cost】Each breeding attempt costs **1 Heart** (regenerates 1 every **7 min**, cap 5). 【Rarity & Grade】Parent star tiers determine **1★–5★** offspring odds, while higher parent grades boost high-grade offspring odds (up to **2.0x EXP**). 【Species】Once the tier is rolled, **every species in that tier has an equal chance**, with no parent-species preference. Familiar fish can still appear. 【Uses & EXP】Starter fish have **∞ infinite uses** (3m cooldown) and bred fish have **1–5 uses**; half EXP is awarded on hatching and half on maturation.',
   pairingCol: 'Pairing',
-  breedBtn: (picked) => `Breed · 1 heart (${picked}/2)`,
+  breedBtn: 'Breed',
   clearBtn: 'Clear',
   hatchedMsg: (name, starsStr, tierStr, grade, expGained, novel) =>
     `${name} hatched at ${starsStr} ${tierStr}, grade ${grade} (+${expGained} EXP).${novel ? ' New species for the book!' : ''}`,
@@ -593,7 +595,7 @@ const EN: Copy = {
   mergeFilterZeroUses: 'Only fish with 0 remaining breeding uses',
   mergeFilterExcludeTank: 'Exclude fish currently placed in the tank',
   mergeTierTitle: 'Rarity Tier Filter',
-  mergeAutoPickBtn: 'Auto-select 10',
+  mergeAutoPickBtn: 'Auto-select',
   mergeEmptyByFilter:
     'No fish match the current filters (try unchecking "0 remaining uses" or enabling more rarity tiers).',
   mergeAutoPickedMsg: (picked, total) =>
@@ -604,7 +606,7 @@ const EN: Copy = {
         : 'No matching fish available to auto-select.',
   mergeAlreadyFullMsg: (total) => `Already selected ${total}/${total} fish. Click Merge or deselect one first.`,
   mergeNothingToClearMsg: 'No selected merge materials to clear.',
-  mergeBtn: (picked, total) => `Merge (${picked}/${total})`,
+  mergeBtn: 'Merge',
   mergedMsg: (name, starsStr, tierStr) => `Merged into ${name}, ${starsStr} ${tierStr}.`,
   mergeNoteTitle: '10-to-1 Synthesis Tips',
   mergeNote:
@@ -649,7 +651,8 @@ const EN: Copy = {
   shortcutsLocale: 'Switch Chinese / English',
   shortcutsAutoPick: 'Best Pair on Breed / auto-select materials on Merge',
   shortcutsClear: 'Clear breeding / merge selection',
-  shortcutsRun: 'R: run a ready action / collect result; Enter: activate focused control',
+  shortcutsRun: 'Run ready breeding / merge, or collect a revealed fish',
+  shortcutsEnter: 'Activate the focused control; otherwise run a ready action or collect a result',
   shortcutsEscape: 'Close / cancel / back / exit immersive',
   shortcutsNote: 'Use single keys. Switching tabs leaves immersive mode. Shortcuts pause in inputs, sliders, selects and during IME composition; overlays block background actions. Press R after selecting fish with the mouse to breed. Enter on a focused button keeps its normal action. Held keys do not repeat shortcuts. Ctrl / Cmd / Alt combinations keep their browser behavior.',
   shortcutsCloseHelp: 'Close help',
