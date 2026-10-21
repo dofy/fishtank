@@ -113,7 +113,7 @@ export class PixiTank {
     this.app.canvas.addEventListener('webglcontextlost', this.onContextLost)
     this.app.canvas.addEventListener('webglcontextrestored', this.onContextRestored)
     this.water.addChild(this.environment.back, this.environment.decors, this.fishLayer, this.environment.foreground, this.sparks, this.environment.interactions, this.environment.front)
-    this.app.stage.addChild(this.water)
+    this.app.stage.addChild(this.water, this.environment.highlights)
     this.gpuTimer = new GpuTimer((this.app.renderer as WebGLRenderer).gl)
     for (let i = 0; i < 28; i++) {
       const point = new Graphics().circle(0, 0, 1 + i % 3 * 0.3).fill('#c9f4ff')
@@ -336,6 +336,7 @@ export class PixiTank {
     this.clearFish()
     // Release renderer-owned batch bindings before disposing native gradient textures.
     this.water.removeChildren()
+    this.environment.highlights.removeFromParent()
     if (this.app.renderer) this.app.destroy(true, { children: true })
     else this.app.stage.destroy({ children: true })
     this.environment.destroy()

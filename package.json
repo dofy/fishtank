@@ -34,7 +34,9 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "deploy": "pnpm build && env -u CLOUDFLARE_API_TOKEN wrangler deploy"
+    "deploy": "pnpm build && env -u CLOUDFLARE_API_TOKEN wrangler deploy",
+    "test:ui": "node scripts/verify-ui.mjs",
+    "test:ui:online": "node scripts/verify-ui.mjs --online"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",

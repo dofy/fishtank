@@ -152,6 +152,7 @@ Available since v1.5.0. Use single keys without Ctrl or Cmd. The in-game Help an
 - [更新日志](CHANGELOG.md)：玩家可见的版本变化。
 - [玩法与数值](docs/BALANCE.md)：繁育、合成、成长和存档规则。
 - [PixiJS 开发说明](docs/PIXI_LAB.md)：渲染结构、对照工具与性能参考。
+- [UI 验证](scripts/ui/README.md)：`pnpm test:ui` 本地验证及 `pnpm test:ui:online` 双域名验证，统一使用无头浏览器。
 - [部署记录](docs/DEPLOYMENTS.md)：当前部署、验收结论及历史版本索引。
 
 ## License

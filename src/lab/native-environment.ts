@@ -30,6 +30,8 @@ export class NativeEnvironment {
   readonly foreground = new Container()
   readonly interactions = new Graphics()
   readonly front = new Container()
+  /** Editor feedback is drawn above the aquarium, outside water refraction. */
+  readonly highlights = new Container({ label: 'decor-highlights' })
   private key = ''
   private readonly contexts = new Set<GraphicsContext>()
   private readonly gradients = new Set<FillGradient>()
@@ -241,6 +243,7 @@ export class NativeEnvironment {
       const top = item.mount === 'top'
       decor.root.position.set(lcd ? Math.round(node.x / c) * c : node.x, lcd ? top ? Math.round((c * 2 + item.height) / c) * c : Math.round((view.height - c * 4) / c) * c : top ? 4 + item.height : view.height - 14)
       decor.art.scale.x = node.flip
+      decor.highlight.position.copyFrom(decor.root.position)
       decor.highlight.visible = node.active
       const period = PERIODS[item.id] ?? 0
       const steps = lcd ? 12 : 32
@@ -276,7 +279,7 @@ export class NativeEnvironment {
     const halo = this.graphic(root)
     if (night && item.mount === 'top' && manifest.renderer !== 'lcd') halo.circle(0, -item.height * 0.35, Math.max(item.width * 0.65, 58)).fill(this.gradient(`hsla(${item.hue},95%,72%,0.35)`, '#ffffff00', true))
     const art = this.graphic(root)
-    const highlight = this.graphic(root).rect(-item.width / 2 - 4, -item.height - 4, item.width + 8, item.height + 6).stroke({ color: sceneColorsFor(manifest, night).accent, width: 1.5 })
+    const highlight = this.graphic(this.highlights).rect(-item.width / 2 - 4, -item.height - 4, item.width + 8, item.height + 6).stroke({ color: sceneColorsFor(manifest, night).accent, width: 1.5 })
     const gradient = manifest.renderer === 'lcd' ? null : this.gradient(`hsl(${item.hue},${item.sat * 100}%,${Math.min(82, item.light * 115)}%)`, `hsl(${item.hue},${item.sat * 100}%,${Math.max(18, item.light * 75)}%)`)
     return { root, art, highlight, halo, frames: new Map(), gradient, override: null, overrideImage: null }
   }
@@ -341,6 +344,7 @@ export class NativeEnvironment {
     decor.override?.destroy({ texture: true, textureSource: true })
     for (const context of decor.frames.values()) { this.contexts.delete(context); context.destroy() }
     for (const graphic of [decor.art, decor.highlight, decor.halo]) this.contexts.delete(graphic.context)
+    decor.highlight.destroy({ context: true })
     decor.root.destroy({ children: true })
   }
 
@@ -349,7 +353,7 @@ export class NativeEnvironment {
     this.panel?.destroy()
     this.panel = null
     this.foodLayer.removeChildren().forEach(child => child.destroy())
-    for (const parent of [this.back, this.decors, this.foreground, this.front]) for (const child of parent.removeChildren()) if (child !== this.foodLayer) child.destroy({ children: true })
+    for (const parent of [this.back, this.decors, this.foreground, this.front, this.highlights]) for (const child of parent.removeChildren()) if (child !== this.foodLayer) child.destroy({ children: true })
     for (const context of this.contexts) if (!context.destroyed) context.destroy()
     this.contexts.clear(); this.decorations.clear(); this.foods.clear()
     for (const array of [this.bubbles, this.plankton, ...this.schools, this.kelps, this.beams, this.bulbs, this.pools, this.beads, this.waves]) array.length = 0
@@ -363,5 +367,6 @@ export class NativeEnvironment {
     for (const gradient of this.gradients) gradient.destroy()
     this.gradients.clear(); this.gradientCache.clear()
     this.back.destroy(); this.decors.destroy(); this.foreground.destroy(); this.front.destroy(); this.foodLayer.destroy(); this.interactions.destroy({ context: true })
+    this.highlights.destroy()
   }
 }
