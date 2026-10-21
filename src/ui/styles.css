@@ -734,14 +734,14 @@ table.help-matrix td:not(:first-child) { @apply whitespace-nowrap px-0.5; }
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
   }
-  footer.app-footer { gap: 4px; }
+  footer.app-footer { gap: 4px; padding-top: 0; }
   .footer-meta { display: flex; align-items: center; white-space: nowrap; font-size: 10px; line-height: 1.25; }
   .footer-links .btn-text { display: none; }
   .footer-separator { white-space: pre; }
   .footer-copyright { @apply text-[10px]; }
   .footer-links { gap: 0; }
   .footer-links .footer-link { @apply justify-center w-8 h-8 p-0; }
-  :root[data-theme] .footer-links .footer-link { width: 32px; min-width: 32px; border: 0; background: transparent; box-shadow: none; }
+  :root[data-theme] .footer-links .footer-link { width: 32px; min-width: 32px; height: 28px; min-height: 28px !important; border: 0; background: transparent; box-shadow: none; }
   .footer-links .ico { @apply w-4 h-4; }
   .help-modal, .showcase-card {
     width: 100vw;
