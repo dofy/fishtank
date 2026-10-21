@@ -22,6 +22,17 @@ export function setFishLocked(state: GameState, uid: string, value: boolean): bo
   return true
 }
 
+/** Protect only the specimens currently held; future arrivals keep their own lock state. */
+export function lockOwnedSpecies(state: GameState, speciesId: Fish['speciesId']): number {
+  let changed = 0
+  for (const fish of state.fish) {
+    if (fish.speciesId !== speciesId || fish.locked) continue
+    fish.locked = true
+    changed++
+  }
+  return changed
+}
+
 /** Normalize collection preferences and fish metadata from persisted/untrusted state. */
 export function syncCollectionPreferences(state: GameState): void {
   // Retain nickname/favorite only as inert metadata from older saves.

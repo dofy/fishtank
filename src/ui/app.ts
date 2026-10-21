@@ -4,7 +4,7 @@ import { fishCare, fishDisplayName, saveTools } from './collection'
 import { choosePlaque, milestoneCopy, milestonePanel } from './milestones'
 import { medalArt } from './medals'
 import { milestoneProgress } from '../core/milestones'
-import { setFishLocked } from '../core/collection'
+import { lockOwnedSpecies, setFishLocked } from '../core/collection'
 import { sound, syncAudioConfig } from '../core/audio'
 import { syncRailLightConfig } from '../core/lighting'
 import {
@@ -160,6 +160,7 @@ export class App {
   private bookDetailSpeciesId: SpeciesId | null = null
   private bookDetailGrade: Grade = 1
   private bookSelectedUid: string | null = null
+  private bookVariantsOpen = false
   private immersive = false
   private helpOpen = false
   private helpReturnFocus: HTMLElement | null = null
@@ -1211,6 +1212,7 @@ export class App {
 
   private bookDetailView(sp: Species): HTMLElement {
     const c = this.t
+    const cc = collectionCopy(this.locale)
     const now = Date.now()
     const card = document.createElement('aside')
     card.className = 'book-detail'
@@ -1247,7 +1249,7 @@ export class App {
     )
     if (this.bookSelectedUid && !specimens.some((f) => f.uid === this.bookSelectedUid)) {
       this.bookSelectedUid =
-        specimens.find((f) => f.grade === this.bookDetailGrade)?.uid ?? null
+        specimens.find((f) => f.grade === this.bookDetailGrade)?.uid ?? specimens[0]?.uid ?? null
     }
     const activeSpecimen = this.bookSelectedUid
       ? (specimens.find((f) => f.uid === this.bookSelectedUid) ?? null)
@@ -1310,23 +1312,21 @@ export class App {
     // Grade Variant Color Swatches (1 for starter fish, 5 for regular species)
     const unlockedGrades = new Set(discoveredGradesFor(this.state, sp.id))
     const maxGrades: Grade[] = sp.tier === 0 ? [1] : [1, 2, 3, 4, 5]
-    const varTitle = heading(c.bookVariantsTitle, 'h3')
     const varRow = document.createElement('div')
     varRow.className = 'variant-strip'
     for (const g of maxGrades) {
       const isUnlocked = unlockedGrades.has(g)
       const chip = itemCard({
         key: `grade:${sp.id}:${g}`, density: 'mini',
-        label: c.gradeLabel(g), selected: displayGrade === g && isUnlocked, unavailable: !isUnlocked,
+        label: c.gradeLabel(g), selected: this.bookDetailGrade === g && isUnlocked, unavailable: !isUnlocked,
         portrait: this.portrait(sp, sp.tier, g, !isUnlocked),
         meta: isUnlocked ? label(c.gradeLabel(g), `meta grade-${g}`) : makeStatusIcon(ACTION_ICONS.lock, collectionCopy(this.locale).locked),
         onActivate: () => {
           if (!isUnlocked) return
           sound.play('select')
           this.bookDetailGrade = g
-          const matching = specimens.find((f) => f.grade === g)
-          this.bookSelectedUid = matching ? matching.uid : null
           this.render()
+          this.body.querySelector<HTMLButtonElement>(`[data-variant-grade="${g}"] .item-card-main`)?.focus({ preventScroll: true })
         },
       })
       chip.dataset.variantGrade = String(g)
@@ -1335,6 +1335,34 @@ export class App {
 
     // Owned specimens grid
     const specTitle = heading(c.bookSpecimensTitle(specimens.length), 'h3')
+    const specHead = document.createElement('div')
+    specHead.className = 'book-specimen-head'
+    specHead.append(specTitle)
+    if (specimens.length) {
+      const allLocked = specimens.every(f => f.locked)
+      const lockAll = makeButton(allLocked ? cc.allOwnedLocked : cc.lockOwned, () => {
+        const previous = specimens.map(fish => ({ fish, locked: fish.locked }))
+        if (!lockOwnedSpecies(this.state, sp.id)) return
+        this.confirmingReleaseUid = null
+        if (!this.hooks.onSave()) {
+          for (const { fish, locked } of previous) {
+            if (locked === undefined) delete fish.locked
+            else fish.locked = locked
+          }
+          this.say(cc.storageError, 'bad')
+        }
+        this.render()
+        const button = this.body.querySelector<HTMLButtonElement>('[data-lock-owned]')
+        const focus = button?.disabled
+          ? this.body.querySelector<HTMLButtonElement>('.book-selected-specimen [data-fish-lock]')
+          : button
+        focus?.focus({ preventScroll: true })
+      }, ACTION_ICONS.lock)
+      lockAll.disabled = allLocked
+      lockAll.title = cc.lockOwnedNote
+      lockAll.dataset.lockOwned = sp.id
+      specHead.append(lockAll)
+    }
     const specGrid = document.createElement('div')
     specGrid.className = 'specimen-grid'
     if (specimens.length === 0) {
@@ -1345,11 +1373,13 @@ export class App {
         specGrid.append(
           this.fishCell(f, now, {
             selected,
+            pickOrder: specimens.indexOf(f) + 1,
             density: 'mini',
             onClick: () => {
               sound.play('select')
               this.bookSelectedUid = f.uid
               this.bookDetailGrade = f.grade
+              this.confirmingReleaseUid = null
               this.render()
             },
           }),
@@ -1367,17 +1397,31 @@ export class App {
       label(c.bookVariantRate(varCount, maxGrades.length, varPct), 'meta'),
     )
 
-    card.append(
-      top,
-      previewWrap,
-      previewMeta,
-      care,
-      varTitle,
-      varRow,
-      specTitle,
-      specGrid,
-      footer,
-    )
+    const selection = document.createElement('section')
+    selection.className = 'book-selected-specimen'
+    if (activeSpecimen) {
+      const selectedTitle = heading(cc.currentSpecimen(specimens.indexOf(activeSpecimen) + 1), 'h3')
+      selection.setAttribute('aria-label', selectedTitle.textContent!)
+      selection.append(selectedTitle, previewWrap, previewMeta, care)
+    }
+
+    const variants = document.createElement('details')
+    variants.className = 'book-appearance-section'
+    variants.open = this.bookVariantsOpen || !specimens.length
+    variants.addEventListener('toggle', () => { this.bookVariantsOpen = variants.open })
+    const summary = document.createElement('summary')
+    summary.textContent = `${cc.appearanceBook} · ${varCount}/${maxGrades.length}`
+    const appearance = document.createElement('div')
+    appearance.className = 'book-preview book-appearance-preview'
+    appearance.append(this.largePortrait(sp, sp.tier, this.bookDetailGrade))
+    const appearanceMeta = document.createElement('div')
+    appearanceMeta.className = 'book-preview-meta'
+    appearanceMeta.append(label(cc.appearancePreview, 'collection-hint'), this.tierMetaLine(sp.tier, this.bookDetailGrade))
+    variants.append(summary, varRow, appearance, appearanceMeta)
+
+    card.append(top, specHead, specGrid)
+    if (activeSpecimen) card.append(selection)
+    card.append(variants, footer)
     return card
   }
 

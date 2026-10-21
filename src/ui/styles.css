@@ -408,6 +408,20 @@ button.book-close-btn svg {
 .variant-strip { @apply grid grid-cols-5 gap-[5px]; }
 .specimen-grid { @apply grid grid-cols-3 gap-1.5 max-h-[196px] overflow-y-auto pr-0.5; }
 .specimen-grid > .note { @apply col-span-full m-0 py-1.5; }
+.book-specimen-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+.book-specimen-head h3, .book-selected-specimen h3 { margin: 0; font-size: 12px; }
+.book-specimen-head > button { min-height: 36px; padding: 5px 8px; font-size: 11px; flex-shrink: 0; }
+.book-selected-specimen { display: grid; gap: 8px; padding-top: 10px; border-top: 1px solid var(--border); }
+.book-selected-specimen > h3 { color: var(--accent); }
+.book-selected-specimen .fish-care { padding-bottom: 0; border-bottom: 0; }
+.book-appearance-section { border-top: 1px solid var(--border); padding-top: 8px; }
+.book-appearance-section > summary { cursor: pointer; min-height: 36px; padding: 8px 0; font-size: 12px; font-weight: 600; color: var(--muted); }
+.book-appearance-section > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.book-appearance-section .variant-strip { margin-top: 8px; }
+.book-appearance-preview { margin-top: 8px; background: var(--cell-bg); }
+@media (pointer: coarse) {
+  .book-specimen-head > button, .book-appearance-section > summary { min-height: 44px; }
+}
 .book-detail-foot { @apply flex items-center justify-between gap-2 pt-1.5 border-t border-[var(--border)] text-[11px]; }
 
 table.odds { @apply border-collapse text-xs w-full max-[640px]:text-[11px]; }
@@ -720,11 +734,14 @@ table.help-matrix td:not(:first-child) { @apply whitespace-nowrap px-0.5; }
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
   }
-  .footer-meta { @apply flex flex-col leading-tight; }
-  .footer-separator, .footer-links .btn-text { display: none; }
+  footer.app-footer { gap: 4px; }
+  .footer-meta { display: flex; align-items: center; white-space: nowrap; font-size: 10px; line-height: 1.25; }
+  .footer-links .btn-text { display: none; }
+  .footer-separator { white-space: pre; }
   .footer-copyright { @apply text-[10px]; }
-  .footer-links { @apply gap-1; }
+  .footer-links { gap: 0; }
   .footer-links .footer-link { @apply justify-center w-8 h-8 p-0; }
+  :root[data-theme] .footer-links .footer-link { width: 32px; min-width: 32px; border: 0; background: transparent; box-shadow: none; }
   .footer-links .ico { @apply w-4 h-4; }
   .help-modal, .showcase-card {
     width: 100vw;

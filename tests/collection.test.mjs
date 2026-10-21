@@ -78,6 +78,26 @@ test('fish metadata normalizes safely and legacy recommendation fields stay iner
   assert.deepEqual(state.collectionTarget, { speciesId: 'copperband', grade: 5 })
 })
 
+test('species batch protection affects only current specimens and permits individual unlocking', () => {
+  const state = game.newGame(NOW, 'zh')
+  const a = fishAt(2, 1)
+  const b = fishAt(2, 4)
+  const other = fishAt(3, 2)
+  b.locked = true
+  state.fish = [a, b, other]
+  assert.equal(collection.lockOwnedSpecies(state, a.speciesId), 1)
+  assert.equal(a.locked, true)
+  assert.equal(b.locked, true)
+  assert.equal(other.locked, undefined)
+  assert.equal(collection.lockOwnedSpecies(state, a.speciesId), 0)
+  const arrival = fishAt(2, 2)
+  state.fish.push(arrival)
+  assert.equal(arrival.locked, undefined)
+  assert.equal(collection.setFishLocked(state, a.uid, false), true)
+  assert.equal(a.locked, false)
+  assert.equal(b.locked, true)
+})
+
 test('automatic breeding skips locked, growing and exhausted fish without changing manual candidates', () => {
   const state = game.newGame(NOW, 'zh')
   const locked = fishAt(5, 5)
