@@ -556,6 +556,15 @@ export function sortBreedCandidates(list: Fish[], sort: FishSort, now = Date.now
   })
 }
 
+/** Protection excludes automatic pairing; manually selected parents remain breedable. */
+export function autoPickForBreed(state: GameState, now = Date.now()): string[] {
+  const eligible = state.fish.filter(f =>
+    !f.locked && (f.tier === 0 || f.uses > 0) && isAdult(f, now),
+  )
+  const best = sortBreedCandidates(eligible, 'tier', now)
+  return best.length >= 2 ? best.slice(0, 2).map(f => f.uid) : []
+}
+
 /**
  * Pick up to 10 fish from all filtered candidates using the optimal "1 + 9" strategy:
  * 1 highest-grade fish (so the merged output inherits that grade) + up to 9 lowest-grade/lowest-tier fish.

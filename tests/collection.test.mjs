@@ -78,6 +78,52 @@ test('fish metadata normalizes safely and legacy recommendation fields stay iner
   assert.deepEqual(state.collectionTarget, { speciesId: 'copperband', grade: 5 })
 })
 
+test('automatic breeding skips locked, growing and exhausted fish without changing manual candidates', () => {
+  const state = game.newGame(NOW, 'zh')
+  const locked = fishAt(5, 5)
+  locked.locked = true
+  const growing = fishAt(5, 4)
+  growing.maturesAt = NOW + 60_000
+  const exhausted = fishAt(5, 3, { uses: 0 })
+  const lower = fishAt(2, 5)
+  const best = fishAt(4, 3)
+  const second = fishAt(4, 2)
+  state.fish = [locked, growing, exhausted, lower, second, best]
+  const before = JSON.stringify(state)
+  assert.deepEqual(game.autoPickForBreed(state, NOW), [best.uid, second.uid])
+  assert.equal(JSON.stringify(state), before)
+  assert.ok(game.sortBreedCandidates(state.fish, 'tier', NOW).includes(locked))
+})
+
+test('automatic breeding requires two unlocked parents and honors unlocking', () => {
+  const state = game.newGame(NOW, 'zh')
+  const [a, b] = state.fish
+  state.fish = [a, b]
+  a.locked = true
+  b.locked = true
+  assert.deepEqual(game.autoPickForBreed(state, NOW), [])
+  collection.setFishLocked(state, a.uid, false)
+  assert.deepEqual(game.autoPickForBreed(state, NOW), [])
+  collection.setFishLocked(state, b.uid, false)
+  assert.deepEqual(game.autoPickForBreed(state, NOW), [a.uid, b.uid])
+})
+
+test('manual breeding still accepts locked parents and preserves their protection', () => {
+  const state = game.newGame(NOW, 'zh')
+  const a = fishAt(4, 3, { uses: 2 })
+  const b = fishAt(3, 2, { uses: 2 })
+  a.locked = true
+  b.locked = true
+  state.fish = [a, b]
+  const result = game.breed(state, a.uid, b.uid, NOW, new Rng(178))
+  assert.ok(!('error' in result))
+  assert.equal(state.fish.length, 3)
+  assert.equal(a.uses, 1)
+  assert.equal(b.uses, 1)
+  assert.equal(a.locked, true)
+  assert.equal(b.locked, true)
+})
+
 test('locked fish are excluded from merge selection and atomically reject manual synthesis', () => {
   const state = game.newGame(NOW, 'zh')
   const materials = Array.from({ length: 11 }, () => fishAt(1, 2, { uses: 0 }))

@@ -18,6 +18,7 @@ import {
   nextLevelExp,
 } from '../core/balance'
 import {
+  autoPickForBreed,
   autoPickForMerge,
   breed,
   capacity,
@@ -111,7 +112,7 @@ import {
 
 export { formatClock, stars } from './dom'
 
-export const APP_VERSION = '1.8.0'
+export const APP_VERSION = '1.8.1'
 export const GITHUB_URL = 'https://github.com/dofy/fishtank'
 
 export interface AppHooks {
@@ -663,6 +664,7 @@ export class App {
     const rawCandidates = this.state.fish.filter((f) => f.tier === 0 || f.uses > 0)
     const candidates = sortBreedCandidates(rawCandidates, currentSort, now)
     const eligible = candidates.filter((f) => isAdult(f, now))
+    const recommendedPair = autoPickForBreed(this.state, now)
     const eligibleIds = new Set(eligible.map((f) => f.uid))
     this.breedPick = this.breedPick.filter((uid) => eligibleIds.has(uid)).slice(-2)
 
@@ -746,19 +748,18 @@ export class App {
     row.append(go)
 
     const bestPairBtn = makeButton(c.breedAutoPickBtn, () => {
-      if (eligible.length < 2) {
-        this.say(c.breedNotEnoughAdults, 'bad')
+      if (recommendedPair.length < 2) {
+        this.say(collectionCopy(this.locale).autoPairUnavailable, 'bad')
         this.render(now)
         return
       }
       sound.play('select')
-      const best = sortBreedCandidates(eligible, 'tier', now)
-      this.breedPick = [best[0]!.uid, best[1]!.uid]
+      this.breedPick = recommendedPair
       this.say('')
       this.render(now)
     })
     bestPairBtn.className = 'btn-secondary'
-    bestPairBtn.setAttribute('aria-disabled', String(eligible.length < 2))
+    bestPairBtn.setAttribute('aria-disabled', String(recommendedPair.length < 2))
     bindShortcut(bestPairBtn, 'autoPick')
     row.append(bestPairBtn)
 
@@ -1155,6 +1156,10 @@ export class App {
     for (const sp of SPECIES) {
       const owned = this.state.discovered.includes(sp.id)
       const ownedCopies = this.state.fish.filter((f) => f.speciesId === sp.id)
+      const lockedCount = ownedCopies.filter(f => f.locked).length
+      const lockedLabel = collectionCopy(this.locale).lockedCount(lockedCount, ownedCopies.length)
+      const lockedStatus = lockedCount ? makeStatusIcon(ACTION_ICONS.lock, lockedLabel) : undefined
+      lockedStatus?.append(label(`${lockedCount}/${ownedCopies.length}`, 'item-card-count'))
       const bestOwnedGrade = ownedCopies.length
         ? (Math.max(...ownedCopies.map((f) => f.grade)) as Grade)
         : (Math.max(1, ...discoveredGradesFor(this.state, sp.id)) as Grade)
@@ -1162,11 +1167,12 @@ export class App {
 
       const cell = itemCard({
         key: `species:${sp.id}`, selected: isActive, unavailable: !owned,
-        label: owned ? speciesName(sp.id, this.locale) : c.bookLockedMsg(`${stars(sp.tier)} ${tierName(sp.tier, this.locale)}`),
+        label: owned ? `${speciesName(sp.id, this.locale)}${lockedCount ? ` · ${lockedLabel}` : ''}` : c.bookLockedMsg(`${stars(sp.tier)} ${tierName(sp.tier, this.locale)}`),
         name: owned ? speciesName(sp.id, this.locale) : '???',
         portrait: this.cardPortrait(sp, sp.tier, owned ? bestOwnedGrade : 1, !owned),
         meta: this.tierMetaLine(sp.tier),
         count: owned ? { text: `×${ownedCopies.length}` } : undefined,
+        status: lockedStatus ? [lockedStatus] : undefined,
         onActivate: () => {
           if (owned) {
             sound.play('select')

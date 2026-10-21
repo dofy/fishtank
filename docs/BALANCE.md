@@ -14,10 +14,10 @@ This document details the gameplay mechanics, progression curves, and breeding p
 
 ### v1.8.0：珍藏与进度保护 / Fish care and save tools
 
-- 繁育可手动选鱼，也可点击「推荐配对」或按 A，从可繁育的成年鱼中按星级、品阶、剩余次数从高到低排序，平手时优先较早获得的鱼，自动选前两条。推荐不受图鉴、旧目标或页面排序方式影响。选好后显示亲代星级组合对应的后代星级概率；锁定鱼仍可繁育。锁定阻止合成和放生，自动选材也会跳过；已移除昵称、收藏及详情里的繁育/合成跳转，旧字段仅作存档兼容，不影响规则。
+- 繁育可手动选鱼，也可点击「推荐配对」或按 A，从未锁定、可繁育的成年鱼中按星级、品阶、剩余次数从高到低排序，平手时优先较早获得的鱼，自动选前两条。推荐不受图鉴、旧目标或页面排序方式影响。选好后显示亲代星级组合对应的后代星级概率；锁定鱼不参与推荐配对，仍可手动选择繁育。图鉴列表显示已锁定个体数/持有总数。锁定阻止合成和放生，自动选材也会跳过；已移除昵称、收藏及详情里的繁育/合成跳转，旧字段仅作存档兼容，不影响规则。
 - 存档导入只在确认替换后写入；失败保留原进度，替换前自动备份；「恢复导入前进度」独立保留，不会因后续普通备份轮转而失去入口。较晚的导入确认或重置会取消仍在加载主题的旧导入。备份与主存档同属当前浏览器、当前域名，不能抵御浏览器数据清除；导出文件可用于跨设备迁移。重置会同时清除两份本地备份。
 - 造景直接摆放、拖动和翻转，当前布置随进度自动保存，不再提供命名布景预设。旧版导出的预设、推荐偏好及追踪元数据仅兼容保留，不参与当前游戏操作。
-- Choose adult parents manually or use Best Pair (A), which selects by tier, grade, remaining uses, then acquisition time; the displayed table shows offspring tier odds for their tier combination. Favorites and protection are independent; protected fish remain breedable. Import previews do not write progress. Confirmed imports replace the collection after backing it up, and local backups are removed on reset.
+- Choose adult parents manually or use Best Pair (A), which skips locked fish and selects by tier, grade, remaining uses, then acquisition time; the displayed table shows offspring tier odds for their tier combination. Favorites and protection are independent; protected fish remain manually breedable. Book species cards show locked counts out of the total held. Import previews do not write progress. Confirmed imports replace the collection after backing it up, and local backups are removed on reset.
 
 ### v1.8.0：鱼景互动与成就勋章 / Scenery interactions and medals
 

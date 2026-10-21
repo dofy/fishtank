@@ -3,7 +3,9 @@ import type { Locale } from '../core/types'
 const zh = {
   releasePrompt: (name: string) => `放生「${name}」？小鱼会离开背包，图鉴记录保留。`,
   manage: '管理这条鱼', unlock: '解除锁定',
-  locked: '已锁定', lock: '锁定保护', unlocked: '未锁定', lockNote: '锁定后不会被合成或放生，仍可展示和繁育。',
+  locked: '已锁定', lock: '锁定保护', unlocked: '未锁定', lockNote: '锁定后不会被合成、放生或自动推荐配对，仍可展示和手动繁育。',
+  lockedCount: (locked: number, total: number) => `已锁定 ${locked}/${total}`,
+  autoPairUnavailable: '需要至少两条未锁定、已成年且仍可繁育的鱼才能推荐配对。锁定鱼可手动选择繁育。',
   export: '导出存档', import: '导入存档', restoreBackup: '恢复最近备份', restoreBeforeImport: '恢复导入前进度', saveTitle: '带上你的小鱼',
   saveNote: '导出后可在另一台设备或另一个域名导入。存档只保存在当前浏览器，各域名独立。',
   backupNote: '每隔一段时间保留一份本地备份；导入前会先备份当前进度，可单独恢复；重置会清除本地备份。',
@@ -21,7 +23,9 @@ type Copy = { [K in keyof typeof zh]: typeof zh[K] }
 const en: Copy = {
   releasePrompt: (name: string) => `Release ${name}? This fish will leave your collection. Your Book discoveries will remain.`,
   manage: 'Manage this fish', unlock: 'Unlock fish',
-  locked: 'Locked', lock: 'Protect fish', unlocked: 'Unlocked', lockNote: 'Locked fish cannot be merged or released. They can still be displayed and bred.',
+  locked: 'Locked', lock: 'Protect fish', unlocked: 'Unlocked', lockNote: 'Locked fish are excluded from merging, release and Best Pair. They can still be displayed and bred manually.',
+  lockedCount: (locked: number, total: number) => `Locked ${locked}/${total}`,
+  autoPairUnavailable: 'Best Pair needs two unlocked, ready adults with breeding uses left. Locked fish can be selected manually.',
   export: 'Export save', import: 'Import save', restoreBackup: 'Restore backup', restoreBeforeImport: 'Before last import', saveTitle: 'Take your fish with you',
   saveNote: 'Export to move to another device or domain. Progress is stored in this browser, separately for each domain.',
   backupNote: 'A recent local backup is kept periodically. You can restore the progress before your last import separately. Resetting clears local backups.',
