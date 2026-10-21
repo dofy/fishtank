@@ -245,7 +245,7 @@ export class App {
     const target = event.target instanceof HTMLElement ? event.target : null
     if (action !== 'escape' && target?.closest('input, textarea, select, [contenteditable]:not([contenteditable="false"]), [role="textbox"], [role="slider"]')) return
     // Native Enter activation of focused controls must remain a single normal click.
-    if (action === 'run' && target?.closest('button, a, summary, [role="button"], [role="checkbox"]')) return
+    if (event.key === 'Enter' && action === 'run' && target?.closest('button, a, summary, [role="button"], [role="checkbox"]')) return
 
     if (action === 'escape') {
       if (this.changelogOpen) this.closeChangelog()
@@ -270,7 +270,7 @@ export class App {
     }
 
     if (this.modal.childElementCount > 0 || this.confirmingReset || this.confirmingReleaseUid) {
-      // A fresh Enter can collect an already revealed result; all background actions stay paused.
+      // R or a fresh Enter can collect an already revealed result; all background actions stay paused.
       if (action === 'run' && this.showcase && !this.helpOpen && !this.changelogOpen) {
         const collect = this.modal.querySelector<HTMLButtonElement>('[data-shortcut="collect"]')
         if (collect) { event.preventDefault(); collect.click() }
@@ -701,7 +701,7 @@ export class App {
     const row = document.createElement('div')
     row.className = 'action-buttons'
     const canBreed = Boolean(a && b && this.state.hearts > 0)
-    const go = makeButton(c.breedBtn(this.breedPick.length), () => {
+    const go = makeButton(`${c.breedBtn(this.breedPick.length)} · R`, () => {
       const clickNow = Date.now()
       if (this.state.hearts <= 0) {
         const wait = formatClock(Math.max(0, this.state.nextHeartAt - clickNow))
@@ -2209,7 +2209,7 @@ export class App {
       })
       closeBtn.className = 'showcase-btn btn-primary'
       closeBtn.dataset.shortcut = 'collect'
-      closeBtn.setAttribute('aria-keyshortcuts', 'Enter Escape')
+      closeBtn.setAttribute('aria-keyshortcuts', 'r Enter Escape')
 
       const details = document.createElement('div')
       details.className = 'showcase-details'

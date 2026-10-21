@@ -131,11 +131,11 @@ Available since v1.5.0. Use single keys without Ctrl or Cmd. The in-game Help an
 | `U` | 打开更新日志 / Open Changelog |
 | `A` | 繁育页推荐配对 / 合成页自动选材 / Best Pair on Breed, auto-select materials on Merge |
 | `C` | 清空当前繁育或合成选择 / Clear the current breeding or merge selection |
-| `Enter` | 执行已就绪的繁育或合成；收下已展示的小鱼 / Run a ready action, or collect a revealed result |
+| `R` / `Enter` | R 执行已就绪的繁育或合成、收下小鱼；Enter 优先操作当前聚焦按钮 / R runs a ready action or collects a result; Enter activates a focused control first |
 | `Esc` | 关闭弹窗、取消确认、返回图鉴列表或退出沉浸 / Close overlay, cancel confirmation, leave book details, or exit immersive mode |
 
-- 切换 Tab 会自动退出沉浸模式；`A`、`C` 和开始繁育/合成的 `Enter` 只作用于当前操作页，未就绪的操作不会执行。
-- 输入框、滑条、下拉菜单和输入法组字期间暂停快捷键；弹窗打开时暂停后台操作，避免误触。聚焦按钮时，`Enter` 保留按钮原有操作。
+- 切换 Tab 会自动退出沉浸模式；`A`、`C` 和开始繁育/合成的 `R` / `Enter` 只作用于当前操作页，未就绪的操作不会执行。
+- 输入框、滑条、下拉菜单和输入法组字期间暂停快捷键；弹窗打开时暂停后台操作，避免误触。鼠标选鱼后按 `R` 可直接繁育；聚焦按钮时，`Enter` 保留按钮原有操作。
 - 长按不会重复触发快捷键，Ctrl / Cmd / Alt 组合键不受影响。放生和重置没有全局执行快捷键。
 - Tab switching leaves immersive mode. Context actions apply only to the current page and require a ready action. Inputs and IME composition pause shortcuts; overlays block background actions. Native button activation and browser modifier shortcuts remain available. Held keys do not repeat shortcuts; release and reset have no global execution shortcut.
 

@@ -421,9 +421,9 @@ const ZH: Copy = {
   shortcutsLocale: '切换中英文',
   shortcutsAutoPick: '繁育页推荐配对 / 合成页自动选材',
   shortcutsClear: '清空繁育 / 合成选择',
-  shortcutsRun: '确认繁育 / 合成；收下小鱼',
+  shortcutsRun: 'R：执行已就绪的繁育 / 合成、收下小鱼；Enter：当前按钮操作',
   shortcutsEscape: '关闭 / 取消 / 返回 / 退出沉浸',
-  shortcutsNote: '直接按单键即可，切换 Tab 会退出沉浸。输入框、滑条、下拉菜单和输入法组字时暂停快捷键，弹窗内暂停后台操作；聚焦按钮时 Enter 保留原有操作。长按不会重复触发快捷键，Ctrl / Cmd / Alt 组合键保留浏览器功能。',
+  shortcutsNote: '直接按单键即可，切换 Tab 会退出沉浸。输入框、滑条、下拉菜单和输入法组字时暂停快捷键，弹窗内暂停后台操作；鼠标选鱼后按 R 可直接繁育；聚焦按钮时 Enter 保留原有操作。长按不会重复触发快捷键，Ctrl / Cmd / Alt 组合键保留浏览器功能。',
   shortcutsCloseHelp: '关闭帮助',
   shortcutsHelpContents: '帮助内容',
   settingsThemeNote:
@@ -649,9 +649,9 @@ const EN: Copy = {
   shortcutsLocale: 'Switch Chinese / English',
   shortcutsAutoPick: 'Best Pair on Breed / auto-select materials on Merge',
   shortcutsClear: 'Clear breeding / merge selection',
-  shortcutsRun: 'Run a ready action / collect result',
+  shortcutsRun: 'R: run a ready action / collect result; Enter: activate focused control',
   shortcutsEscape: 'Close / cancel / back / exit immersive',
-  shortcutsNote: 'Use single keys. Switching tabs leaves immersive mode. Shortcuts pause in inputs, sliders, selects and during IME composition; overlays block background actions. Enter on a focused button keeps its normal action. Held keys do not repeat shortcuts. Ctrl / Cmd / Alt combinations keep their browser behavior.',
+  shortcutsNote: 'Use single keys. Switching tabs leaves immersive mode. Shortcuts pause in inputs, sliders, selects and during IME composition; overlays block background actions. Press R after selecting fish with the mouse to breed. Enter on a focused button keeps its normal action. Held keys do not repeat shortcuts. Ctrl / Cmd / Alt combinations keep their browser behavior.',
   shortcutsCloseHelp: 'Close help',
   shortcutsHelpContents: 'Help contents',
   settingsThemeNote:

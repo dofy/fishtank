@@ -4,7 +4,7 @@ import type { Tab } from './icons'
 export const ACTION_KEYS = {
   immersive: ['f'], mode: ['d'], bgm: ['m'], sfx: ['s'], locale: ['l'],
   help: ['h', '?'], changelog: ['u'], autoPick: ['a'], clear: ['c'],
-  run: ['Enter'], escape: ['Escape'],
+  run: ['r', 'Enter'], escape: ['Escape'],
 } as const
 
 export type ShortcutAction = `tab-${Tab}` | keyof typeof ACTION_KEYS

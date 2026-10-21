@@ -66,13 +66,17 @@ try {
   if (!/"headless"\s*:\s*true/.test(evidence)) throw new Error('Missing headless browser evidence')
   console.log('Browser verified: --headless, fresh isolated session.')
 
-  const suites = online ? ['detail-online.cjs', 'footer-online.cjs'] : ['decor-highlight.cjs', 'detail-layout.cjs', 'footer.cjs']
+  const suites = online ? ['shortcuts.cjs', 'detail-online.cjs', 'footer-online.cjs'] : ['shortcuts.cjs', 'decor-highlight.cjs', 'detail-layout.cjs', 'footer.cjs']
   const workerSource = await readFile(resolve(root, 'public/sw.js'), 'utf8')
   const cacheName = workerSource.match(/const CACHE_NAME = '([^']+)'/)?.[1]
   if (!cacheName) throw new Error('Cannot determine expected Service Worker cache')
   for (const suite of suites) {
     let source = await readFile(resolve(root, 'scripts/ui', suite), 'utf8')
     source = source.replaceAll('__FISHTANK_CACHE_NAME__', cacheName)
+    const shortcutUrls = online
+      ? ['https://fishtank.phpz.org/', 'https://fish.yahaha.net/'].flatMap(url => [url, `${url}?renderer=canvas`])
+      : [baseUrl]
+    source = source.replaceAll('__FISHTANK_SHORTCUT_URLS__', JSON.stringify(shortcutUrls))
     if (baseUrl) source = source.replaceAll('http://127.0.0.1:5173/', baseUrl)
     const filename = resolve(temporary, suite)
     await writeFile(filename, source)

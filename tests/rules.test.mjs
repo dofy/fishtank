@@ -320,6 +320,9 @@ test('shortcuts map tabs, aliases and context actions without duplicate keys', (
       assert.equal(shortcuts.shortcutForKey(keyEvent(key)), action)
     }
   }
+  assert.equal(shortcuts.shortcutForKey(keyEvent('r')), 'run')
+  assert.equal(shortcuts.shortcutForKey(keyEvent('R')), 'run')
+  assert.equal(shortcuts.shortcutForKey(keyEvent('Enter')), 'run')
   assert.equal(shortcuts.shortcutForKey(keyEvent('F')), 'immersive')
   assert.equal(shortcuts.shortcutForKey(keyEvent('?', { shiftKey: true })), 'help')
   for (const key of ['Tab', ' ', 'Backspace', 'Delete', 'z']) {
