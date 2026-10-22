@@ -1,3 +1,4 @@
+import { heartReminder } from '../notifications'
 import { itemCard } from './item-card'
 import { collectionCopy } from './collection-copy'
 import { fishCare, fishDisplayName, saveTools } from './collection'
@@ -112,7 +113,7 @@ import {
 
 export { formatClock, stars } from './dom'
 
-export const APP_VERSION = '1.8.1'
+export const APP_VERSION = '1.8.2'
 export const GITHUB_URL = 'https://github.com/dofy/fishtank'
 
 export interface AppHooks {
@@ -386,6 +387,21 @@ export class App {
    * Never replaces DOM nodes so button/card clicks are never interrupted.
    */
   updateTimers(now = Date.now()): void {
+    const reminderStatus = this.body.querySelector<HTMLElement>('[data-heart-reminder-status]')
+    if (reminderStatus) {
+      const status = heartReminder.status()
+      if (reminderStatus.dataset.heartReminderStatus !== status) {
+        reminderStatus.dataset.heartReminderStatus = status
+        reminderStatus.textContent = this.t.reminderStatus[status]
+      }
+      const button = this.body.querySelector<HTMLButtonElement>('[data-heart-reminder]')
+      if (button) {
+        const enabled = heartReminder.enabled()
+        const text = enabled ? this.t.reminderDisable : this.t.reminderEnable
+        if (button.textContent !== text) button.textContent = text
+        button.setAttribute('aria-pressed', String(enabled))
+      }
+    }
     const s = this.state
     const heartEl = this.hud.querySelector<HTMLElement>('[data-heart-timer]')
     if (heartEl) {
@@ -1674,7 +1690,28 @@ export class App {
 
     const grid = document.createElement('div')
     grid.className = 'settings-grid'
-    grid.append(themeCard, audioCard, modeCard, systemCard, saveTools(this.state, this.locale, async next => {
+    const notificationCard = document.createElement('div')
+    notificationCard.className = 'settings-card'
+    const notificationStatus = heartReminder.status()
+    const notificationEnabled = heartReminder.enabled()
+    const notificationButton = makeButton(notificationEnabled ? c.reminderDisable : c.reminderEnable, async () => {
+      notificationButton.disabled = true
+      if (heartReminder.enabled()) heartReminder.disable()
+      else await heartReminder.enable()
+      await heartReminder.check(() => this.state)
+      this.render()
+      this.body.querySelector<HTMLButtonElement>('[data-heart-reminder]')?.focus()
+    })
+    notificationButton.dataset.heartReminder = '1'
+    notificationButton.setAttribute('aria-pressed', String(notificationEnabled))
+    notificationButton.disabled = notificationStatus === 'unsupported'
+    const notificationMessage = document.createElement('p')
+    notificationMessage.className = 'collection-hint'
+    notificationMessage.dataset.heartReminderStatus = notificationStatus
+    notificationMessage.setAttribute('role', 'status')
+    notificationMessage.textContent = c.reminderStatus[notificationStatus]
+    notificationCard.append(heading(c.reminderHeading, 'h3'), notificationButton, notificationMessage, note(c.reminderNote))
+    grid.append(themeCard, audioCard, modeCard, notificationCard, systemCard, saveTools(this.state, this.locale, async next => {
       const ok = await this.hooks.onRestore(next)
       if (ok) this.say(collectionCopy(this.locale).importDone, 'good')
       return ok

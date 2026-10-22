@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fishtank-pwa-v1.8.1-r6'
+const CACHE_NAME = 'fishtank-pwa-v1.8.2-r1'
 const PRECACHE_URLS = [
   '/',
   '/index.html',
@@ -71,4 +71,15 @@ self.addEventListener('fetch', (event) => {
       return cached || networkFetch
     }),
   )
+})
+
+// Notification clicks are user gestures: return to an existing aquarium window.
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close()
+  event.waitUntil((async () => {
+    const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+    const app = windows.find(client => new URL(client.url).origin === self.location.origin)
+    if (app) await app.focus()
+    else await self.clients.openWindow('/')
+  })())
 })

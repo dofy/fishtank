@@ -215,6 +215,11 @@ export interface Copy {
   bookNoteTitle: string
   bookNote: string
   settingsThemeHeading: string
+  reminderHeading: string
+  reminderEnable: string
+  reminderDisable: string
+  reminderNote: string
+  reminderStatus: Record<'enabled' | 'disabled' | 'denied' | 'unsupported' | 'error', string>
   shortcutsTitle: string
   shortcutsTabsLabel: string
   shortcutsActionsLabel: string
@@ -412,6 +417,11 @@ const ZH: Copy = {
   bookNote:
     '【全图鉴收集】共收录 **29 种海洋生物**（初始鱼 1 种品阶，1★–5★ 鱼种各含 **5 种品阶色相变种**）。【详情与快捷操作】点击任意已解锁的鱼种卡片可展开详情面板，自由切换预览已点亮的品阶外观、查看当前持有个体，或一键放入鱼缸、跳转繁育与合成。',
   settingsThemeHeading: '画面风格（支持素材替换）',
+  reminderHeading: '繁育满心提醒',
+  reminderEnable: '开启提醒',
+  reminderDisable: '关闭提醒',
+  reminderNote: '每次恢复到 5 颗爱心时通知一次。请保持应用打开，后台被系统冻结时可能延迟，完全退出后无法保证提醒。提醒设置仅保存在当前浏览器，不随存档导出。',
+  reminderStatus: { enabled: '已开启系统通知', disabled: '尚未开启；点击开启后允许系统通知。', denied: '通知权限已被阻止，请在浏览器或系统的网站通知设置中允许。', unsupported: '当前浏览器或访问方式不支持系统通知，请使用 HTTPS 或已安装的应用。', error: '提醒未能启用或发送，请检查网站存储和通知权限后重试。' },
   shortcutsTitle: '⌨️ 键盘快捷键',
   shortcutsTabsLabel: '页面切换',
   shortcutsActionsLabel: '常用操作',
@@ -641,6 +651,11 @@ const EN: Copy = {
   bookNote:
     '【Full Collection】Features **29 marine species** (1 grade for starter fish and **5 color-grade variants** for each 1★–5★ species). 【Inspector & Actions】Click any discovered species card to open the detail inspector, preview unlocked grade variants, inspect owned specimens, or jump straight to Breed & Merge.',
   settingsThemeHeading: 'Art theme',
+  reminderHeading: 'Full hearts reminder',
+  reminderEnable: 'Enable reminder',
+  reminderDisable: 'Disable reminder',
+  reminderNote: 'Notify once each time all 5 hearts are restored. Keep the app open; background suspension may delay reminders, and delivery after closing is not guaranteed. This browser-only preference is not included in save exports.',
+  reminderStatus: { enabled: 'System notifications enabled', disabled: 'Not enabled. Enable the reminder and allow notifications.', denied: 'Notifications are blocked. Allow them in your browser or system website notification settings.', unsupported: 'Notifications are unavailable here. Use HTTPS or the installed app in a supported browser.', error: 'The reminder could not be enabled or delivered. Check site storage and notification permissions, then retry.' },
   shortcutsTitle: '⌨️ Keyboard shortcuts',
   shortcutsTabsLabel: 'Page navigation',
   shortcutsActionsLabel: 'Common actions',

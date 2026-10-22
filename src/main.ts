@@ -17,6 +17,7 @@ import {
 } from './render/theme'
 import { App } from './ui/app'
 import { registerOfflineCache } from './pwa'
+import { heartReminder } from './notifications'
 import './ui/styles.css'
 
 const THEMES = [
@@ -87,7 +88,9 @@ async function main(): Promise<void> {
       save(state)
     },
     onSave: () => {
-      return save(state)
+      const saved = save(state)
+      if (saved) void heartReminder.check(() => state)
+      return saved
     },
     onRestore: async (next) => {
       const revision = ++stateRevision
@@ -349,6 +352,8 @@ async function main(): Promise<void> {
 
   requestAnimationFrame(frame)
 
+  void heartReminder.check(() => state)
+
   window.setInterval(() => {
     const now = Date.now()
     const res = tick(state, now)
@@ -358,6 +363,7 @@ async function main(): Promise<void> {
     } else {
       app.updateTimers(now)
     }
+    void heartReminder.check(() => state)
   }, 1000)
 
   window.addEventListener('visibilitychange', () => {

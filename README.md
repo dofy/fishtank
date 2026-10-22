@@ -37,7 +37,7 @@ LCD 的结果标记、仪式光效、放电与眩晕均使用单色方格；界�
 
 **Fishtank** 是一款灵感源自 Steam 桌面放置游戏《[PC FISH: Taskbar Aquarium](https://store.steampowered.com/app/4842670/PC_FISH_Taskbar_Aquarium/?l=tchinese)》的网页端放置养成水族箱。无需注册登录、即开即玩，既可以在工作间隙体验配对繁育与全图鉴收集的乐趣，也可以一键切换至**全屏沉浸模式**，伴随轻柔的海洋白噪音与 Lo-Fi 音乐作为桌面生态屏保。
 
-当前版本 **v1.8.1**。版本更新记录见 [CHANGELOG](CHANGELOG.md)，完整玩法与数值见 [游戏帮助](docs/BALANCE.md)。
+当前版本 **v1.8.2**。版本更新记录见 [CHANGELOG](CHANGELOG.md)，完整玩法与数值见 [游戏帮助](docs/BALANCE.md)。
 
 ---
 
@@ -147,6 +147,14 @@ Available since v1.5.0. Use single keys without Ctrl or Cmd. The in-game Help an
 鱼群、繁育、合成、装饰、图鉴及品阶/个体预览统一使用 [`itemCard`](src/ui/item-card.ts)，样式集中在 [`item-card.css`](src/ui/item-card.css)。页面提供内容、状态与回调，组件统一处理选中态、状态栏、次要操作、键盘焦点和触屏尺寸；选中使用顶部色条与浅色底；通过 regular / compact / mini 三种密度适应不同位置。新增卡片应复用此组件，避免另写选中样式。
 
 ---
+
+## 满心系统提醒 / Full hearts reminder
+
+在设置中开启「繁育满心提醒」并允许系统通知后，每次恢复到 5 颗爱心时提醒一次；关闭后可随时重新开启。提醒偏好仅保存在当前浏览器，不随鱼缸存档导出或导入。
+
+应用需保持打开。后台冻结可能延迟提醒，完全退出应用后不能保证通知；当前版本不使用服务器推送。系统通知被拒绝时，可在浏览器或系统的网站通知设置中重新允许。
+
+Enable **Full hearts reminder** in Settings and allow system notifications to receive one reminder per full-heart cycle. Keep the app open: background suspension may delay delivery, and delivery after closing is not guaranteed. This browser-only preference stays separate from game saves; no push server is used.
 
 ## 项目文档
 

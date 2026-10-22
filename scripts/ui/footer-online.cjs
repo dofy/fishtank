@@ -23,7 +23,7 @@ async page => {
   await tab.waitForFunction(async()=> (await caches.keys()).includes('__FISHTANK_CACHE_NAME__'));
   await tab.evaluate(()=>navigator.serviceWorker.ready.then(()=>true));await tab.reload();await tab.locator('footer.app-footer').waitFor();await tab.waitForFunction(()=>navigator.serviceWorker.controller!==null);
   await ctx.setOffline(true);await tab.reload();await tab.locator('footer.app-footer').waitFor();
-  if((await tab.locator('footer.app-footer').innerText()).indexOf('v1.8.1')<0)throw Error('Offline footer failed');
+  if((await tab.locator('footer.app-footer').innerText()).indexOf('v__FISHTANK_VERSION__')<0)throw Error('Offline footer failed');
   await ctx.close();
  }
  return results;

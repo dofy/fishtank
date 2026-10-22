@@ -16,7 +16,7 @@ async (page) => {
       }
     }, s)
     await tab.goto(`https://${host}/${renderer==='canvas'?'?renderer=canvas':''}`, {waitUntil:'domcontentloaded'})
-    await tab.getByText('Fishtank v1.8.1',{exact:false}).waitFor()
+    await tab.getByText('Fishtank v__FISHTANK_VERSION__',{exact:false}).waitFor()
     await tab.locator(`nav button[title^="${locale === 'zh' ? '图鉴' : 'Book'}"]`).click()
     await tab.locator('[data-species="ambereel"] .item-card-main').click()
     const ordered = await tab.evaluate(() => !!(document.querySelector('.specimen-grid').compareDocumentPosition(document.querySelector('.book-selected-specimen')) & Node.DOCUMENT_POSITION_FOLLOWING))
@@ -54,10 +54,10 @@ async (page) => {
     }
     await tab.waitForFunction(async()=> (await caches.keys()).includes('__FISHTANK_CACHE_NAME__'));
     await tab.evaluate(()=>navigator.serviceWorker.ready.then(()=>true));
-    await tab.reload();await tab.getByText('Fishtank v1.8.1',{exact:false}).waitFor();
+    await tab.reload();await tab.getByText('Fishtank v__FISHTANK_VERSION__',{exact:false}).waitFor();
     await tab.waitForFunction(()=>navigator.serviceWorker.controller!==null);
     await context.setOffline(true);await tab.evaluate(()=>navigator.serviceWorker.ready.then(()=>true));
-    await tab.reload();await tab.getByText('Fishtank v1.8.1',{exact:false}).waitFor();
+    await tab.reload();await tab.getByText('Fishtank v__FISHTANK_VERSION__',{exact:false}).waitFor();
     await tab.waitForFunction(()=>navigator.serviceWorker.controller!==null);
     await tab.locator(`nav button[title^="${locale === 'zh' ? '图鉴' : 'Book'}"]`).click();
     if(!(await tab.locator('[data-species="ambereel"]').innerText()).includes('2/3'))throw Error('Offline protection lost');
