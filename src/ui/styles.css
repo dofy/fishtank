@@ -569,17 +569,22 @@ button.check-row[aria-checked='true'] .check-dot {
 :root[data-theme='lcd'] .ceremony-bar > span { background: var(--text); transition: none; }
 
 .settings-grid {
-  @apply grid grid-cols-2 gap-3 items-stretch max-[720px]:grid-cols-1;
+  @apply grid grid-cols-2 gap-3 items-start max-[720px]:grid-cols-1;
 }
 .settings-card {
-  @apply py-3 px-3.5 flex flex-col gap-2.5 min-w-0 h-full;
+  @apply py-3 px-3.5 flex flex-col gap-2.5 min-w-0;
   background: var(--cell-bg);
   border: 1px solid var(--border);
   border-radius: var(--radius);
 }
 .settings-card > h3 { @apply mt-1 mb-0 first:mt-0; }
-.settings-card > .note { @apply mt-auto; }
-.settings-card > .row > button { @apply max-[640px]:flex-1 max-[640px]:justify-center; }
+.settings-stack { @apply flex flex-col gap-3 min-w-0; }
+.settings-section { @apply flex flex-col gap-2.5 pt-3 mt-0.5 min-w-0; border-top: 1px solid var(--border); }
+.settings-section > h3 { @apply m-0; }
+.settings-section .row { @apply m-0; }
+.settings-reset { @apply mt-1; }
+.settings-card > [data-heart-reminder] { @apply self-start; }
+.settings-card > .row > button, .settings-section > .row > button { @apply max-[640px]:flex-1 max-[640px]:justify-center; }
 .audio-row { @apply flex flex-wrap items-center gap-2.5; }
 .audio-row > button { @apply shrink-0 min-w-[138px] justify-start whitespace-nowrap; }
 .vol-slider { @apply flex-1 min-w-[100px] accent-[var(--accent)] cursor-pointer; }

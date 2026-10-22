@@ -1272,10 +1272,11 @@ export class App {
         ? (Math.max(...ownedCopies.map((f) => f.grade)) as Grade)
         : (Math.max(1, ...discoveredGradesFor(this.state, sp.id)) as Grade)
       const isActive = this.bookDetailSpeciesId === sp.id
+      const hiddenLabel = sp.hidden ? (this.locale === 'zh' ? '隐藏' : 'Hidden') : ''
 
       const cell = itemCard({
         key: `species:${sp.id}`, selected: isActive, unavailable: !owned,
-        label: owned ? `${speciesName(sp.id, this.locale)}${lockedCount ? ` · ${lockedLabel}` : ''}` : c.bookLockedMsg(`${stars(sp.tier)} ${tierName(sp.tier, this.locale)}`),
+        label: owned ? `${speciesName(sp.id, this.locale)}${hiddenLabel ? ` · ${hiddenLabel}` : ''}${lockedCount ? ` · ${lockedLabel}` : ''}` : c.bookLockedMsg(`${stars(sp.tier)} ${tierName(sp.tier, this.locale)}`),
         name: owned ? speciesName(sp.id, this.locale) : '???',
         portrait: this.cardPortrait(sp, sp.tier, owned ? bestOwnedGrade : 1, !owned),
         meta: this.tierMetaLine(sp.tier),
@@ -1310,6 +1311,7 @@ export class App {
       })
       cell.dataset.species = sp.id
       cell.dataset.hiddenSpecies = String(Boolean(sp.hidden))
+      if (hiddenLabel) cell.querySelector('.item-card-header')?.append(label(hiddenLabel, 'item-card-secret'))
       grid.append(cell)
     }
 
@@ -1552,11 +1554,12 @@ export class App {
       b.setAttribute('aria-pressed', String(this.state.theme === theme.id))
       themeRow.append(b)
     }
-    themeCard.append(heading(c.settingsThemeHeading, 'h3'), themeRow, note(c.settingsThemeNote))
+    themeCard.dataset.settingsSection = 'display'
+    themeCard.append(heading(c.settingsThemeHeading, 'h3'), themeRow)
 
     // Card 2: Color Mode
     const modeCard = document.createElement('div')
-    modeCard.className = 'settings-card'
+    modeCard.className = 'settings-section'
 
     const modeRow = document.createElement('div')
     modeRow.className = 'row m-0'
@@ -1578,7 +1581,7 @@ export class App {
     modeCard.append(
       heading(c.settingsColorModeHeading, 'h3'),
       modeRow,
-      note(c.settingsColorModeNote),
+      label(c.settingsColorModeNote, 'collection-hint'),
     )
 
     const railConfig = syncRailLightConfig(this.state.railLights)
@@ -1618,7 +1621,7 @@ export class App {
     })
     frequencySlider.addEventListener('change', () => this.hooks.onSave())
     frequencyRow.append(frequencyLabel, frequencySlider, frequencyValue)
-    modeCard.append(heading(c.settingsRailLightsHeading, 'h3'), railToggle, frequencyRow, note(c.railLightsNote))
+    modeCard.append(heading(c.settingsRailLightsHeading, 'h3'), railToggle, frequencyRow, label(c.railLightsNote, 'collection-hint'))
 
     // Card 3: Audio & BGM controls
     const audioCfg = syncAudioConfig(this.state.audio)
@@ -1722,7 +1725,7 @@ export class App {
       trackRow,
     )
 
-    // Card 4: Language, Help & Save Management
+    // Language and help stay separate from save management.
     const systemCard = document.createElement('div')
     systemCard.className = 'settings-card'
 
@@ -1775,9 +1778,6 @@ export class App {
     systemCard.append(
       heading(c.settingsLangHeading, 'h3'),
       langHelpRow,
-      heading(c.settingsSaveHeading, 'h3'),
-      danger,
-      note(c.settingsSaveNote),
     )
 
     const grid = document.createElement('div')
@@ -1802,12 +1802,21 @@ export class App {
     notificationMessage.dataset.heartReminderStatus = notificationStatus
     notificationMessage.setAttribute('role', 'status')
     notificationMessage.textContent = c.reminderStatus[notificationStatus]
-    notificationCard.append(heading(c.reminderHeading, 'h3'), notificationButton, notificationMessage, note(c.reminderNote))
-    grid.append(themeCard, audioCard, modeCard, notificationCard, systemCard, saveTools(this.state, this.locale, async next => {
+    notificationCard.append(heading(c.reminderHeading, 'h3'), notificationButton, notificationMessage, label(c.reminderNote, 'collection-hint'))
+    themeCard.append(modeCard)
+    const secondary = document.createElement('div')
+    secondary.className = 'settings-stack'
+    secondary.append(audioCard, notificationCard, systemCard)
+    const saves = saveTools(this.state, this.locale, async next => {
       const ok = await this.hooks.onRestore(next)
       if (ok) this.say(collectionCopy(this.locale).importDone, 'good')
       return ok
-    }))
+    })
+    const resetSection = document.createElement('div')
+    resetSection.className = 'settings-section settings-reset'
+    resetSection.append(heading(c.settingsSaveHeading, 'h3'), danger, label(c.settingsSaveNote, 'collection-hint'))
+    saves.append(resetSection)
+    grid.append(themeCard, secondary, saves)
 
     return [grid]
   }

@@ -77,10 +77,14 @@ async page => {
      if(!state.discoveredVariants.includes(id+':1'))state.discoveredVariants.push(id+':1');
      state.fish.push({uid:'gallery-'+id,speciesId:id,tier:5,grade:1,uses:2,maxUses:2,maturesAt:null,bornAt:now+i,birthExp:0,expBanked:true});
     }
+    state.fish.find(f=>f.uid==='gallery-lanternangler').locked=true;
     state.tankUids=secrets.map(id=>'gallery-'+id);sessionStorage.setItem('reforge-gallery',JSON.stringify(state));
    },secrets);
    await tab.reload();await tab.locator('[data-shortcut="tab-book"]').click();
    assert(await hiddenCards.count()===3&&await tab.locator('.book-grid .item-card').count()===32,'Full main collection count wrong');
+   assert(await hiddenCards.locator('.item-card-secret').count()===3,'Missing hidden badges');
+   assert(await hiddenCards.locator('.item-card-secret').evaluateAll((els,text)=>els.every(el=>el.textContent===text),locale==='zh'?'隐藏':'Hidden'),'Wrong hidden badge translation');
+   assert(await tab.locator('.book-grid [data-hidden-species="false"] .item-card-secret').count()===0,'Normal species has a hidden badge');
    const art=await hiddenCards.locator('canvas').evaluateAll(canvases=>canvases.map(c=>{
     const bytes=c.getContext('2d').getImageData(0,0,c.width,c.height).data;let visible=0;for(let i=3;i<bytes.length;i+=4)if(bytes[i])visible++;return {visible,data:c.toDataURL()};
    }));
@@ -104,6 +108,8 @@ async page => {
      return [...range.getClientRects()].every(r=>r.left>=box.left-1&&r.right<=box.right+1);
     }));
     assert(labelsFit,'Collection tab label is clipped at '+checkWidth);
+    const badgesFit=await hiddenCards.evaluateAll(cards=>cards.every(card=>{const badge=card.querySelector('.item-card-secret').getBoundingClientRect(),status=card.querySelector('.item-card-status').getBoundingClientRect(),box=card.getBoundingClientRect();return status.right<=badge.left+1&&badge.right<=box.right&&badge.left>=box.left}));
+    assert(badgesFit,'Hidden badge overlaps count or lock at '+checkWidth);
     assert(await tab.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Horizontal overflow at '+checkWidth);
    }
    await tab.setViewportSize({width,height:1000});

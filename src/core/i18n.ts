@@ -419,7 +419,7 @@ const ZH: Copy = {
   bookNoteTitle: '生物图鉴与品阶变种收集',
   bookNote:
     '【全图鉴收集】共收录 **29 种海洋生物**（初始鱼 1 种品阶，1★–5★ 鱼种各含 **5 种品阶色相变种**）。【详情与快捷操作】点击任意已解锁的鱼种卡片可展开详情面板，自由切换预览已点亮的品阶外观、查看当前持有个体，或一键放入鱼缸、跳转繁育与合成。',
-  settingsThemeHeading: '画面风格（支持素材替换）',
+  settingsThemeHeading: '画面风格',
   reminderHeading: '繁育满心提醒',
   reminderEnable: '开启提醒',
   reminderDisable: '关闭提醒',

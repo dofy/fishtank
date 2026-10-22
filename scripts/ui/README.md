@@ -3,8 +3,8 @@
 Run from the repository root:
 
 ```sh
-pnpm test:ui          # local shortcuts, decoration borders, detail/lock interactions and footer
-pnpm test:ui:online   # both production domains, shortcuts, themes, renderers and offline reopen
+pnpm test:ui          # local settings, reforge/hidden badges, reminders, shortcuts, decoration borders, details and footer
+pnpm test:ui:online   # both production domains, settings, hidden badges, reminders, shortcuts, themes, renderers and offline reopen
 ```
 
 Requires an existing Chrome installation and Playwright CLI available to
