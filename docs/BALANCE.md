@@ -140,8 +140,8 @@ After rolling the offspring tier using the matrix above, select uniformly from *
 - **新隐藏保底**：连续 9 次未发现新的隐藏品种，第 10 次从尚未发现的隐藏品种中等概率抽取。抽到普通神话或重复隐藏都增加计数；只有首次发现隐藏品种才清零。三款全解锁后关闭新物种保底，80/20 概率保持不变。保底计数随本地存档、导出、导入和备份保存；旧存档默认 0。非法操作与保存失败不消耗材料或计数。
 - 自动选材仅从合格鱼中选「1 高品阶 + 2 低品阶」，不自动解除锁定或收回展示鱼。R 执行当前页重铸／收下，A 自动选材；按钮只标功能名称。
 - 隐藏鱼可以繁育，其后代仍按原星级概率从**普通鱼池**抽取。隐藏鱼仅由重铸的概率抽取或保底产出，不进入普通繁育或十合一合成鱼池；耗尽后仍可作为五星重铸材料。
-- 图鉴新增 **深海秘藏 0/3**，只展示已经发现的隐藏生物，未获得的隐藏物种不生成卡片。普通图鉴维持 29 种、137 种品阶外观，既有成就分母不变；未发现的普通鱼种仅显示全黑剪影及 `???`。
+- 已发现的隐藏生物直接追加到原生物图谱，不设独立秘藏标签；未获得的隐藏物种不生成卡片。普通图鉴维持 29 种、137 种品阶外观，既有成就分母不变；未发现的普通鱼种仅显示全黑剪影及 `???`。
 
 Mythic reforging consumes three adult, exhausted, unlocked Mythics outside the tank to produce one Mythic fry. It inherits the highest input grade, rolls fresh breeding uses, costs no hearts and has the usual 20-minute growth time. Each reforge rolls 80% regular Mythic / 20% secret, uniformly within each pool. After nine consecutive reforges without discovering a new secret, the tenth guarantees an undiscovered secret. Duplicates do not reset this counter; after all three secrets are discovered, pity is disabled while the 80/20 roll stays unchanged. The counter is persisted and included in exports/imports/backups. Invalid actions and failed saves do not consume materials or pity.
 
-Secrets have their own collection, with cards shown only after discovery. Ordinary collection progress and achievement targets remain unchanged. Secrets can breed, but offspring and normal merges always use the regular species pools.
+Secrets appear in the existing species collection, with cards shown only after discovery and no separate tab. Ordinary collection progress and achievement targets remain unchanged. Secrets can breed, but offspring and normal merges always use the regular species pools.

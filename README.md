@@ -152,9 +152,9 @@ Available since v1.5.0. Use single keys without Ctrl or Cmd. The in-game Help an
 
 在「合成 → 五星重铸」选择 3 条已成年、次数耗尽、未锁定且未展示的五星鱼，生成继承最高品阶、重新获得繁育次数的五星幼鱼。20% 概率发现隐藏生物；连续 9 次未发现新隐藏，第 10 次必得尚未发现的一款。重复隐藏不重置保底，计数随存档保存。
 
-「图鉴 → 深海秘藏」只展示已发现的隐藏生物，普通图鉴完成率保持不变。未发现的普通鱼种显示黑色剪影和 `???`。具体概率及保护规则见 [游戏规则](docs/BALANCE.md)。
+已发现的隐藏生物直接展示在原生物图谱中，不另设标签页，未发现的隐藏生物不显示卡片，普通图鉴完成率保持不变。未发现的普通鱼种显示黑色剪影和 `???`。具体概率及保护规则见 [游戏规则](docs/BALANCE.md)。
 
-Reforge three adult, exhausted, unlocked Mythics outside the tank into one fresh Mythic fry. There is a 20% secret chance, with an undiscovered secret guaranteed on the tenth consecutive reforge without a new discovery. View discovered secrets in the separate **Deep-sea secrets** collection.
+Reforge three adult, exhausted, unlocked Mythics outside the tank into one fresh Mythic fry. There is a 20% secret chance, with an undiscovered secret guaranteed on the tenth consecutive reforge without a new discovery. Discovered secrets appear in the main species collection; undiscovered secrets have no cards.
 
 ## 满心系统提醒 / Full hearts reminder
 

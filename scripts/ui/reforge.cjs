@@ -36,10 +36,10 @@ async page => {
    });
    assert(silhouette.black&&silhouette.opaque>100,'Portrait is not an opaque black silhouette');
    await tab.screenshot({path:`output/playwright/reforge-${new URL(url).hostname}-${renderer}-${theme}-${locale}-unknown.png`});
-   await tab.locator('[data-book-page="hidden"]').click();
-   assert(await tab.locator('.book-grid .item-card').count()===0,'Undiscovered secret cards leaked');
-   assert((await tab.locator('[data-book-page="hidden"]').innerText()).includes('0/3'),'Secret counter incorrect');
-   await tab.locator('[data-book-page="hidden"]').focus();await tab.keyboard.press('ArrowRight');
+   const hiddenCards=tab.locator('.book-grid [data-hidden-species="true"]');
+   assert(await tab.locator('[data-book-page="hidden"]').count()===0,'Separate secret tab remains');
+   assert(await hiddenCards.count()===0,'Undiscovered secret cards leaked');
+   await tab.locator('[data-book-page="species"]').focus();await tab.keyboard.press('ArrowRight');
    assert(await tab.locator('[data-book-page="medals"]').getAttribute('aria-selected')==='true','Book keyboard navigation failed');
    await tab.locator('[data-shortcut="tab-merge"]').click();await tab.locator('[data-merge-mode="reforge"]').click();
    assert(await tab.locator('[data-reforge-candidates] .item-card').count()===3,'Protected fish eligible');
@@ -66,9 +66,8 @@ async page => {
    await tab.keyboard.press('r');await tab.locator('[data-shortcut="collect"]').waitFor({state:'detached'});
    await tab.reload();await tab.locator('[data-shortcut="tab-book"]').click();
    assert(await tab.locator('.sort-label').innerText()===completion,'Secret changed regular completion');
-   await tab.locator('[data-book-page="hidden"]').click();
-   assert(await tab.locator('.book-grid .item-card').count()===1,'Hidden collection not persistent');
-   const only=tab.locator('.book-grid .item-card');await only.locator('.item-card-main').click();
+   assert(await hiddenCards.count()===1&&await tab.locator('.book-grid .item-card').count()===30,'Secret did not persist in the main collection');
+   const only=hiddenCards;await only.locator('.item-card-main').click();
    assert(await tab.locator('.book-detail').count()===1,'Discovered secret details inaccessible');
    // A separate synthetic gallery state verifies all three unique forms and both renderers.
    await tab.evaluate(secrets=>{
@@ -80,9 +79,9 @@ async page => {
     }
     state.tankUids=secrets.map(id=>'gallery-'+id);sessionStorage.setItem('reforge-gallery',JSON.stringify(state));
    },secrets);
-   await tab.reload();await tab.locator('[data-shortcut="tab-book"]').click();await tab.locator('[data-book-page="hidden"]').click();
-   assert(await tab.locator('.book-grid .item-card').count()===3,'Full gallery count wrong');
-   const art=await tab.locator('.book-grid canvas').evaluateAll(canvases=>canvases.map(c=>{
+   await tab.reload();await tab.locator('[data-shortcut="tab-book"]').click();
+   assert(await hiddenCards.count()===3&&await tab.locator('.book-grid .item-card').count()===32,'Full main collection count wrong');
+   const art=await hiddenCards.locator('canvas').evaluateAll(canvases=>canvases.map(c=>{
     const bytes=c.getContext('2d').getImageData(0,0,c.width,c.height).data;let visible=0;for(let i=3;i<bytes.length;i+=4)if(bytes[i])visible++;return {visible,data:c.toDataURL()};
    }));
    assert(art.every(a=>a.visible>100)&&new Set(art.map(a=>a.data)).size===3,'Secret creature artwork empty or identical');
@@ -108,6 +107,7 @@ async page => {
     assert(await tab.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Horizontal overflow at '+checkWidth);
    }
    await tab.setViewportSize({width,height:1000});
+   await hiddenCards.first().scrollIntoViewIfNeeded();
    await tab.screenshot({path:`output/playwright/reforge-${new URL(url).hostname}-${renderer}-${theme}-${locale}-secrets.png`});
    assert(errors.length===0,errors.join('; '));results.push({url,renderer,theme,locale,blackSilhouette:true,pity:true,persistence:true,hiddenGallery:true,pageErrors:errors});
   } finally {await ctx.close()}

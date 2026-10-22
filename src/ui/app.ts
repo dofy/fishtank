@@ -163,7 +163,7 @@ export class App {
   private mergeMode: 'merge' | 'reforge' = 'merge'
   private confirmingReset = false
   private confirmingReleaseUid: string | null = null
-  private bookPage: 'species' | 'hidden' | 'medals' = 'species'
+  private bookPage: 'species' | 'medals' = 'species'
   private bookDetailSpeciesId: SpeciesId | null = null
   private bookDetailGrade: Grade = 1
   private bookSelectedUid: string | null = null
@@ -1203,19 +1203,17 @@ export class App {
     headRow.className = 'panel-head'
     const prog = collectionProgress(this.state)
     headRow.append(
-      heading(this.bookPage === 'hidden' ? reforgeCopy(this.locale).hidden : c.bookHeading),
+      heading(c.bookHeading),
     )
     if (this.bookPage === 'species') headRow.append(label(c.bookCompletion(pctStr), 'sort-label'))
     out.push(headRow)
     const pages = document.createElement('div'); pages.className = 'book-pages'; pages.setAttribute('role', 'tablist')
     pages.setAttribute('aria-label', this.locale === 'zh' ? '图鉴分页' : 'Book pages')
-    const secret = reforgeCopy(this.locale)
     const knownHidden = HIDDEN_SPECIES.filter(sp => this.state.discovered.includes(sp.id))
     const medals = milestoneProgress(this.state)
     const earned = medals.filter(p => p.unlocked).length
     for (const [id, text, count] of [
       ['species', this.locale === 'zh' ? '鱼种' : 'Species', `${prog.owned}/${prog.total}`],
-      ['hidden', secret.secretTab, `${knownHidden.length}/${HIDDEN_SPECIES.length}`],
       ['medals', this.locale === 'zh' ? '勋章' : 'Medals', `${earned}/${medals.length}`],
     ] as const) {
       const button = makeButton(text, () => {
@@ -1230,8 +1228,8 @@ export class App {
       button.addEventListener('keydown', event => {
         if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return
         event.preventDefault()
-        const ids = ['species', 'hidden', 'medals'] as const
-        const next = event.key === 'Home' ? 'species' : event.key === 'End' ? 'medals' : ids[(ids.indexOf(id) + (event.key === 'ArrowLeft' ? 2 : 1)) % 3]
+        const ids = ['species', 'medals'] as const
+        const next = event.key === 'Home' ? 'species' : event.key === 'End' ? 'medals' : ids[(ids.indexOf(id) + 1) % 2]
         this.body.querySelector<HTMLButtonElement>(`[data-book-page="${next}"]`)?.click()
       })
       pages.append(button)
@@ -1263,11 +1261,7 @@ export class App {
 
     const grid = document.createElement('div')
     grid.className = 'fish-grid book-grid item-grid'
-    if (this.bookPage === 'hidden') {
-      out.push(note(secret.secretNote))
-      if (knownHidden.length === 0) out.push(note(secret.secretEmpty))
-    }
-    for (const sp of this.bookPage === 'hidden' ? knownHidden : REGULAR_SPECIES) {
+    for (const sp of [...REGULAR_SPECIES, ...knownHidden]) {
       const owned = this.state.discovered.includes(sp.id)
       const ownedCopies = this.state.fish.filter((f) => f.speciesId === sp.id)
       const lockedCount = ownedCopies.filter(f => f.locked).length
@@ -1315,6 +1309,7 @@ export class App {
         },
       })
       cell.dataset.species = sp.id
+      cell.dataset.hiddenSpecies = String(Boolean(sp.hidden))
       grid.append(cell)
     }
 
