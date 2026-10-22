@@ -37,7 +37,7 @@ LCD 的结果标记、仪式光效、放电与眩晕均使用单色方格；界�
 
 **Fishtank** 是一款灵感源自 Steam 桌面放置游戏《[PC FISH: Taskbar Aquarium](https://store.steampowered.com/app/4842670/PC_FISH_Taskbar_Aquarium/?l=tchinese)》的网页端放置养成水族箱。无需注册登录、即开即玩，既可以在工作间隙体验配对繁育与全图鉴收集的乐趣，也可以一键切换至**全屏沉浸模式**，伴随轻柔的海洋白噪音与 Lo-Fi 音乐作为桌面生态屏保。
 
-当前版本 **v1.8.2**。版本更新记录见 [CHANGELOG](CHANGELOG.md)，完整玩法与数值见 [游戏帮助](docs/BALANCE.md)。
+当前版本 **v1.9.0**。版本更新记录见 [CHANGELOG](CHANGELOG.md)，完整玩法与数值见 [游戏帮助](docs/BALANCE.md)。
 
 ---
 
@@ -147,6 +147,14 @@ Available since v1.5.0. Use single keys without Ctrl or Cmd. The in-game Help an
 鱼群、繁育、合成、装饰、图鉴及品阶/个体预览统一使用 [`itemCard`](src/ui/item-card.ts)，样式集中在 [`item-card.css`](src/ui/item-card.css)。页面提供内容、状态与回调，组件统一处理选中态、状态栏、次要操作、键盘焦点和触屏尺寸；选中使用顶部色条与浅色底；通过 regular / compact / mini 三种密度适应不同位置。新增卡片应复用此组件，避免另写选中样式。
 
 ---
+
+## 五星重铸 / Mythic reforging
+
+在「合成 → 五星重铸」选择 3 条已成年、次数耗尽、未锁定且未展示的五星鱼，生成继承最高品阶、重新获得繁育次数的五星幼鱼。20% 概率发现隐藏生物；连续 9 次未发现新隐藏，第 10 次必得尚未发现的一款。重复隐藏不重置保底，计数随存档保存。
+
+「图鉴 → 深海秘藏」只展示已发现的隐藏生物，普通图鉴完成率保持不变。未发现的普通鱼种显示黑色剪影和 `???`。具体概率及保护规则见 [游戏规则](docs/BALANCE.md)。
+
+Reforge three adult, exhausted, unlocked Mythics outside the tank into one fresh Mythic fry. There is a 20% secret chance, with an undiscovered secret guaranteed on the tenth consecutive reforge without a new discovery. View discovered secrets in the separate **Deep-sea secrets** collection.
 
 ## 满心系统提醒 / Full hearts reminder
 

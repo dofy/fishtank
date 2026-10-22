@@ -213,3 +213,29 @@ test('same-species fry join schools after settling into the aquarium',()=>{
     assert.equal(agents.filter(a=>a.scenery?.kind==='school').length,1)
   }finally{Math.random=original}
 })
+
+test('the secret angler attracts existing plankton without spawning rewards or editing the save',()=>{
+  const secret=setup(['lanternangler'],[]),regular=setup(['prismkoi'],[])
+  const before=JSON.stringify(secret.state)
+  for(const {scene,agents:[a]} of [secret,regular]){
+    a.eatCooldown=60
+    scene.foods=[{id:987,x:290,y:100,vy:0,seed:0,kind:'plankton',age:0,lifetime:20}]
+    scene.update(0.1,W,H,1)
+    assert.equal(scene.foods.length,1)
+  }
+  assert.ok(secret.scene.foods[0].x<regular.scene.foods[0].x)
+  assert.equal(JSON.stringify(secret.state),before)
+  secret.scene.update(0.1,W,H,2,undefined,undefined,true,true)
+  assert.equal(secret.scene.foods.length,0)
+  assert.equal(JSON.stringify(secret.state),before)
+})
+
+test('the secret nautilus alternates slow cruising and jet pulses without changing game state',()=>{
+  const slow=setup(['starnautilus'],[]),jet=setup(['starnautilus'],[])
+  const before=JSON.stringify(jet.state)
+  for(const group of [slow,jet])Object.assign(group.agents[0],{phase:0,speed:20})
+  slow.scene.update(0.1,W,H,0)
+  jet.scene.update(0.1,W,H,Math.PI/(2*0.85))
+  assert.ok(jet.agents[0].x-220>(slow.agents[0].x-220)*5, JSON.stringify({slow:slow.agents[0].x,jet:jet.agents[0].x}))
+  assert.equal(JSON.stringify(jet.state),before)
+})

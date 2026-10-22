@@ -173,7 +173,7 @@ export class PixiTank {
       const visibility = lcd ? lcdWithdrawalDensity(agent.withdrawal) : 1
       used.add(key)
       const art = this.textures.get(key) ?? this.bake(renderer, agent, key, visibility, puff)
-      if (lcd && (art.visibility !== visibility || (motion && !view.reducedMotion && Math.abs(view.time - art.lastPose) >= 1 / 8))) {
+      if ((lcd || agent.species.hidden) && (art.visibility !== visibility || (motion && !view.reducedMotion && Math.abs(view.time - art.lastPose) >= 1 / 8))) {
         const ctx = art.canvas.getContext('2d')!
         ctx.clearRect(-art.pad, -art.height / 2, art.width, art.height)
         renderer.fishFrame(ctx, art.length, { species: agent.species, grade: agent.fish.grade, tier: agent.fish.tier, visibility, puffLevel: puff }, view.reducedMotion || agent.withdrawal?.reducedMotion || !motion ? 0 : view.time + agent.phase)

@@ -118,6 +118,8 @@ function assertValidState(value: unknown): asserts value is GameState {
   if (!Array.isArray(value.fish)) fail('invalid-state')
   if (value.fish.length > MAX_FISH) fail('too-many-fish')
 
+  if (value.reforgeMisses !== undefined && (!Number.isInteger(value.reforgeMisses) || (value.reforgeMisses as number) < 0 || (value.reforgeMisses as number) > 9)) fail('invalid-state')
+
   const uids = new Set<string>()
   for (const item of value.fish) {
     if (!isRecord(item)) fail('invalid-state')
@@ -212,6 +214,7 @@ function normalizeState(
   now: number,
   advanceOffline: boolean,
 ): GameState {
+  state.reforgeMisses ??= 0
   if (state.locale !== 'zh' && state.locale !== 'en') state.locale = detectLocale()
   if (state.colorMode !== 'auto' && state.colorMode !== 'light' && state.colorMode !== 'dark') state.colorMode = 'auto'
   if (

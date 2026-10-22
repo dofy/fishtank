@@ -46,7 +46,14 @@ export const SPECIES: Species[] = [
   { id: 'prismkoi', name: 'Prism Koi', tier: 5, body: { form: 'fish', silhouette: 'veil-koi', length: 22, depth: 0.62, tail: 0.52, dorsal: 0.48, pattern: 'gradient', hue: 316, sat: 0.78, light: 0.62 } },
   { id: 'leviathanfry', name: 'Leviathan Sea Serpent', tier: 5, body: { form: 'seasnake', silhouette: 'sea-dragon', length: 24, depth: 0.48, tail: 0.3, dorsal: 0.8, pattern: 'spots', hue: 186, sat: 0.78, light: 0.46 } },
   { id: 'astraljelly', name: 'Astral Crown Jelly', tier: 5, body: { form: 'jellyfish', silhouette: 'crown-jelly', length: 19, depth: 0.95, tail: 0.55, dorsal: 0.5, pattern: 'spots', hue: 278, sat: 0.86, light: 0.62 } },
+  // Secret creatures never enter ordinary breeding or synthesis pools.
+  { id: 'lanternangler', name: 'Abyssal Lantern Angler', tier: 5, hidden: true, body: { form: 'fish', silhouette: 'lantern-angler', length: 21, depth: 0.8, tail: 0.22, dorsal: 0.4, pattern: 'plain', hue: 223, sat: 0.68, light: 0.34 } },
+  { id: 'glassangel', name: 'Glass Sea Angel', tier: 5, hidden: true, body: { form: 'fish', silhouette: 'glass-angel', length: 21, depth: 0.95, tail: 0.12, dorsal: 0.1, pattern: 'plain', hue: 176, sat: 0.48, light: 0.79 } },
+  { id: 'starnautilus', name: 'Starwheel Nautilus', tier: 5, hidden: true, body: { form: 'fish', silhouette: 'star-nautilus', length: 22, depth: 0.78, tail: 0.1, dorsal: 0.1, pattern: 'plain', hue: 266, sat: 0.6, light: 0.65 } },
 ]
+
+export const REGULAR_SPECIES = SPECIES.filter(s => !s.hidden)
+export const HIDDEN_SPECIES = SPECIES.filter(s => s.hidden)
 
 const BY_ID = new Map<SpeciesId, Species>(SPECIES.map((s) => [s.id, s]))
 
@@ -62,8 +69,8 @@ export function species(id: SpeciesId): Species {
 
 /** Species that can appear at a given tier. */
 export function poolForTier(tier: Tier): Species[] {
-  const pool = SPECIES.filter((s) => s.tier === tier)
-  return pool.length > 0 ? pool : SPECIES.filter((s) => s.tier <= tier)
+  const pool = REGULAR_SPECIES.filter((s) => s.tier === tier)
+  return pool.length > 0 ? pool : REGULAR_SPECIES.filter((s) => s.tier <= tier)
 }
 
 export const STARTER_SPECIES: SpeciesId[] = ['goldfin', 'goldfin', 'greyminnow']

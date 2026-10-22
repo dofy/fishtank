@@ -1,4 +1,4 @@
-import { SPECIES, hasSpecies } from './species'
+import { REGULAR_SPECIES as SPECIES, hasSpecies } from './species'
 import type { GameState, Grade, MilestoneId } from './types'
 
 export interface MilestoneDescriptor {
@@ -30,6 +30,7 @@ export const MILESTONES: readonly MilestoneDescriptor[] = [
 
 export const MILESTONE_IDS: readonly MilestoneId[] = MILESTONES.map((item) => item.id)
 
+const REGULAR_IDS = new Set(SPECIES.map(s => s.id))
 const ID_SET = new Set<MilestoneId>(MILESTONE_IDS)
 const TIER_ONE_IDS = new Set(SPECIES.filter((item) => item.tier === 1).map((item) => item.id))
 const JELLY_IDS = new Set(
@@ -52,16 +53,16 @@ function evidence(state: GameState): { species: Set<string>; variants: Set<strin
   const knownVariants = new Set<string>()
 
   for (const speciesId of state.discovered ?? []) {
-    if (hasSpecies(speciesId)) knownSpecies.add(speciesId)
+    if (REGULAR_IDS.has(speciesId)) knownSpecies.add(speciesId)
   }
   for (const key of state.discoveredVariants ?? []) {
     const parts = typeof key === 'string' ? variantParts(key) : null
-    if (!parts) continue
+    if (!parts || !REGULAR_IDS.has(parts.speciesId)) continue
     knownSpecies.add(parts.speciesId)
     knownVariants.add(`${parts.speciesId}:${parts.grade}`)
   }
   for (const fish of state.fish ?? []) {
-    if (!fish || !hasSpecies(fish.speciesId) || fish.grade < 1 || fish.grade > 5) continue
+    if (!fish || !REGULAR_IDS.has(fish.speciesId) || fish.grade < 1 || fish.grade > 5) continue
     knownSpecies.add(fish.speciesId)
     knownVariants.add(`${fish.speciesId}:${fish.grade}`)
   }

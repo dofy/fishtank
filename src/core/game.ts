@@ -23,7 +23,7 @@ import { syncMilestones } from './milestones'
 import { Rng, rng as defaultRng } from './rng'
 import {
   DECORATIONS,
-  SPECIES,
+  REGULAR_SPECIES,
   STARTER_DECOR,
   STARTER_SPECIES,
   decorItem,
@@ -139,6 +139,7 @@ export function newGame(now = Date.now(), locale: Locale = detectLocale()): Game
     exp: 0,
     level: 1,
     discovered: uniqueStarters,
+    reforgeMisses: 0,
     discoveredVariants: uniqueStarters.map((id) => variantKey(id, 1)),
     theme: 'realistic',
     colorMode: 'auto',
@@ -349,7 +350,7 @@ function rollGrade(parentGradeAvg: number, random: Rng): Grade {
   return (random.weighted(gradeOdds(parentGradeAvg)) + 1) as Grade
 }
 
-function rollUses(tier: Tier, random: Rng): number {
+export function rollUses(tier: Tier, random: Rng): number {
   if (tier === 0) return USES_BY_TIER[0]
   const center = USES_BY_TIER[tier]
   const weights = [1, 2, 3, 4, 5].map((u) => Math.max(1, 6 - Math.abs(u - center) * 2))
@@ -609,5 +610,5 @@ export function autoPickForMerge(state: GameState): string[] {
 }
 
 export function collectionProgress(state: GameState): { owned: number; total: number } {
-  return { owned: state.discovered.length, total: SPECIES.length }
+  return { owned: REGULAR_SPECIES.filter(s => state.discovered.includes(s.id)).length, total: REGULAR_SPECIES.length }
 }

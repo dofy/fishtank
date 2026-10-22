@@ -2,7 +2,7 @@ import type { BodyShape, DecorItem, Grade, Tier } from '../core/types'
 import type { DecorPortraitRequest, PortraitRequest, Renderer } from './renderer'
 import type { Agent, DecorNode, SceneView, SplashEffect } from './scene'
 import { foregroundDecor, pufferBody, pufferLevel } from './ecology'
-import { decorLayers, eyeAt, fishPath, hashString, patternBands, patternSpots } from './shape'
+import { secretMarkings, decorLayers, eyeAt, fishPath, hashString, patternBands, patternSpots } from './shape'
 import { type SceneColors, type ThemeManifest, lampPositions, sceneColorsFor, spriteFor } from './theme'
 import { drawRailBeads } from './rail-lights'
 import { clipLcdWithdrawal, lcdWithdrawalDensity } from './withdrawal'
@@ -372,6 +372,7 @@ export class LcdRenderer implements Renderer {
 
     const c = this.cell
     const { path } = fishPath(bodyShape, len, animPhase)
+    const secret = secretMarkings(bodyShape, len, animPhase)
     const ink = s.ink
     const bands = patternBands(bodyShape, len)
     const spots = patternSpots(bodyShape, len, hashString(speciesId))
@@ -388,7 +389,7 @@ export class LcdRenderer implements Renderer {
         const checker = (((gx / c) | 0) + ((gy / c) | 0)) % 2 === 0
         const hollow = (onBand || onSpot) && checker
         const interiorOnly = tier <= 1 && !this.isEdge(path, cx, cy, c)
-        if (hollow || interiorOnly) continue
+        if (hollow || interiorOnly || (secret && probe.isPointInPath(secret, cx, cy))) continue
 
         ctx.fillRect(gx, gy, c - 1, c - 1)
       }

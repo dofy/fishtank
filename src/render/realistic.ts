@@ -4,7 +4,7 @@ import type { Agent, DecorNode, FoodPellet, SceneView, SplashEffect } from './sc
 import { foregroundDecor, pufferAmount } from './ecology'
 import { drawRailBeads } from './rail-lights'
 import { withdrawalOpacity, withdrawalScale } from './withdrawal'
-import { decorLayers, elongatedProfile, eyeAt, fishPath, hashString, patternBands, patternSpots } from './shape'
+import { secretMarkings, decorLayers, elongatedProfile, eyeAt, fishPath, hashString, patternBands, patternSpots } from './shape'
 import { type SceneColors, type ThemeManifest, lampPositions, sceneColorsFor, spriteFor } from './theme'
 
 /**
@@ -788,6 +788,7 @@ export class RealisticRenderer implements Renderer {
     const belly = `hsl(${hue} ${sat * 70}% ${Math.min(95, light * 135)}%)`
 
     ctx.save()
+    if (bodyShape.silhouette === 'glass-angel') ctx.globalAlpha *= 0.72
     ctx.shadowColor = 'rgba(0,0,0,0.3)'
     ctx.shadowBlur = 6
     ctx.shadowOffsetY = 3
@@ -837,7 +838,11 @@ export class RealisticRenderer implements Renderer {
     const h = len * body.depth
     const sil = body.silhouette
     ctx.save()
-    if (sil === 'wrasse') {
+    const secret = secretMarkings(body, len, phase)
+    if (secret) {
+      ctx.fillStyle = sil === 'star-nautilus' ? '#352950' : sil === 'glass-angel' ? '#ff9975' : '#b9fff0'
+      ctx.fill(secret)
+    } else if (sil === 'wrasse') {
       ctx.fillStyle = '#142e50'
       ctx.fillRect(len * 0.16, -h * 0.065, len * 0.81, h * 0.14)
       ctx.fillStyle = '#b6f4ff'

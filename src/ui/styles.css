@@ -984,3 +984,6 @@ button.fish-release-button:hover { color: var(--text); border-color: var(--borde
 }
 
 :root[data-theme='lcd'] button.fish-release-button { color: var(--muted); background: transparent; border-color: transparent; box-shadow: none; }
+
+/* Three collection tabs keep their labels and counters readable on narrow screens. */
+.book-pages[role='tablist'] button { flex-wrap: wrap; column-gap: 6px; row-gap: 2px; }

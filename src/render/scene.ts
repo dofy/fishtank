@@ -341,9 +341,16 @@ export class Scene {
         })
       }
     }
+    const lures = swimmers.filter(a => a.species.id === 'lanternangler' && (a.scaredTimer ?? 0) <= 0 && (a.shockedTimer ?? 0) <= 0)
     const floorY = height - 18
     for (const f of this.foods) {
       if (f.kind === 'plankton') {
+        // Cosmetic attraction of existing plankton only: no spawning or game rewards.
+        const lure = lures.find(a => Math.hypot(a.x - f.x, a.y - f.y) < 100)
+        if (lure) {
+          f.x += (lure.x + lure.dir * 24 - f.x) * Math.min(1, dt * 0.35)
+          f.y += (lure.y - 20 - f.y) * Math.min(1, dt * 0.35)
+        }
         f.age = (f.age ?? 0) + dt
         f.x += (Math.sin(time * 0.6 + f.seed) * 5 + 3) * dt
         f.y += (f.vy + Math.cos(time * 1.2 + f.seed) * 3) * dt
@@ -579,7 +586,16 @@ export class Scene {
 
         case 'fish':
         default: {
-          if (body.depth < 0.44) {
+          if (body.silhouette === 'star-nautilus') {
+            const jet = reducedMotion ? 0 : Math.pow(Math.max(0, Math.sin(p * 0.85)), 10)
+            a.x += a.dir * a.speed * (0.3 + jet * 2.8) * dt
+            a.y += Math.sin(p * 0.8) * 5 * dt + (targetY - a.y) * 0.3 * dt
+            a.tilt = -jet * 0.1
+          } else if (body.silhouette === 'lantern-angler') {
+            a.x += a.dir * a.speed * 0.45 * dt
+            a.y += Math.sin(p) * 5 * dt + (targetY - a.y) * 0.3 * dt
+            a.tilt = Math.sin(p) * 0.04
+          } else if (body.depth < 0.44) {
             const burst = Math.pow(Math.max(0, Math.sin(p * 2.8)), 2)
             const vy = Math.sin(p * 1.9) * 12
             a.x += a.dir * a.speed * (0.75 + burst * 1.15) * dt

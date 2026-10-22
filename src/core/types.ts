@@ -17,6 +17,8 @@ export interface Species {
   body: BodyShape
   /** Can trigger the electric discharge easter egg. Independent of rarity. */
   electric?: boolean
+  /** Available only through mythic reforging, outside the regular collection. */
+  hidden?: boolean
 }
 
 export interface DecorItem {
@@ -83,6 +85,9 @@ export type SilhouetteId =
   | 'veil-koi'
   | 'sea-dragon'
   | 'crown-jelly'
+  | 'lantern-angler'
+  | 'glass-angel'
+  | 'star-nautilus'
 
 /**
  * Renderer-neutral body description. A theme may either draw this
@@ -232,6 +237,8 @@ export interface GameState {
   discovered: SpeciesId[]
   /** Variant keys (`${speciesId}:${grade}`) ever owned, for the 5-grade variant catalog. */
   discoveredVariants?: string[]
+  /** Consecutive reforges without discovering a new hidden species (0..9). */
+  reforgeMisses?: number
   /** Permanent collection milestone history and optional displayed plaque. */
   milestones?: MilestoneState
   /** Legacy tracked target; not exposed or used by gameplay. */

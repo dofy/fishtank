@@ -1,3 +1,7 @@
+import { reforge, reforgeCandidates, reforgeMisses, autoPickForReforge } from '../core/reforge'
+import { REGULAR_SPECIES, HIDDEN_SPECIES } from '../core/species'
+import { reforgeCopy } from './reforge-copy'
+import { fishPath } from '../render/shape'
 import { heartReminder } from '../notifications'
 import { itemCard } from './item-card'
 import { collectionCopy } from './collection-copy'
@@ -113,7 +117,7 @@ import {
 
 export { formatClock, stars } from './dom'
 
-export const APP_VERSION = '1.8.2'
+export const APP_VERSION = '1.9.0'
 export const GITHUB_URL = 'https://github.com/dofy/fishtank'
 
 export interface AppHooks {
@@ -155,9 +159,11 @@ export class App {
   private tab: Tab = 'tank'
   private breedPick: string[] = []
   private mergePick: string[] = []
+  private reforgePick: string[] = []
+  private mergeMode: 'merge' | 'reforge' = 'merge'
   private confirmingReset = false
   private confirmingReleaseUid: string | null = null
-  private bookPage: 'species' | 'medals' = 'species'
+  private bookPage: 'species' | 'hidden' | 'medals' = 'species'
   private bookDetailSpeciesId: SpeciesId | null = null
   private bookDetailGrade: Grade = 1
   private bookSelectedUid: string | null = null
@@ -328,6 +334,8 @@ export class App {
     this.state = state
     this.breedPick = []
     this.mergePick = []
+    this.reforgePick = []
+    this.mergeMode = 'merge'
     this.confirmingReset = false
     this.confirmingReleaseUid = null
     this.bookDetailSpeciesId = null
@@ -846,7 +854,88 @@ export class App {
 
   // --------------------------------------------------------------- merge
 
+  private mergeModeTabs(): HTMLElement {
+    const row = document.createElement('div')
+    row.className = 'book-pages'
+    const c = reforgeCopy(this.locale)
+    row.setAttribute('aria-label', this.locale === 'zh' ? '合成方式' : 'Merge mode')
+    for (const [mode, text] of [['merge', c.merge], ['reforge', c.title]] as const) {
+      const button = makeButton(text, () => {
+        this.mergeMode = mode
+        this.mergePick = []; this.reforgePick = []
+        this.render()
+        this.body.querySelector<HTMLButtonElement>(`[data-merge-mode="${mode}"]`)?.focus({ preventScroll: true })
+      })
+      button.dataset.mergeMode = mode
+      button.setAttribute('aria-pressed', String(this.mergeMode === mode))
+      row.append(button)
+    }
+    return row
+  }
+
+  private reforgePanel(now: number): Node[] {
+    const c = reforgeCopy(this.locale)
+    const candidates = reforgeCandidates(this.state, now)
+    const valid = new Set(candidates.map(f => f.uid))
+    this.reforgePick = this.reforgePick.filter(id => valid.has(id)).slice(0, 3)
+    const header = document.createElement('div'); header.className = 'panel-head'
+    header.append(heading(c.heading(this.reforgePick.length)))
+    const row = document.createElement('div'); row.className = 'action-buttons'
+    const go = makeButton(c.run, () => {
+      const clickNow = Date.now()
+      const before = structuredClone(this.state)
+      const snapshots = this.reforgePick.map(id => this.state.fish.find(f => f.uid === id)).filter((f): f is Fish => Boolean(f)).map(f => ({ ...f }))
+      const result = reforge(this.state, this.reforgePick, clickNow)
+      if ('error' in result) this.say(c.error(result.error), 'bad')
+      else if (!this.hooks.onSave()) {
+        Object.assign(this.state, before)
+        this.state.reforgeMisses = before.reforgeMisses
+        this.say(c.storage, 'bad')
+      } else {
+        sound.play('merge-start')
+        this.reforgePick = []
+        this.say(c.done(speciesName(result.child.speciesId, this.locale), result.novel), 'good')
+        this.openShowcase({ ...result, expGained: 0 }, 'merge', snapshots)
+      }
+      this.render(clickNow)
+    })
+    go.className = 'btn-primary'; go.dataset.reforgeRun = '1'
+    go.setAttribute('aria-disabled', String(this.reforgePick.length !== 3)); bindShortcut(go, 'run')
+    const auto = makeButton(this.t.mergeAutoPickBtn, () => {
+      this.reforgePick = autoPickForReforge(this.state)
+      this.render()
+    })
+    auto.className = 'btn-secondary'; auto.dataset.reforgeAuto = '1'
+    auto.setAttribute('aria-disabled', String(candidates.length === 0)); bindShortcut(auto, 'autoPick')
+    const clear = makeButton(this.t.clearBtn, () => { this.reforgePick = []; this.render() })
+    clear.className = 'btn-secondary'; bindShortcut(clear, 'clear')
+    clear.setAttribute('aria-disabled', String(this.reforgePick.length === 0))
+    row.append(go, auto, clear)
+    const action = document.createElement('div'); action.className = 'action-bar'; action.append(row)
+    const missing = HIDDEN_SPECIES.filter(sp => !this.state.discovered.includes(sp.id))
+    const pity = note(missing.length ? c.pity(reforgeMisses(this.state)) : c.complete)
+    pity.dataset.reforgePity = String(reforgeMisses(this.state))
+    const out: Node[] = [this.mergeModeTabs(), header, action, note(c.rule), note(c.odds), pity]
+    const grid = document.createElement('div'); grid.className = 'fish-grid'
+    grid.dataset.reforgeCandidates = '1'
+    for (const fish of candidates) {
+      const index = this.reforgePick.indexOf(fish.uid)
+      grid.append(this.fishCell(fish, now, {
+        selected: index !== -1, pickOrder: index + 1,
+        onClick: () => {
+          if (index !== -1) this.reforgePick = this.reforgePick.filter(id => id !== fish.uid)
+          else if (this.reforgePick.length < 3) this.reforgePick.push(fish.uid)
+          this.render()
+        },
+      }))
+    }
+    out.push(grid)
+    if (!candidates.length) out.push(note(c.empty))
+    return out
+  }
+
   private mergePanel(now: number): Node[] {
+    if (this.mergeMode === 'reforge') return this.reforgePanel(now)
     const c = this.t
     const filter = syncMergeFilter(this.state)
     const mergeCandidates = filterMergeCandidates(this.state)
@@ -934,7 +1023,7 @@ export class App {
     actionBar.className = 'action-bar'
     actionBar.append(row)
 
-    const out: Node[] = [headRow, actionBar]
+    const out: Node[] = [this.mergeModeTabs(), headRow, actionBar]
 
     const filterBox = document.createElement('div')
     filterBox.className = 'filter-box'
@@ -1102,8 +1191,8 @@ export class App {
     const c = this.t
     const out: Node[] = []
 
-    const totalVariants = SPECIES.reduce((sum, sp) => sum + (sp.tier === 0 ? 1 : 5), 0)
-    const unlockedVariants = SPECIES.reduce(
+    const totalVariants = REGULAR_SPECIES.reduce((sum, sp) => sum + (sp.tier === 0 ? 1 : 5), 0)
+    const unlockedVariants = REGULAR_SPECIES.reduce(
       (sum, sp) =>
         sum + Math.min(sp.tier === 0 ? 1 : 5, discoveredGradesFor(this.state, sp.id).length),
       0,
@@ -1114,16 +1203,19 @@ export class App {
     headRow.className = 'panel-head'
     const prog = collectionProgress(this.state)
     headRow.append(
-      heading(c.bookHeading),
+      heading(this.bookPage === 'hidden' ? reforgeCopy(this.locale).hidden : c.bookHeading),
     )
     if (this.bookPage === 'species') headRow.append(label(c.bookCompletion(pctStr), 'sort-label'))
     out.push(headRow)
     const pages = document.createElement('div'); pages.className = 'book-pages'; pages.setAttribute('role', 'tablist')
     pages.setAttribute('aria-label', this.locale === 'zh' ? '图鉴分页' : 'Book pages')
+    const secret = reforgeCopy(this.locale)
+    const knownHidden = HIDDEN_SPECIES.filter(sp => this.state.discovered.includes(sp.id))
     const medals = milestoneProgress(this.state)
     const earned = medals.filter(p => p.unlocked).length
     for (const [id, text, count] of [
       ['species', this.locale === 'zh' ? '鱼种' : 'Species', `${prog.owned}/${prog.total}`],
+      ['hidden', secret.secretTab, `${knownHidden.length}/${HIDDEN_SPECIES.length}`],
       ['medals', this.locale === 'zh' ? '勋章' : 'Medals', `${earned}/${medals.length}`],
     ] as const) {
       const button = makeButton(text, () => {
@@ -1138,7 +1230,8 @@ export class App {
       button.addEventListener('keydown', event => {
         if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return
         event.preventDefault()
-        const next = event.key === 'Home' ? 'species' : event.key === 'End' ? 'medals' : id === 'species' ? 'medals' : 'species'
+        const ids = ['species', 'hidden', 'medals'] as const
+        const next = event.key === 'Home' ? 'species' : event.key === 'End' ? 'medals' : ids[(ids.indexOf(id) + (event.key === 'ArrowLeft' ? 2 : 1)) % 3]
         this.body.querySelector<HTMLButtonElement>(`[data-book-page="${next}"]`)?.click()
       })
       pages.append(button)
@@ -1157,7 +1250,7 @@ export class App {
     }
     const layout = document.createElement('div')
     layout.className = `book-layout${this.bookDetailSpeciesId ? ' with-detail' : ''}`
-    layout.id = 'book-page-content'; layout.setAttribute('role', 'tabpanel'); layout.setAttribute('aria-labelledby', 'book-tab-species')
+    layout.id = 'book-page-content'; layout.setAttribute('role', 'tabpanel'); layout.setAttribute('aria-labelledby', `book-tab-${this.bookPage}`)
 
     if (this.bookDetailSpeciesId) {
       const detailSp = SPECIES.find((s) => s.id === this.bookDetailSpeciesId)
@@ -1170,7 +1263,11 @@ export class App {
 
     const grid = document.createElement('div')
     grid.className = 'fish-grid book-grid item-grid'
-    for (const sp of SPECIES) {
+    if (this.bookPage === 'hidden') {
+      out.push(note(secret.secretNote))
+      if (knownHidden.length === 0) out.push(note(secret.secretEmpty))
+    }
+    for (const sp of this.bookPage === 'hidden' ? knownHidden : REGULAR_SPECIES) {
       const owned = this.state.discovered.includes(sp.id)
       const ownedCopies = this.state.fish.filter((f) => f.speciesId === sp.id)
       const lockedCount = ownedCopies.filter(f => f.locked).length
@@ -2470,7 +2567,12 @@ export class App {
 
   private cardPortrait(sp: Species, tier: Tier, grade: Grade, dim = false): HTMLCanvasElement {
     return this.cachedCanvas(`card:${sp.id}:${tier}:${grade}:${dim ? 1 : 0}`, 128, 72, ctx => {
-      this.renderer.portrait(ctx, 128, 72, { species: sp, tier, grade, dim })
+      if (dim) {
+        const len = Math.min(128 * 0.82, 72 * 0.76 / Math.max(0.35, sp.body.depth))
+        ctx.translate((128 - len) / 2, 36)
+        ctx.fillStyle = '#000'
+        ctx.fill(fishPath(sp.body, len).path)
+      } else this.renderer.portrait(ctx, 128, 72, { species: sp, tier, grade, dim: false })
     })
   }
 

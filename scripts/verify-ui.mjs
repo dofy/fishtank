@@ -28,7 +28,7 @@ async function cli(label, ...commands) {
     ], {
       cwd: root,
       env: { ...process.env, PLAYWRIGHT_MCP_HEADLESS: 'true' },
-      timeout: 180_000,
+      timeout: label === 'reforge.cjs' ? 300_000 : 180_000,
       maxBuffer: 4 * 1024 * 1024,
     })
   } catch (error) {
@@ -66,7 +66,7 @@ try {
   if (!/"headless"\s*:\s*true/.test(evidence)) throw new Error('Missing headless browser evidence')
   console.log('Browser verified: --headless, fresh isolated session.')
 
-  const suites = online ? ['notifications.cjs', 'shortcuts.cjs', 'detail-online.cjs', 'footer-online.cjs'] : ['notifications.cjs', 'shortcuts.cjs', 'decor-highlight.cjs', 'detail-layout.cjs', 'footer.cjs']
+  const suites = online ? ['reforge.cjs', 'notifications.cjs', 'shortcuts.cjs', 'detail-online.cjs', 'footer-online.cjs'] : ['reforge.cjs', 'notifications.cjs', 'shortcuts.cjs', 'decor-highlight.cjs', 'detail-layout.cjs', 'footer.cjs']
   const workerSource = await readFile(resolve(root, 'public/sw.js'), 'utf8')
   const cacheName = workerSource.match(/const CACHE_NAME = '([^']+)'/)?.[1]
   if (!cacheName) throw new Error('Cannot determine expected Service Worker cache')
@@ -78,6 +78,7 @@ try {
       ? ['https://fishtank.phpz.org/', 'https://fish.yahaha.net/'].flatMap(url => [url, `${url}?renderer=canvas`])
       : [baseUrl]
     source = source.replaceAll('__FISHTANK_SHORTCUT_URLS__', JSON.stringify(shortcutUrls))
+    source = source.replaceAll('__FISHTANK_REFORGE_URLS__', JSON.stringify(online ? ['https://fishtank.phpz.org/', 'https://fish.yahaha.net/'] : [baseUrl]))
     source = source.replaceAll('__FISHTANK_REMINDER_URLS__', JSON.stringify(online ? ['https://fishtank.phpz.org/', 'https://fish.yahaha.net/'] : [baseUrl]))
     if (baseUrl) source = source.replaceAll('http://127.0.0.1:5173/', baseUrl)
     const filename = resolve(temporary, suite)

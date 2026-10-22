@@ -254,7 +254,7 @@ test('LCD interface and scene palettes remain monochrome in both day and night m
 test('the new uncommon eel joins the uniform species pool without moving existing fish', () => {
   const pool = species.filter(s => s.tier === 2)
   assert.equal(pool.length, 7)
-  assert.equal(species.length, 29)
+  assert.equal(species.filter(s => !s.hidden).length, 29)
   assert.equal(species.find(s => s.id === 'ambereel').electric, true)
   assert.equal(species.find(s => s.id === 'volteel').tier, 3)
   assert.equal(species.find(s => s.id === 'volteel').electric, true)
@@ -463,7 +463,7 @@ test('every species in the rolled tier gets an equal interval regardless of pare
     for (let bTier = aTier; bTier <= 5; bTier++) {
       for (let tier = 1; tier <= 5; tier++) {
         if (oddsByTotal[aTier + bTier][tier - 1] === 0) continue
-        const pool = species.filter((sp) => sp.tier === tier)
+        const pool = species.filter((sp) => sp.tier === tier && !sp.hidden)
         for (const sameSpecies of [true, false]) {
           for (const [index, expected] of pool.entries()) {
             const state = game.newGame(NOW, 'zh')

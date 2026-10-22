@@ -14,6 +14,55 @@ export function fishPath(
   const sil = body.silhouette
   const path = new Path2D()
 
+  // Reforge secrets share their anatomy and animation across Canvas, LCD and Pixi textures.
+  if (sil === 'lantern-angler') {
+    addBodyEllipse(path, len * 0.53, h * 0.09, len * 0.32, h * 0.36, 0)
+    addBodyPolygon(path, [[len * 0.29, 0], [len * 0.03, -h * 0.2], [len * 0.1, h * 0.28], [len * 0.31, h * 0.16]])
+    addBodyPolygon(path, [[len * 0.42, h * 0.25], [len * 0.34, h * 0.48], [len * 0.63, h * 0.34]])
+    const sway = Math.sin(animPhase * 2) * len * 0.025
+    let x = len * 0.48, y = -h * 0.21
+    for (let i = 1; i <= 20; i++) {
+      const t = i / 20, nx = len * (0.48 + t * 0.37) + sway * t, ny = -h * (0.21 + Math.sin(t * Math.PI * 0.85) * 0.25)
+      addBodyCapsule(path, x, y, nx, ny, len * 0.014); x = nx; y = ny
+    }
+    addBodyEllipse(path, x, y, len * 0.065, h * 0.065, 0)
+    return { path, height: h }
+  }
+  if (sil === 'glass-angel') {
+    const flutter = 0.78 + Math.sin(animPhase * 2.8) * 0.16
+    addBodyEllipse(path, len * 0.59, -h * 0.02, len * 0.22, h * 0.16, -0.16)
+    addBodyPolygon(path, [[len * 0.46, 0], [len * 0.1, -h * 0.05], [len * 0.25, h * 0.12], [len * 0.46, h * 0.1]])
+    for (const side of [-1, 1]) {
+      // Match the body's negative winding on both wings to avoid transparent overlaps.
+      if (side > 0) {
+        path.moveTo(len * 0.5, side * h * 0.09)
+        path.bezierCurveTo(len * 0.27, side * h * 0.15, len * 0.28, side * h * 0.49 * flutter, len * 0.6, side * h * 0.45 * flutter)
+        path.quadraticCurveTo(len * 0.75, side * h * 0.31, len * 0.64, side * h * 0.08)
+      } else {
+        path.moveTo(len * 0.64, side * h * 0.08)
+        path.quadraticCurveTo(len * 0.75, side * h * 0.31, len * 0.6, side * h * 0.45 * flutter)
+        path.bezierCurveTo(len * 0.28, side * h * 0.49 * flutter, len * 0.27, side * h * 0.15, len * 0.5, side * h * 0.09)
+      }
+      path.closePath()
+    }
+    addBodyCapsule(path, len * 0.72, -h * 0.1, len * 0.83, -h * 0.22, len * 0.023)
+    addBodyCapsule(path, len * 0.76, h * 0.02, len * 0.9, h * 0.1, len * 0.02)
+    return { path, height: h }
+  }
+  if (sil === 'star-nautilus') {
+    addBodyEllipse(path, len * 0.4, -h * 0.02, len * 0.28, h * 0.43, 0)
+    addBodyEllipse(path, len * 0.68, h * 0.15, len * 0.12, h * 0.16, -0.2)
+    for (let i = 0; i < 7; i++) {
+      let x = len * 0.72, y = h * 0.14
+      for (let j = 1; j <= 15; j++) {
+        const t = j / 15, wave = Math.sin(animPhase * 2 + i * 0.7 + t * 4)
+        const nx = len * (0.72 + t * (0.18 + 0.025 * Math.sin(i))), ny = h * (0.14 + (i - 3) * 0.07 * t + wave * 0.035 * t)
+        addBodyCapsule(path, x, y, nx, ny, len * (0.014 - t * 0.007)); x = nx; y = ny
+      }
+    }
+    return { path, height: h }
+  }
+
   switch (form) {
     case 'jellyfish': {
       const pulse = animPhase ? Math.sin(animPhase * 2.2) : 0
@@ -479,6 +528,9 @@ export function eyeAt(
   const h = len * body.depth
   const form = body.form ?? 'fish'
   const sil = body.silhouette
+  if (sil === 'lantern-angler') return { x: len * 0.73, y: -h * 0.025, r: len * 0.038 }
+  if (sil === 'glass-angel') return { x: len * 0.76, y: -h * 0.055, r: len * 0.023 }
+  if (sil === 'star-nautilus') return { x: len * 0.71, y: h * 0.12, r: len * 0.029 }
   switch (form) {
     case 'jellyfish':
       return { x: len * 0.58, y: -h * 0.18, r: Math.max(1, len * 0.045) }
@@ -1024,4 +1076,25 @@ export function hashString(value: string): number {
     h = Math.imul(h, 16777619)
   }
   return h >>> 0
+}
+
+/** Filled anatomical accents for the secret creatures; LCD samples the same paths. */
+export function secretMarkings(body: BodyShape, len: number, phase = 0): Path2D | null {
+  const sil = body.silhouette, h = len * body.depth, path = new Path2D()
+  if (sil === 'lantern-angler') {
+    const t = 1, x = len * 0.85 + Math.sin(phase * 2) * len * 0.025, y = -h * (0.21 + Math.sin(t * Math.PI * 0.85) * 0.25)
+    addBodyEllipse(path, x, y, len * (0.045 + Math.sin(phase * 3) * 0.006), h * 0.045, 0)
+    addBodyCapsule(path, len * 0.76, h * 0.16, len * 0.83, h * 0.11, len * 0.012)
+  } else if (sil === 'glass-angel') {
+    addBodyEllipse(path, len * 0.59, 0, len * (0.07 + Math.sin(phase * 2) * 0.008), h * 0.08, -0.2)
+    addBodyEllipse(path, len * 0.7, -h * 0.04, len * 0.035, h * 0.04, 0)
+  } else if (sil === 'star-nautilus') {
+    let x = len * 0.4, y = -h * 0.02
+    for (let i = 1; i <= 90; i++) {
+      const t = i / 90, angle = t * Math.PI * 4.4, radius = t * len * 0.25
+      const nx = len * 0.4 + Math.cos(angle) * radius, ny = -h * 0.02 + Math.sin(angle) * radius
+      addBodyCapsule(path, x, y, nx, ny, len * 0.01); x = nx; y = ny
+    }
+  } else return null
+  return path
 }
