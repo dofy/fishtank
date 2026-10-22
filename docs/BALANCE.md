@@ -21,7 +21,7 @@ This document details the gameplay mechanics, progression curves, and breeding p
 
 ### v1.8.0：鱼景互动与成就勋章 / Scenery interactions and medals
 
-- 海马可在海草旁停歇，小型鱼可穿过石拱，同种鱼会间歇组成 2–5 条的鱼群，持续约 8–14 秒后散开，入水后的幼鱼也能参与；观赏动作有冷却和超时，造景被拖动、移除或伙伴离缸会中断。投喂、受惊、眩晕、放电与收鱼优先；所有行为状态留在场景内，不写入存档、不结算经验。减少动态效果会关闭新增观赏行为与河豚鼓起。
+- 海马可在海草旁停歇，小型鱼可穿过石拱，同种鱼会间歇组成 2–5 条的鱼群，持续约 8–14 秒后散开，入水后的幼鱼也能参与；观赏动作有冷却和超时，造景被拖动、移除或伙伴离缸会中断。投喂、受惊、彩蛋效果与收鱼优先；所有行为状态留在场景内，不写入存档、不结算经验。减少动态效果会关闭新增观赏行为与河豚鼓起。
 - 河豚被点击时约 1.8 秒恢复原形。写实使用轻微体积变化，LCD 使用四档不透明点阵轮廓；两套渲染共享行为和石拱遮挡关系。
 - 自动浮游生物：首次约 10–18 秒，之后间隔 18–42 秒出现 1–3 只，同时最多 3 只，寿命约 16–24 秒；附近小鱼可追逐吃掉。手动鱼食优先，进食仍共用 9 秒饱食冷却。空鱼缸或减少动态效果下不生成，已有浮游生物会清理，临时状态不写入存档。
 - 14 项永久成就：保留原有六项，再加入发现 5/15 种非初始鱼、首次发现 3★/4★/5★、全部三种鳗鱼、任一非初始鱼五个品阶、60 种非初始品阶外观。历史与现存个体可作为证据，已获得记录不随放生或合成减少。
@@ -31,14 +31,12 @@ This document details the gameplay mechanics, progression curves, and breeding p
 ### v1.7.0：鱼缸渲染 / Aquarium rendering
 
 - The aquarium defaults to PixiJS in both themes. WebGL failures fall back to Canvas; append `?renderer=canvas` to either production domain to use Canvas directly.
-- 两种主题默认使用 PixiJS，投喂、受惊、电鳗放电与装饰拖动沿用原操作；WebGL 不可用时自动回退 Canvas。两个域名均保留 `?renderer=canvas` 入口，繁育、合成、成长、经验和收集规则不变。
+- 两种主题默认使用 PixiJS，投喂、受惊、彩蛋效果与装饰拖动沿用原操作；WebGL 不可用时自动回退 Canvas。两个域名均保留 `?renderer=canvas` 入口，繁育、合成、成长、经验和收集规则不变。
 
-### v1.6.0：高级电鳗 / Earlier electric eel
+### v1.6.0：更早遇见电鳗 / Earlier electric eel
 
 - **29 species / 137 grade appearances**: 2 starter species with 1 grade each, plus 27 species with 5 grades. Tier pools contain 7 / 7 / 5 / 5 / 3 species at tiers 1–5.
 - **琥珀电鳗 / Amber Electric Eel** (`ambereel`) joins tier 2 alongside its six existing species, each with a conditional probability of `1/7` after rolling tier 2. Existing `volteel` stays tier 3; tier odds, grade weights and save format are unchanged.
-- 两种电鳗共享原有彩蛋：30 秒内点击同一条电鳗 6 次立即放电；游动中仍按原有随机概率触发。放电持续 0.85 秒，其他小鱼眩晕 3 秒；随机放电冷却 22–40 秒。夜间改变一盏顶灯颜色，日间不改灯色。极光彩带鳗不参与放电。
-- Both electric eels share the existing six-click and spontaneous-discharge behavior. Six clicks within 30 seconds trigger discharge; spontaneous discharges retain the 22–40 second cooldown. Discharge lasts 0.85 seconds and stuns other fish for 3 seconds. One lamp changes color at night; daytime lamp colors stay unchanged. Ribbon eels are not electric.
 
 ---
 
