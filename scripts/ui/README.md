@@ -3,7 +3,7 @@
 Run from the repository root:
 
 ```sh
-pnpm test:ui          # local card hit areas, settings, reforge/hidden badges, reminders, shortcuts, decoration borders, details and footer
+pnpm test:ui          # local collection-aware breeding recommendations, card hit areas, settings, reforge/hidden badges, reminders, shortcuts, decoration borders, details and footer
 pnpm test:ui:online   # both production domains, settings, hidden badges, reminders, shortcuts, themes, renderers and offline reopen
 ```
 

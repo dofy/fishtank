@@ -557,13 +557,94 @@ export function sortBreedCandidates(list: Fish[], sort: FishSort, now = Date.now
   })
 }
 
-/** Protection excludes automatic pairing; manually selected parents remain breedable. */
-export function autoPickForBreed(state: GameState, now = Date.now()): string[] {
+export interface BreedRecommendation {
+  pair: string[]
+  reason: 'new-species' | 'new-variant' | 'complete' | 'unreachable' | 'unavailable'
+  /** Exact one-birth probabilities, in [0, 1], for this recommended pair only. */
+  newSpeciesProbability: number
+  newVariantProbability: number
+  missingSpeciesCount: number
+}
+
+/** Read-only recommendation; it never samples RNG or changes breeding odds. */
+export function recommendBreed(state: GameState, now = Date.now()): BreedRecommendation {
   const eligible = state.fish.filter(f =>
     !f.locked && (f.tier === 0 || f.uses > 0) && isAdult(f, now),
   )
-  const best = sortBreedCandidates(eligible, 'tier', now)
-  return best.length >= 2 ? best.slice(0, 2).map(f => f.uid) : []
+  const knownSpecies = new Set([...state.discovered, ...state.fish.map(f => f.speciesId)])
+  const knownGrades = new Map(REGULAR_SPECIES.map(sp => [sp.id, new Set(discoveredGradesFor(state, sp.id))]))
+  const targets = ([1, 2, 3, 4, 5] as Tier[]).map(tier => {
+    const pool = poolForTier(tier)
+    return {
+      missingSpecies: pool.filter(sp => !knownSpecies.has(sp.id)).length / pool.length,
+      missingGrades: ([1, 2, 3, 4, 5] as Grade[]).map(grade =>
+        pool.filter(sp => !knownGrades.get(sp.id)!.has(grade)).length / pool.length),
+    }
+  })
+  const missingSpeciesCount = REGULAR_SPECIES.filter(sp => sp.tier > 0 && !knownSpecies.has(sp.id)).length
+  const empty: BreedRecommendation = { pair: [], reason: 'unavailable', newSpeciesProbability: 0, newVariantProbability: 0, missingSpeciesCount }
+  if (eligible.length < 2) return empty
+
+  const score = (a: Fish, b: Fish): [number, number] => {
+    const tiers = tierOdds(a.tier, b.tier)
+    const grades = gradeOdds((a.grade + b.grade) / 2)
+    const gradeTotal = grades.reduce((sum, weight) => sum + weight, 0)
+    let species = 0, variants = 0
+    targets.forEach((target, t) => {
+      const probability = tiers[t]! / 100
+      species += probability * target.missingSpecies
+      variants += probability * grades.reduce((sum, weight, g) => sum + weight / gradeTotal * target.missingGrades[g]!, 0)
+    })
+    return [species, variants]
+  }
+
+  // Identical tier/grade parents have identical offspring distributions. Retain only
+  // two representatives per bucket, so even a large inventory has <= 60 candidates.
+  const buckets = new Map<string, Fish[]>()
+  const representativeOrder = (a: Fish, b: Fish): number =>
+    b.uses - a.uses || a.bornAt - b.bornAt || a.uid.localeCompare(b.uid)
+  for (const fish of eligible) {
+    const key = `${fish.tier}:${fish.grade}`
+    const bucket = buckets.get(key) ?? []
+    bucket.push(fish); bucket.sort(representativeOrder)
+    buckets.set(key, bucket.slice(0, 2))
+  }
+  const candidates = [...buckets.values()].flat()
+  let best: [Fish, Fish] | undefined
+  let bestScore: [number, number] = [-1, -1]
+  const resourceOrder = (a: [Fish, Fish], b: [Fish, Fish]): number => {
+    const stable = (pair: [Fish, Fish]) => pair.map(f => f.uid).sort().join('|')
+    return a[0].tier + a[1].tier - b[0].tier - b[1].tier
+      || Math.max(a[0].tier, a[1].tier) - Math.max(b[0].tier, b[1].tier)
+      || b[0].uses + b[1].uses - a[0].uses - a[1].uses
+      || a[0].bornAt + a[1].bornAt - b[0].bornAt - b[1].bornAt
+      || stable(a).localeCompare(stable(b))
+  }
+  const epsilon = 1e-12
+  for (let i = 0; i < candidates.length; i++) for (let j = i + 1; j < candidates.length; j++) {
+    const pair: [Fish, Fish] = [candidates[i]!, candidates[j]!]
+    const probabilities = score(...pair)
+    const speciesDiff = probabilities[0] - bestScore[0]
+    const variantDiff = probabilities[1] - bestScore[1]
+    if (!best || speciesDiff > epsilon || (Math.abs(speciesDiff) <= epsilon &&
+      (variantDiff > epsilon || (Math.abs(variantDiff) <= epsilon && resourceOrder(pair, best) < 0)))) {
+      best = pair; bestScore = probabilities
+    }
+  }
+  if (bestScore[0] === 0 && bestScore[1] === 0) {
+    const fallback = sortBreedCandidates(eligible, 'tier', now).slice(0, 2)
+    return { ...empty, pair: fallback.map(f => f.uid), reason: targets.every(t => t.missingSpecies === 0 && t.missingGrades.every(g => g === 0)) ? 'complete' : 'unreachable' }
+  }
+  return {
+    pair: sortBreedCandidates(best!, 'tier', now).map(f => f.uid),
+    reason: bestScore[0] > 0 ? 'new-species' : 'new-variant',
+    newSpeciesProbability: bestScore[0], newVariantProbability: bestScore[1], missingSpeciesCount,
+  }
+}
+
+/** Protection excludes automatic pairing; manually selected parents remain breedable. */
+export function autoPickForBreed(state: GameState, now = Date.now()): string[] {
+  return recommendBreed(state, now).pair
 }
 
 /**

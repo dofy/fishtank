@@ -1,3 +1,4 @@
+import type { BreedRecommendation } from '../core/game'
 import type { Locale } from '../core/types'
 
 const zh = {
@@ -48,3 +49,24 @@ const en: Copy = {
 }
 
 export function collectionCopy(locale: Locale): Copy { return locale === 'zh' ? zh : en }
+
+/** These probabilities describe the suggested pair, never a different manual selection. */
+export function breedRecommendationText(result: BreedRecommendation, locale: Locale, applied = false): string {
+  const zh = locale === 'zh'
+  const probability = (value: number): string => value > 0 && value < 0.0005
+    ? (zh ? '低于 0.1%' : '<0.1%') : `${(value * 100).toFixed(1)}%`
+  if (result.reason === 'unavailable') return collectionCopy(locale).autoPairUnavailable
+  if (result.reason === 'complete') return zh
+    ? '普通鱼种与品阶外观已收齐，新鱼种、新外观概率均为 0%。推荐高星高品阶亲代。隐藏生物需通过重铸获得。'
+    : 'All regular species and appearances collected; both discovery probabilities are 0%. Recommending high-tier, high-grade parents. Hidden creatures require reforging.'
+  if (result.reason === 'unreachable') return zh
+    ? '现有可用亲代补新鱼种、新外观概率均为 0%，暂推荐高星高品阶亲代；可等待其他亲代成年或解除锁定。'
+    : 'Available parents have 0% chance of new species or appearances. Recommending high-tier, high-grade parents; wait for other parents to mature or unlock them.'
+  const caption = zh ? `推荐组合（${applied ? '已选' : '未选用'}）` : `Suggested pair (${applied ? 'selected' : 'not selected'})`
+  const target = result.reason === 'new-species' ? (zh ? '优先补新鱼种' : 'Prioritize new species') : (zh ? '优先补品阶外观' : 'Prioritize new appearances')
+  const fallback = result.reason === 'new-variant' && result.missingSpeciesCount > 0
+    ? (zh ? '现有可用亲代暂时无法获得缺失鱼种。' : 'Available parents cannot produce the missing species. ') : ''
+  return zh
+    ? `${fallback}${caption}：${target} · 新鱼种 ${probability(result.newSpeciesProbability)} · 新外观 ${probability(result.newVariantProbability)}。均为该推荐组合单次繁育的概率，非保底。`
+    : `${fallback}${caption}: ${target} · New species ${probability(result.newSpeciesProbability)} · New appearance ${probability(result.newVariantProbability)}. Per-birth probabilities for this suggestion, not guarantees.`
+}

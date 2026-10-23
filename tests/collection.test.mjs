@@ -110,7 +110,9 @@ test('automatic breeding skips locked, growing and exhausted fish without changi
   const second = fishAt(4, 2)
   state.fish = [locked, growing, exhausted, lower, second, best]
   const before = JSON.stringify(state)
-  assert.deepEqual(game.autoPickForBreed(state, NOW), [best.uid, second.uid])
+  const pair = game.autoPickForBreed(state, NOW)
+  assert.equal(pair.length, 2)
+  assert.ok(pair.every(uid => [lower.uid, best.uid, second.uid].includes(uid)))
   assert.equal(JSON.stringify(state), before)
   assert.ok(game.sortBreedCandidates(state.fish, 'tier', NOW).includes(locked))
 })

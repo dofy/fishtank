@@ -28,7 +28,7 @@ async function cli(label, ...commands) {
     ], {
       cwd: root,
       env: { ...process.env, PLAYWRIGHT_MCP_HEADLESS: 'true' },
-      timeout: label === 'reforge.cjs' ? 300_000 : 180_000,
+      timeout: ['reforge.cjs', 'breed-recommendation.cjs'].includes(label) ? 300_000 : 180_000,
       maxBuffer: 4 * 1024 * 1024,
     })
   } catch (error) {
@@ -66,7 +66,7 @@ try {
   if (!/"headless"\s*:\s*true/.test(evidence)) throw new Error('Missing headless browser evidence')
   console.log('Browser verified: --headless, fresh isolated session.')
 
-  const suites = online ? ['settings.cjs', 'reforge.cjs', 'notifications.cjs', 'shortcuts.cjs', 'detail-online.cjs', 'footer-online.cjs'] : ['card-hit-area.cjs', 'settings.cjs', 'reforge.cjs', 'notifications.cjs', 'shortcuts.cjs', 'decor-highlight.cjs', 'detail-layout.cjs', 'footer.cjs']
+  const suites = online ? ['settings.cjs', 'reforge.cjs', 'notifications.cjs', 'shortcuts.cjs', 'detail-online.cjs', 'footer-online.cjs'] : ['breed-recommendation.cjs', 'card-hit-area.cjs', 'settings.cjs', 'reforge.cjs', 'notifications.cjs', 'shortcuts.cjs', 'decor-highlight.cjs', 'detail-layout.cjs', 'footer.cjs']
   const workerSource = await readFile(resolve(root, 'public/sw.js'), 'utf8')
   const cacheName = workerSource.match(/const CACHE_NAME = '([^']+)'/)?.[1]
   if (!cacheName) throw new Error('Cannot determine expected Service Worker cache')

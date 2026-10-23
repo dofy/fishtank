@@ -4,7 +4,7 @@ import { reforgeCopy } from './reforge-copy'
 import { fishPath } from '../render/shape'
 import { heartReminder } from '../notifications'
 import { itemCard } from './item-card'
-import { collectionCopy } from './collection-copy'
+import { breedRecommendationText, collectionCopy } from './collection-copy'
 import { fishCare, fishDisplayName, saveTools } from './collection'
 import { choosePlaque, milestoneCopy, milestonePanel } from './milestones'
 import { medalArt } from './medals'
@@ -23,7 +23,7 @@ import {
   nextLevelExp,
 } from '../core/balance'
 import {
-  autoPickForBreed,
+  recommendBreed,
   autoPickForMerge,
   breed,
   capacity,
@@ -689,7 +689,8 @@ export class App {
     const rawCandidates = this.state.fish.filter((f) => f.tier === 0 || f.uses > 0)
     const candidates = sortBreedCandidates(rawCandidates, currentSort, now)
     const eligible = candidates.filter((f) => isAdult(f, now))
-    const recommendedPair = autoPickForBreed(this.state, now)
+    const recommendation = recommendBreed(this.state, now)
+    const recommendedPair = recommendation.pair
     const eligibleIds = new Set(eligible.map((f) => f.uid))
     this.breedPick = this.breedPick.filter((uid) => eligibleIds.has(uid)).slice(-2)
 
@@ -801,6 +802,13 @@ export class App {
     }
 
     actionBar.append(row)
+    const recommendationApplied = recommendedPair.length === 2 && this.breedPick.length === 2 && recommendedPair.every(uid => this.breedPick.includes(uid))
+    const recommendationHint = label(breedRecommendationText(recommendation, this.locale, recommendationApplied), 'collection-hint')
+    recommendationHint.dataset.applied = String(recommendationApplied)
+    recommendationHint.dataset.breedRecommendation = recommendation.reason
+    recommendationHint.dataset.newSpeciesProbability = String(recommendation.newSpeciesProbability)
+    recommendationHint.dataset.newVariantProbability = String(recommendation.newVariantProbability)
+    actionBar.append(recommendationHint)
     if (a && b) {
       actionBar.append(this.oddsTable(a.tier, b.tier))
     }

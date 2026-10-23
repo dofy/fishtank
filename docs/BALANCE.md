@@ -14,7 +14,7 @@ This document details the gameplay mechanics, progression curves, and breeding p
 
 ### v1.8.0：珍藏与进度保护 / Fish care and save tools
 
-- 繁育可手动选鱼，也可点击「推荐配对」或按 A，从未锁定、可繁育的成年鱼中按星级、品阶、剩余次数从高到低排序，平手时优先较早获得的鱼，自动选前两条。推荐不受图鉴、旧目标或页面排序方式影响。选好后显示亲代星级组合对应的后代星级概率；锁定鱼不参与推荐配对，仍可手动选择繁育。图鉴列表显示已锁定个体数/持有总数；可批量锁定当前持有的同品种个体，仍可逐条解锁，新获得的鱼不自动锁定。详情先选个体再操作；下方品阶外观图鉴仅用于预览，不切换正在操作的个体。锁定阻止合成和放生，自动选材也会跳过；已移除昵称、收藏及详情里的繁育/合成跳转，旧字段仅作存档兼容，不影响规则。
+- 繁育可手动选鱼，也可点击「推荐配对」或按 A，从未锁定、可繁育的成年鱼中，优先最大化新鱼种概率，其次最大化新「鱼种 × 品阶」外观概率；两项相同时依次优先亲代总星级较低、最高星级较低、剩余次数总和较多、获得时间较早及稳定 ID。按历史图鉴计算缺口，不受页面排序或旧推荐字段影响；隐藏物种不进入普通繁育目标。已收齐或暂不可达时回退高星高品阶，明确显示原因；推荐只选鱼，不自动繁育，也不覆盖手动选择。推荐说明显示两项真实单次概率，不提供保底。选好后显示亲代星级组合对应的后代星级概率；锁定鱼不参与推荐配对，仍可手动选择繁育。图鉴列表显示已锁定个体数/持有总数；可批量锁定当前持有的同品种个体，仍可逐条解锁，新获得的鱼不自动锁定。详情先选个体再操作；下方品阶外观图鉴仅用于预览，不切换正在操作的个体。锁定阻止合成和放生，自动选材也会跳过；已移除昵称、收藏及详情里的繁育/合成跳转，旧字段仅作存档兼容，不影响规则。
 - 存档导入只在确认替换后写入；失败保留原进度，替换前自动备份；「恢复导入前进度」独立保留，不会因后续普通备份轮转而失去入口。较晚的导入确认或重置会取消仍在加载主题的旧导入。备份与主存档同属当前浏览器、当前域名，不能抵御浏览器数据清除；导出文件可用于跨设备迁移。重置会同时清除两份本地备份。
 - 造景直接摆放、拖动和翻转，当前布置随进度自动保存，不再提供命名布景预设。旧版导出的预设、推荐偏好及追踪元数据仅兼容保留，不参与当前游戏操作。
 - Choose adult parents manually or use Best Pair (A), which skips locked fish and selects by tier, grade, remaining uses, then acquisition time; the displayed table shows offspring tier odds for their tier combination. Favorites and protection are independent; protected fish remain manually breedable. Book species cards show locked counts out of the total held. Import previews do not write progress. Confirmed imports replace the collection after backing it up, and local backups are removed on reset.
