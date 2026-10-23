@@ -12,6 +12,9 @@
 /* Native button semantics stay intact, while the outer shell owns its appearance. */
 :root[data-theme] .item-card > button.item-card-main[aria-pressed] { display: grid; grid-template-rows: 64px 30px auto; align-content: start; align-items: center; justify-items: center; gap: 2px; width: 100%; margin: 0; padding: 0 8px 10px; border: 0; border-radius: 0; background: transparent; color: inherit; box-shadow: none; opacity: 1; transform: none; filter: none; font-family: inherit; text-shadow: none; white-space: normal; }
 .item-card > button.item-card-main:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }
+/* Stretch the native primary button over the shell; secondary buttons stay above it. */
+.item-card-main::after { content: ''; position: absolute; inset: 0; z-index: 1; }
+.item-card-action { position: relative; z-index: 2; }
 .item-card-main > * { pointer-events: none; }
 .item-card-art { position: relative; display: grid; place-items: center; width: 100%; height: 64px; }
 .item-card-art canvas { width: 128px !important; height: 72px !important; max-width: 100%; object-fit: contain; }

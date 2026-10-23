@@ -72,6 +72,11 @@ export function milestonePanel(state: GameState, locale: Locale, change: (id: Mi
     button.append(medalArt(item.id),name,status);button.addEventListener('click',()=>change(item.id))
     const meter=document.createElement('progress');meter.className='milestone-meter';meter.max=item.total;meter.value=item.unlocked?item.total:item.current;meter.setAttribute('aria-label',text.title)
     entry.dataset.earned=String(item.unlocked);entry.classList.toggle('is-displayed',mounted)
+    entry.addEventListener('click', event => {
+      if (button.disabled || (event.target instanceof Element && event.target.closest('button'))) return
+      button.focus({ preventScroll: true })
+      button.click()
+    })
     entry.append(button,label(text.note,'collection-hint'),meter);list.append(entry)
   }
   box.append(list);return box

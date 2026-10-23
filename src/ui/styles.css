@@ -919,6 +919,8 @@ table.help-matrix td:not(:first-child) { @apply whitespace-nowrap px-0.5; }
 .milestone-entry { min-width: 0; padding: 8px 10px 10px; display: grid; grid-template-rows: auto 1fr 3px; gap: 6px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--cell-bg); }
 .milestone-entry.is-displayed { border-color: var(--accent); box-shadow: inset 0 3px 0 var(--accent); }
 :root[data-theme] button.medal-select { display: grid; justify-items: center; align-content: start; gap: 3px; padding: 4px 0; width: 100%; min-height: 126px; border: 0; background: transparent; box-shadow: none; color: var(--text); opacity: 1; transform: none; filter: none; white-space: normal; }
+.milestone-entry:has(.medal-select:not(:disabled)) { cursor: pointer; }
+.milestone-entry:has(.medal-select:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
 .medal-select strong { font-size: 12px; line-height: 1.3; text-align: center; min-height: 2.6em; display: grid; align-content: center; }
 .medal-state { font-size: 10px; color: var(--muted); }
 .is-displayed .medal-state { color: var(--accent); font-weight: 700; }
